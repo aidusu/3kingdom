@@ -3,15 +3,15 @@
         "order": 1,
         "symbol": "000001",
         "name": "地雷復（24）",
-        "meaning": "事情有了轉機，局面即將重新開始",
-        "story": "關羽千里走單騎（第27回）",
+        "meaning": "事情有了轉機，局面即將重新開始。",
+        "story": "赤壁之戰，展開了三國的序幕（第49回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0168.png"
     },
     {
         "order": 2,
         "symbol": "000010",
         "name": "地水師（7）",
-        "meaning": "嚴守紀律，需要組織有序，要累積信任",
+        "meaning": "嚴守紀律，需要組織有序，要累積信任。",
         "story": "孔明揮淚斬馬謖（第92回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0146.png"
     },
@@ -19,496 +19,496 @@
         "order": 3,
         "symbol": "000011",
         "name": "地澤臨（19）",
-        "meaning": "領導或管理，需要親力親為，要以身作則",
-        "story": "各場戰役，曹操率軍親征，身先士卒",
+        "meaning": "領導或管理，需要親力親為，要以身作則。",
+        "story": "曹操親征，打敗袁軍，用心收服有才幹的敵人部屬（33回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0149.png"
     },
     {
         "order": 4,
         "symbol": "000100",
         "name": "地山謙（15）",
-        "meaning": "競爭中保持低調，該低頭時就低頭，謙卑化解競爭",
-        "story": "諸葛亮三氣周瑜後，謙卑到柴桑祭弔",
+        "meaning": "競爭中保持低調，該低頭時就低頭，謙卑化解競爭。",
+        "story": "諸葛亮三氣周瑜後，謙卑到柴桑祭弔（57回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0153.png"
     },
     {
         "order": 5,
         "symbol": "000101",
         "name": "地火明夷（36）",
-        "meaning": "人生總有晦暗時，需忍辱負重，用全局觀鳥瞰",
-        "story": "陶謙三讓徐州給劉備，呂布喧賓奪主霸徐州，趕劉備屯小沛",
+        "meaning": "人生總有晦暗時，需忍辱負重，用全局觀鳥瞰。",
+        "story": "陶謙三讓徐州給劉備，呂布喧賓奪主，劉備屯小沛（14回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0156.png"
     },
     {
         "order": 6,
         "symbol": "000110",
         "name": "地風升（46）",
-        "meaning": "機會逐漸好轉，影響力逐漸穩步上升，",
-        "story": "赤壁之後，劉備得到荊州，得到漢中，計畫下一步得到益州",
+        "meaning": "機會逐漸好轉，影響力逐漸穩步上升。",
+        "story": "赤壁後，劉備得荊州，龐統建議西進，得益州（65回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0176.png"
     },
     {
         "order": 7,
         "symbol": "000111",
         "name": "地天泰（11）",
-        "meaning": "萬事順利，與人交流順暢，時機好轉",
-        "story": "劉備入蜀得民心（第63回）.",
+        "meaning": "雨過天晴，掃去陰霾，交流順暢，時機好轉。",
+        "story": "劉備原本與劉璋為敵，劉璋不戰而降，劉備安撫深得民心（65回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0142.png"
     },
     {
         "order": 8,
         "symbol": "001000",
         "name": "雷地豫（16）",
-        "meaning": "未雨綢繆，預先規劃，順時而動",
-        "story": "郭嘉獻計平遼東，請曹操按兵不動，看公孫康反應而定",
+        "meaning": "抵禦外來的威脅，未雨綢繆預先規劃，順勢而動。",
+        "story": "張飛長坂橋上，掃帚扮大軍，大吼嚇退曹操（42回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0152.png"
     },
     {
         "order": 9,
         "symbol": "001001",
         "name": "雷為震（51）",
-        "meaning": "面對危機迅速應對，全力以赴必有轉機",
-        "story": "張飛長坂坡，掃帚扮大軍，吼聲威震退曹操",
+        "meaning": "集眾人與大自然的力量，心誠則靈，全力以赴必有轉機。",
+        "story": "諸葛亮設七星壇借東南風，助力赤壁之戰（49回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0197.png"
     },
     {
         "order": 10,
         "symbol": "001010",
         "name": "雷水解（40）",
-        "meaning": "問題順利解決，可化解危機",
-        "story": "趙雲單騎救阿斗（第41回）",
+        "meaning": "經營生態系中，不分敵友，協力解決問題，化解危機。",
+        "story": "賈詡原本幫張繡打曹操（25回），後來幫曹操破馬超（46回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0182.png"
     },
     {
         "order": 11,
         "symbol": "001011",
         "name": "雷澤歸妹（54）",
-        "meaning": "競爭對手之間，握手言和，在危機中的合作向前",
-        "story": "孫權嫁妹妹孫尚香給劉備，合作對抗曹操",
+        "meaning": "與有實力的對手合作，借力使力，也避免腹背受敵。",
+        "story": "孫權嫁妹妹孫尚香給劉備，合作對抗曹操（54回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0194.png"
     },
     {
         "order": 12,
         "symbol": "001100",
         "name": "雷山小過(62)",
-        "meaning": "謹慎小心，不冒進而能逢凶化吉",
-        "story": "諸葛亮巧用木牛流馬，賺取司馬懿糧草",
+        "meaning": "寵辱皆驚，謹慎小心，不冒進自能逢凶化吉。",
+        "story": "曹操煮酒論英雄，劉備謹言慎語（21回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0186.png"
     },
     {
         "order": 13,
         "symbol": "001101",
         "name": "雷火豐（55)",
-        "meaning": "豐盛繁榮，盛極一時",
-        "story": "諸葛亮赤壁後，攔阻曹軍，奪下荊州，蜀漢一度氣盛（第50回).",
+        "meaning": "遇見不可思議的現象，表示有些大的改變將要發生。",
+        "story": "漢靈帝時異象頻見，天變之兆：黃巾賊大亂（第1回)",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0193.png"
     },
     {
         "order": 14,
         "symbol": "001110",
-        "name": "雷風恆(32)",
-        "meaning": "有毅力堅持下去，持之以恆",
-        "story": "諸葛亮六出祁山，不屈不撓（第91-104回）.",
+        "name": "雷風恆（32）",
+        "meaning": "穩定適中，取得平衡，才能持之以恆。",
+        "story": "諸葛亮六出祁山，佈局縝密（第91-104回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0160.png"
     },
     {
         "order": 15,
         "symbol": "001111",
         "name": "雷天大壯(34)",
-        "meaning": "才華能力大大展現，受到眾人肯定",
-        "story": "袁紹攻打白馬，關羽溫酒斬華雄，展現才華（第5回）.",
+        "meaning": "面對強大的威脅，只有以柔可以克剛，避免硬碰硬。",
+        "story": "劉備為關公復仇起兵伐東吳，陸遜按兵不動，以柔克剛（83）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0158.png"
     },
     {
         "order": 16,
         "symbol": "010000",
         "name": "水地比（8）",
-        "meaning": "團結合作，親比為友",
-        "story": "桃園三結義（第1回）.",
+        "meaning": "尋找親近信賴的夥伴，團結合作一起前進。",
+        "story": "劉備關羽張飛義結金蘭，桃園三結義（第1回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0145.png"
     },
     {
         "order": 17,
         "symbol": "010001",
         "name": "水雷屯（3）",
-        "meaning": "萬事起頭難",
-        "story": "劉備初創，四處奔波.",
+        "meaning": "萬事起頭難，鍥而不捨。",
+        "story": "劉備投奔公孫瓚，袁紹，曹操，呂布，劉表與劉璋，四處奔波。",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0134.png"
     },
     {
         "order": 18,
         "symbol": "010010",
         "name": "水為坎（29）",
-        "meaning": "險難重重，堅持不懈",
-        "story": "關公過五關斬六將",
+        "meaning": "險難重重，透過創新，將危機變機會。",
+        "story": "諸葛亮六出祁山，探索不同的路徑與做法（第91-104回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0163.png"
     },
     {
         "order": 19,
         "symbol": "010011",
         "name": "水澤節（60）",
-        "meaning": "節制有度",
-        "story": "諸葛亮分兵節度（第91回）.",
+        "meaning": "彈性管理，抓準節奏，在關鍵時刻精準出手。",
+        "story": "諸葛亮神機妙算，關雲長智取華容道（第50回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0188.png"
     },
     {
         "order": 20,
         "symbol": "000100",
         "name": "水山蹇（39）",
-        "meaning": "步履維艱",
-        "story": "鄧艾入蜀處處難險.",
+        "meaning": "面臨左右為難，用開放的態度，聽取多方的意見。",
+        "story": "孫權猶豫投降曹魏，諸葛亮與周瑜舌戰鬥智（43-44回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0183.png"
     },
     {
         "order": 21,
         "symbol": "010101",
         "name": "水火既濟（63）",
-        "meaning": "慎終如始",
-        "story": "諸葛亮七擒孟獲（第90回）.",
+        "meaning": "雖然雨過天晴了，還是慎終如始，謙卑的人有福了。",
+        "story": "老黃忠計奪天蕩山，以逸待勞再取定軍山（第70～71回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0135.png"
     },
     {
         "order": 22,
         "symbol": "010110",
         "name": "水風井（48）",
-        "meaning": "井然有序",
-        "story": "諸葛亮整頓軍紀（第91回）",
+        "meaning": "面對一個爛攤子，用心重新整頓，以利他之心，成功不必在我。",
+        "story": "孫策拜漢光武廟，祈求江東立業，逐步整頓江東（第15回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0174.png"
     },
     {
         "order": 23,
         "symbol": "010111",
         "name": "水天需（5）",
-        "meaning": "耐心等待",
-        "story": "劉備三顧茅廬（第37回）.",
+        "meaning": "面對好的人才與機會，需要有耐心等待，也要懂得付出。",
+        "story": "劉備三顧茅廬，謙虛有耐性，才能贏得諸葛亮（第37回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0140.png"
     },
     {
         "order": 24,
         "symbol": "011000",
         "name": "澤地萃（45）",
-        "meaning": "聚集人才，團結一心",
-        "story": "諸葛亮分封五虎將.",
+        "meaning": "聚集人才，並且根據人才的特色分類，分路前進。",
+        "story": "博望坡之戰，諸葛亮初次用兵，諸將誠服（第39回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0177.png"
     },
     {
         "order": 25,
         "symbol": "011001",
         "name": "澤雷隨（17）",
-        "meaning": "隨機應變",
-        "story": "張飛義釋嚴顏（第64回）.",
+        "meaning": "不管高下尊卑，都維持適當關係，必要時隨機應變貴人相助。",
+        "story": "馬超興兵擊曹操，曹操渭河驚魂，多貴相助而安（第58回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0151.png"
     },
     {
         "order": 26,
         "symbol": "011010",
         "name": "澤水困（47）",
-        "meaning": "困厄受阻",
-        "story": "關雲長敗走麥城（第77回）.",
+        "meaning": "心繫牢籠，若不能看開，害了自己也連累他人。",
+        "story": "劉備拿三十萬將士報關公之仇，心結不開自取其敗（第84～85回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0175.png"
     },
     {
         "order": 27,
         "symbol": "011011",
         "name": "澤為兑（58）",
-        "meaning": "和諧共處",
-        "story": "諸葛亮巧布空城計（第95回）",
+        "meaning": "面對別人的需索，你必須用智慧進行談判，適度的資源交換。",
+        "story": "孫權多次向劉備要荊州（第52，56，66回）終於討回（67回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0190.png"
     },
     {
         "order": 28,
         "symbol": "011100",
         "name": "澤山咸（31）",
-        "meaning": "感應相合",
-        "story": "吳國太看女婿越看越中意（第54回）.",
+        "meaning": "面對合作夥伴，可以理性與感性的衡量彼此的相合程度。",
+        "story": "吳國太看女婿越看越中意（第54回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0161.png"
     },
     {
         "order": 29,
         "symbol": "011101",
         "name": "澤火革（49）",
-        "meaning": "革故鼎新",
-        "story": "董卓入洛陽廢少帝立獻帝",
+        "meaning": "面對改變，不要輕率決定，盱衡情勢，調整方針。",
+        "story": "郭嘉獻計平遼東，請曹操按兵不動，看公孫康反應而定（33回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0173.png"
     },
     {
         "order": 30,
         "symbol": "011110",
         "name": "澤風大過（28）",
-        "meaning": "過猶不及",
-        "story": "關羽水淹七軍（第73回）.",
+        "meaning": "用第三視角來認知現實，避免驕傲自大，失去平衡過猶不及。",
+        "story": "關羽不屑與黃忠並稱五虎將，驕勝樊城後失守襄陽（第73回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0164.png"
     },
     {
         "order": 31,
         "symbol": "011111",
         "name": "澤天夬（43）",
-        "meaning": "果斷決斷",
-        "story": "諸葛亮錦囊斬魏延（第104回）",
+        "meaning": "你最親信的人，也可能是害你最慘的人，與好友決裂前要想清楚。",
+        "story": "袁紹疏離謀士許攸，讓他叛逃到曹營，劫烏巢而造成大患（第30回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0179.png"
     },
     {
         "order": 32,
         "symbol": "1000000",
         "name": "山地剝（23）",
-        "meaning": "剝落退縮",
-        "story": "袁紹敗走倉亭，一盤好棋敗盡.",
+        "meaning": "你想要完成的事，需要一步一腳印的往前進，沒有捷徑。",
+        "story": "鄧艾從陰平小路出漢中德陽亭進取成都，驚嘆諸葛亮碑（117回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0169.png"
     },
     {
         "order": 33,
         "symbol": "100001",
         "name": "山雷頤（27）",
-        "meaning": "養生保健",
-        "story": "袁術稱帝，不自量力.",
+        "meaning": "善用你的天賦，不要羨慕別人有的，捨本逐末將離目標更遠。",
+        "story": "既生瑜何生亮，諸葛亮三氣周瑜（第51～56回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0165.png"
     },
     {
         "order": 34,
         "symbol": "100010",
         "name": "山水蒙（4）",
-        "meaning": "啟蒙教化",
-        "story": "諸葛亮隆中對（第36回）.",
+        "meaning": "在迷霧中，不要莽撞行動，反而可趁對方的魯莽獲利。",
+        "story": "諸葛亮草船借箭（第46回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0136.png"
     },
     {
         "order": 35,
         "symbol": "100011",
         "name": "山澤損（41）",
-        "meaning": "損己利人",
-        "story": "孫權三讓劉備借荊州（第42回.",
+        "meaning": "不要太斤斤計較，偶爾知道退讓，有捨才有得。",
+        "story": "孫權為了不要兩面受敵，接受吳侯封號而降曹操（第82回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0181.png"
     },
     {
         "order": 36,
         "symbol": "100100",
         "name": "山為艮（52）",
-        "meaning": "止於當止",
-        "story": "死諸葛嚇走活仲達（第104回）.",
+        "meaning": "通盤體檢自己的實力，知止而後能行於當止。",
+        "story": "諸葛亮對孟獲七擒七縱，以德服人，免後顧之憂（第87-90回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0196.png"
     },
     {
         "order": 37,
         "symbol": "100101",
         "name": "山火賁（22）",
-        "meaning": "修飾外表，巧用計謀",
-        "story": "貂蟬巧設連環計",
+        "meaning": "在對與錯的黑白之間，還有很多灰色的空間，無意無必無固。",
+        "story": "劉禪無能得善終，孔明盡瘁一切空，後人憑弔三國夢（第120回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0170.png"
     },
     {
         "order": 38,
         "symbol": "100110",
         "name": "山風蠱（18）",
-        "meaning": "除舊布新，革弊從善",
-        "story": "曹操迎天子到許都整頓吏治.",
+        "meaning": "一棒接一棒，學習傳承，學習除弊興善。",
+        "story": "曹丕禪讓成魏帝（80回），司馬昭依樣畫葫蘆成晉帝（119回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0150.png"
     },
     {
         "order": 39,
         "symbol": "100111",
         "name": "山天大畜（26）",
-        "meaning": "大有積蓄，蓄勢待發",
-        "story": "諸葛亮草船借箭（46回）",
+        "meaning": "分工才有效率，試著授權下去，讓別人發揮才華吧！",
+        "story": "鳳雛龐統閒縣令，諸葛重用進蜀漢（57-60回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0166.png"
     },
     {
         "order": 40,
         "symbol": "101000",
         "name": "火地晉（35）",
-        "meaning": "晉升進取",
-        "story": "曹操魏公升魏王（第81回）.",
+        "meaning": "要藉由眾人的相挺才能前進，待人寬大，盡棄前嫌。",
+        "story": "曹操敗師淯水，屬下死心塌地，才能一路向上（第16回）.",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0157.png"
     },
     {
         "order": 41,
         "symbol": "101001",
         "name": "火雷噬嗑（21）",
-        "meaning": "剛柔解紛",
-        "story": "張飛夜戰馬超（第57回）",
+        "meaning": "分清楚你的資源有哪些，貴賤良窳，各得其用。",
+        "story": "諸葛亮劉備隆中對，分析天下大勢與最佳戰略（第28回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0171.png"
     },
     {
         "order": 42,
         "symbol": "101010",
         "name": "火水未濟（64）",
-        "meaning": "尚未完成",
-        "story": "五丈原禳星（第103回）",
+        "meaning": "前方即將遇到風暴，但先為天晴時刻做好準備。",
+        "story": "劉表死後，劉備樊城打敗曹軍，預見曹操將大軍殺進（第40-41回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0137.png"
     },
     {
         "order": 43,
         "symbol": "101011",
         "name": "火澤睽（38）",
-        "meaning": "分歧對立",
-        "story": "孫劉爭荊州（第54回）.",
+        "meaning": "面對不同個性與思維的人，都要廣結善緣，需要時會成為貴人。",
+        "story": "關公過五關斬六將，多少貴人回報相助（第27回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0184.png"
     },
     {
         "order": 44,
         "symbol": "101100",
         "name": "火山旅（56）",
-        "meaning": "旅居客鄉，漂泊不定",
-        "story": "劉備寄居袁紹與曹操，膽戰心驚",
+        "meaning": "你的計畫，須要考慮遠端的後勤支援，才能源源不絕。",
+        "story": "諸葛亮北伐，糧草補給一直是最大的問題（91-100回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0192.png"
     },
     {
         "order": 45,
         "symbol": "101101",
         "name": "火為離（30）",
-        "meaning": "光明耀天，順勢而為",
-        "story": "陸遜火燒聯營，劉備氣走白帝城.",
+        "meaning": "在充滿信心一片光明時，要提防潛在風險與致命災難。",
+        "story": "劉備看不起對手陸遜年輕，卻遭火燒聯營被打敗（81-84回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0162.png"
     },
     {
         "order": 46,
         "symbol": "101110",
         "name": "火風鼎（50）",
-        "meaning": "承載大業，鼎新革故",
-        "story": "曹丕稱帝，劉備建蜀漢",
+        "meaning": "遇到難題，轉個彎逆向思考，透過創新改變局勢。",
+        "story": "諸葛亮造木牛流馬，在山林行軍運糧（102回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0172.png"
     },
     {
         "order": 47,
         "symbol": "101111",
         "name": "火天大有（14）",
-        "meaning": "豐盛富有",
-        "story": "劉備入川得蜀（第63回）.",
+        "meaning": "面對失去，請學習轉念，想想你有的，別想失去的，天佑之。",
+        "story": "劉備依附劉表，劉表病危時，劉備不肯負義爭權（第40回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0154.png"
     },
     {
         "order": 48,
         "symbol": "1100000",
         "name": "風地觀（20）",
-        "meaning": "觀察審勢",
-        "story": "諸葛亮設八陣圖（第84回）",
+        "meaning": "觀察審勢，從不同角度全盤的觀察，並預作準備。",
+        "story": "曹丕看劉備敗後，佈局南下東吳（第84回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0148.png"
     },
     {
         "order": 49,
         "symbol": "110001",
         "name": "風雷益（42）",
-        "meaning": "增益強化",
-        "story": "周瑜騙蔣幹，棒打黃蓋，反間計",
+        "meaning": "要有興利天下的心，有利他的心，就能帶來利己的效益。",
+        "story": "諸葛亮的出師表，為復興漢朝正統，願鞠躬盡瘁（91回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0180.png"
     },
     {
         "order": 50,
         "symbol": "110010",
         "name": "風水渙（59）",
-        "meaning": "分散消融",
-        "story": "諸葛亮初出茅廬，派兵遣將敗曹操（第37回）",
+        "meaning": "除舊佈新，讓自己的外貌居家一切都煥然一新吧！",
+        "story": "曹操打敗袁紹之後，興建銅雀台（34回）大宴銅雀台（第56回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0189.png"
     },
     {
         "order": 51,
         "symbol": "110011",
         "name": "風澤中孚（61）",
-        "meaning": "誠信守信",
-        "story": "關羽義釋曹操（第25回）.",
+        "meaning": "請移開焦點，看看還有沒有第三者？另一個角度的思維。",
+        "story": "董卓與呂布都中了貂蟬的連環計，可怕的第三者（第8回）.",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0187.png"
     },
     {
         "order": 52,
         "symbol": "110100",
         "name": "風山漸（53）",
-        "meaning": "循序漸進",
-        "story": "司馬昭之心路人皆知",
+        "meaning": "不要一意孤行，拉高視野，聽聽更多不同的聲音吧。",
+        "story": "姜維九次北伐，踽踽獨行略顯蕭索（107-115回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0195.png"
     },
     {
         "order": 53,
         "symbol": "110101",
         "name": "風火家人（37）",
-        "meaning": "兄友弟恭，家庭和睦",
-        "story": "孫策病逝，孫權繼位.",
+        "meaning": "培養親密的夥伴，大家可以和樂共事，就能事成業興。",
+        "story": "孫策孝順父母友於兄弟，交付周瑜輔佐孫權（29回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0185.png"
     },
     {
         "order": 54,
         "symbol": "110110",
         "name": "風為巺（57）",
-        "meaning": "隱忍滲透，柔中有剛",
-        "story": "　舌戰群儒（第43回）",
+        "meaning": "面臨重要的決策，要能果斷決定，避免猶豫遲疑。",
+        "story": "　袁紹伐曹操，檄文美兒女情，議而未決（第22-24回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0191.png"
     },
     {
         "order": 55,
         "symbol": "110111",
         "name": "風天小畜（9）",
-        "meaning": "積少成多",
-        "story": "諸葛亮積糧備戰（第91回）",
+        "meaning": "凡事起步從小處著手，逐漸累積，由近而遠，莫貪快！",
+        "story": "諸葛亮設計取漢中，一步一步前進（第69-72回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0144.png"
     },
     {
         "order": 56,
         "symbol": "111000",
         "name": "天地否（12）",
-        "meaning": "絕路逢生，否極泰來",
-        "story": "呂布佔徐州，射戟救劉備（第15～20回）.",
+        "meaning": "當前面臨閉塞的絕路，設法尋找機會，就能否極泰來。",
+        "story": "陸遜追討劉備，誤入諸葛亮的八陣圖，幸遇老叟脫困（第84回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0141.png"
     },
     {
         "order": 57,
         "symbol": "111001",
         "name": "天雷無妄（25）",
-        "meaning": "心無妄念，誠心為本",
-        "story": "劉備白帝託孤（第85回）.",
+        "meaning": "不要心存妄念，別食古不化，也不要胡說妄為。",
+        "story": "禰衡裸衣罵賊，說得都對，死得很慘（第23回）.",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0167.png"
     },
     {
         "order": 58,
         "symbol": "111010",
         "name": "天水訟（6）",
-        "meaning": "爭訟爭端",
-        "story": "官渡之戰，曹操與袁紹征討檄文.",
+        "meaning": "小心因謠言而與人爭執，小心你中了對手的反間計！",
+        "story": "涼州軍隊討伐，曹操打不過馬超，抹書間韓遂，讓馬超離開（59回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0147.png"
     },
     {
         "order": 59,
         "symbol": "111011",
         "name": "天澤履（10）",
-        "meaning": "謹慎前行",
-        "story": "　黃忠夜襲曹營（第71回）",
+        "meaning": "別揣摩有權者的想法。伴君如伴虎，要謹慎而行。",
+        "story": "楊修聰穎過人，猜出雞肋與一合酥，被曹操處斬（第72回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0143.png"
     },
     {
         "order": 60,
         "symbol": "111100",
         "name": "天山遯（33）",
-        "meaning": "退避保身",
-        "story": "姜維引退到隴西屯墾.",
+        "meaning": "小心功高震主，明哲保身之道就是知所進退。",
+        "story": "姜維九次北伐，被劉禪忌憚，引退到隴西去屯墾才自保（第115回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0159.png"
     },
     {
         "order": 61,
         "symbol": "111101",
         "name": "天火同人（13）",
-        "meaning": "同心協力，志同道合",
-        "story": "袁紹十八路軍抗董卓",
+        "meaning": "共同創業的夥伴，即使志同道合，也要注意利益分配",
+        "story": "袁紹號召十八路盟軍對抗董卓，但很快就起內鬨（第5回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0155.png"
     },
     {
         "order": 62,
         "symbol": "111110",
         "name": "天風姤（44）",
-        "meaning": "偶遇機會，因緣際會",
-        "story": "劉備遇司馬徽薦龍鳳（第37回）.",
+        "meaning": "面對偶遇的機會或對象，珍惜這份緣份，但不要亂入草叢。",
+        "story": "司馬徽推薦劉備：臥龍鳳雛得一可安天下，但得二呢？（第35-37回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0178.png"
     },
     {
         "order": 63,
         "symbol": "111111",
         "name": "天為乾（1）",
-        "meaning": "剛健自強，開創局面",
-        "story": "曹操挾天子以令諸侯.",
+        "meaning": "找到清楚的目標與對象，剛健自強地開創新局面。",
+        "story": "曹操挾天子以令諸侯，袁紹怕困難而不為（第14回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0138.png"
     },
     {
         "order": 64,
         "symbol": "0000000",
         "name": "地為坤（2）",
-        "meaning": "柔順包容，厚積薄發",
-        "story": "劉備攜民渡江（第41回）.",
+        "meaning": "面對強大的威脅，透過機智以柔克剛，厚積薄發保存實力。",
+        "story": "諸葛亮空城計（第95回）死諸葛計退司馬懿（104回）",
         "image": "https://aidusu.github.io/3kingdom/image/IMG_0139.png"
     }
 ]
