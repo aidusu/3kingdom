@@ -18,11 +18,13 @@
 <body>
     <h2>GPS點位標註系統</h2>
     <div class="input-group">
-        <input type="text" id="lat" placeholder="緯度 (例：25.033968)" pattern="-?\d+\.?\d*">
-        <input type="text" id="lng" placeholder="經度 (例：121.564468)" pattern="-?\d+\.?\d*">
-        <button onclick="addMarkerFromInput()">新增標註</button>
-        <button onclick="clearAllMarkers()">清除所有標註</button>
-    </div>
+    <input type="text" id="lat" placeholder="緯度 (例：25.033968)" pattern="-?\d+\.?\d*">
+    <input type="text" id="lng" placeholder="經度 (例：121.564468)" pattern="-?\d+\.?\d*">
+    <input type="date" id="date">
+    <input type="text" id="note" placeholder="備註">
+    <button onclick="addMarkerFromInput()">新增標註</button>
+    <button onclick="clearAllMarkers()">清除所有標註</button>
+</div>
     <div id="map"></div>
     <h3>已儲存點位清單</h3>
     <ul id="marker-list"></ul>
@@ -47,74 +49,89 @@
 
         // 從localStorage載入點位
         function loadAndDisplayMarkers() {
-            const savedData = localStorage.getItem(STORAGE_KEY);
-            if (savedData) {
-                JSON.parse(savedData).forEach(point => {
-                    addMarker(point.lat, point.lng, point.label);
-                });
-            }
-        }
+    const savedData = localStorage.getItem(STORAGE_KEY);
+    if (savedData) {
+        JSON.parse(savedData).forEach(point => {
+            addMarker(point.lat, point.lng, point.label, point.date, point.note);
+        });
+    }
+}
 
         // 新增標記到地圖
-        function addMarker(lat, lng, label = '未命名地點') {
-            const marker = L.marker([lat, lng], {
-                title: label,
-                alt: `GPS點位 (${lat}, ${lng})`,
-                riseOnHover: true
-            }).addTo(map)
-            .bindPopup(`<b>${label}</b><br>緯度: ${lat}<br>經度: ${lng}`);
+        function addMarker(lat, lng, label = '未命名地點', date = '', note = '') {
+    const popupContent = `
+        <b>${label}</b><br>
+        緯度: ${lat}<br>
+        經度: ${lng}<br>
+        日期: ${date}<br>
+        備註: ${note}
+    `;
 
-            markers.push({
-                lat: lat,
-                lng: lng,
-                label: label,
-                marker: marker
-            });
-        }
+    const marker = L.marker([lat, lng], {
+        title: label,
+        alt: `GPS點位 (${lat}, ${lng})`,
+        riseOnHover: true
+    }).addTo(map)
+    .bindPopup(popupContent);
+
+    markers.push({
+        lat, lng, label, date, note, marker
+    });
+}
 
         // 從輸入框新增標記
-        function addMarkerFromInput() {
-            const latInput = document.getElementById('lat');
-            const lngInput = document.getElementById('lng');
-            
-            const lat = parseFloat(latInput.value);
-            const lng = parseFloat(lngInput.value);
+       function addMarkerFromInput() {
+    const latInput = document.getElementById('lat');
+    const lngInput = document.getElementById('lng');
+    const dateInput = document.getElementById('date');
+    const noteInput = document.getElementById('note');
 
-            if (isNaN(lat) || isNaN(lng)) {
-                alert('請輸入有效的經緯度數值！');
-                return;
-            }
+    const lat = parseFloat(latInput.value);
+    const lng = parseFloat(lngInput.value);
+    const date = dateInput.value;
+    const note = noteInput.value.trim();
 
-            const label = prompt('請輸入地點名稱：', '未命名地點');
-            addMarker(lat, lng, label);
-            saveMarkers();
-            updateMarkerList();
-            
-            // 清空輸入框
-            latInput.value = '';
-            lngInput.value = '';
-        }
+    if (isNaN(lat) || isNaN(lng)) {
+        alert('請輸入有效的經緯度數值！');
+        return;
+    }
+
+    const label = prompt('請輸入地點名稱：', '未命名地點');
+    addMarker(lat, lng, label, date, note);
+    saveMarkers();
+    updateMarkerList();
+
+    latInput.value = '';
+    lngInput.value = '';
+    dateInput.value = '';
+    noteInput.value = '';
+}
 
         // 儲存到localStorage
         function saveMarkers() {
-            const dataToSave = markers.map(m => ({
-                lat: m.lat,
-                lng: m.lng,
-                label: m.label
-            }));
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
-        }
+    const dataToSave = markers.map(m => ({
+        lat: m.lat,
+        lng: m.lng,
+        label: m.label,
+        date: m.date,
+        note: m.note
+    }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+}
 
         // 更新點位清單
         function updateMarkerList() {
-            const list = document.getElementById('marker-list');
-            list.innerHTML = markers.map(m => `
-                <li>
-                    ${m.label} (${m.lat.toFixed(6)}, ${m.lng.toFixed(6)})
-                    <button onclick="deleteMarker(${markers.indexOf(m)})">刪除</button>
-                </li>
-            `).join('');
-        }
+    const list = document.getElementById('marker-list');
+    list.innerHTML = markers.map((m, i) => `
+        <li>
+            <b>${m.label}</b><br>
+            緯度: ${m.lat.toFixed(6)}，經度: ${m.lng.toFixed(6)}<br>
+            日期: ${m.date}<br>
+            備註: ${m.note}<br>
+            <button onclick="deleteMarker(${i})">刪除</button>
+        </li>
+    `).join('');
+}
 
         // 刪除單個標記
         function deleteMarker(index) {
