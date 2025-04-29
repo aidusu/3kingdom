@@ -1,95 +1,141 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
-    <title>華易AI智繪占卜</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>跨裝置GPS點位標註系統</title>
+    <link rel="stylesheet" href="https://unpkg.com/[email protected]/dist/leaflet.css" />
     <style>
-        .container { max-width: 600px; margin: auto; padding: 20px; }
-        input, select { margin: 5px; padding: 8px; }
-        #result { margin-top: 20px; padding: 15px; border: 1px solid #ddd; }
+        #map { height: 70vh; width: 100%; }
+        .input-group { margin: 10px 0; display: flex; gap: 10px; flex-wrap: wrap; }
+        input[type="text"] { padding: 8px; flex: 1; min-width: 200px; }
+        button { padding: 8px 16px; background: #4CAF50; color: white; border: none; cursor: pointer; }
+        button:hover { background: #45a049; }
+        #marker-list { margin-top: 20px; padding: 0; list-style: none; }
+        #marker-list li { padding: 5px; border-bottom: 1px solid #ddd; }
     </style>
 </head>
 <body>
-    <div class="container">
-    <h2>AI串古今，匯易經與三國，啟發你面對疑難雜症 </h2>
-    <p>這是文華AI易經智繪，透過AI的輔助，讓你詢問一個疑難雜症，然後用易經幫你給個卦，這個卦，將有AI結合卦辭繪出的圖片，以及卦辭與三國演義連結的故事。透過一張圖片與一個故事，讓你可以參考與得到啟發。</p>
-    <p>這些內容，都是AI串連起來的，你可以參考，也可以一笑置之！</p>
-    <h1>    </h1>
-    <h2>占卜說明</h2>
-    <p>首先，請你想著你現在關心的一件事，想想發生在什麼時候？</p>
-    <p>接著，請你輸入你的出生年月日，與你關心的事情的發生日期，如果不記得，就輸入今天的日期。 </p>
-    <p>接著，輸入你的性別，以及這件事情對你的重視程度（0不在乎～9非常重視）。</p>
-    <p>然後，請你按下[開始占卜]的按鈕。</p>
-    <p>AI 串古今，連易經與三國，有圖有故事！</p>
-    <h2> Are you ready？ Let's Go! </h2>
-    <!-- 輸入表單 -->
- <div>
- <ul>
-        <li><label>出生日期：</label>
-        <input type="date" id="birthDate" required></li>
-        
-        <li><label>事發日期：</label>
-        <input type="date" id="eventDate" required></li>
-        
-        <li><label>性別：</label>
-        <select id="gender">
-            <option value="1">男</option>
-            <option value="0">女</option>
-        </select></li>
-        
-        <li><label>重要性（0-9）：</label>
-        <input type="number" id="importance" min="0" max="9" required></li>
-  </ul>    
-        <button onclick="calculateHexagram()">開始占卜</button>
-   </div>
-
-    <!-- 顯示結果 -->
-    <div id="result" style="display:none;">
-        <h1>AI易經智繪</h1>
-        <h3>以下是你這次占卜的結果</h3>
-        <p>易經卦序：<span id="hexagramOrder"></span></p>
-        <p>卦象：<span id="hexagramSymbol"></span></p>
-        <p>卦名：<span id="hexagramName"></span></p>
-        <p>卦意：<span id="hexagramMeaning"></span></p>
-        <p>三國故事：<span id="story"></span></p>
+    <h2>GPS點位標註系統</h2>
+    <div class="input-group">
+        <input type="text" id="lat" placeholder="緯度 (例：25.033968)" pattern="-?\d+\.?\d*">
+        <input type="text" id="lng" placeholder="經度 (例：121.564468)" pattern="-?\d+\.?\d*">
+        <button onclick="addMarkerFromInput()">新增標註</button>
+        <button onclick="clearAllMarkers()">清除所有標註</button>
     </div>
-</div>
+    <div id="map"></div>
+    <h3>已儲存點位清單</h3>
+    <ul id="marker-list"></ul>
 
-<script>
-    // 六十四卦資料庫
-let hexagrams = [];
-fetch('https://raw.githubusercontent.com/aidusu/3kingdom/main/hexagrams.json')
-  .then(response => response.json())
-  .then(data => {
-    hexagrams = data;
-    console.log('卦象資料載入完成', hexagrams);
-  })
-  .catch(error => {
-    console.error('讀取 JSON 失敗:', error);
-  });     
-  
-    // 計算卦象函式
-    function calculateHexagram() {
-        // 提取輸入值
-        const birth = new Date(document.getElementById('birthDate').value);
-        const event = new Date(document.getElementById('eventDate').value);
-        const gender = parseInt(document.getElementById('gender').value);
-        const importance = parseInt(document.getElementById('importance').value);
+    <script src="https://unpkg.com/[email protected]/dist/leaflet.js"></script>
+    <script>
+        let map;
+        let markers = [];
+        const STORAGE_KEY = 'saved_gps_points';
 
-        // 計算總和
-        const sum = birth.getFullYear() + (birth.getMonth()+1) + birth.getDate() + event.getFullYear() + (event.getMonth()+1) + event.getDate() + gender + importance;
+        // 初始化地圖
+        function initMap() {
+            map = L.map('map').setView([23.5, 121], 7); // 預設中心為台灣
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap 貢獻者'
+            }).addTo(map);
 
-        // 取得卦序（1-64）
-        const hexagramIndex = (sum % 64) || 64; 
+            loadAndDisplayMarkers();
+            updateMarkerList();
+        }
 
-      // 顯示結果
-        const result = hexagrams.find(h => h.order === hexagramIndex); 
-        document.getElementById('result').style.display = 'block';
-        document.getElementById('hexagramOrder').textContent = hexagramIndex;
-        document.getElementById('hexagramSymbol').textContent = result.symbol;
-        document.getElementById('hexagramName').textContent = result.name;
-        document.getElementById('hexagramMeaning').textContent = result.meaning;
-        document.getElementById('story').textContent = result.story;
-}
-</script>
+        // 從localStorage載入點位
+        function loadAndDisplayMarkers() {
+            const savedData = localStorage.getItem(STORAGE_KEY);
+            if (savedData) {
+                JSON.parse(savedData).forEach(point => {
+                    addMarker(point.lat, point.lng, point.label);
+                });
+            }
+        }
+
+        // 新增標記到地圖
+        function addMarker(lat, lng, label = '未命名地點') {
+            const marker = L.marker([lat, lng], {
+                title: label,
+                alt: `GPS點位 (${lat}, ${lng})`,
+                riseOnHover: true
+            }).addTo(map)
+            .bindPopup(`<b>${label}</b><br>緯度: ${lat}<br>經度: ${lng}`);
+
+            markers.push({
+                lat: lat,
+                lng: lng,
+                label: label,
+                marker: marker
+            });
+        }
+
+        // 從輸入框新增標記
+        function addMarkerFromInput() {
+            const latInput = document.getElementById('lat');
+            const lngInput = document.getElementById('lng');
+            
+            const lat = parseFloat(latInput.value);
+            const lng = parseFloat(lngInput.value);
+
+            if (isNaN(lat) || isNaN(lng)) {
+                alert('請輸入有效的經緯度數值！');
+                return;
+            }
+
+            const label = prompt('請輸入地點名稱：', '未命名地點');
+            addMarker(lat, lng, label);
+            saveMarkers();
+            updateMarkerList();
+            
+            // 清空輸入框
+            latInput.value = '';
+            lngInput.value = '';
+        }
+
+        // 儲存到localStorage
+        function saveMarkers() {
+            const dataToSave = markers.map(m => ({
+                lat: m.lat,
+                lng: m.lng,
+                label: m.label
+            }));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+        }
+
+        // 更新點位清單
+        function updateMarkerList() {
+            const list = document.getElementById('marker-list');
+            list.innerHTML = markers.map(m => `
+                <li>
+                    ${m.label} (${m.lat.toFixed(6)}, ${m.lng.toFixed(6)})
+                    <button onclick="deleteMarker(${markers.indexOf(m)})">刪除</button>
+                </li>
+            `).join('');
+        }
+
+        // 刪除單個標記
+        function deleteMarker(index) {
+            markers[index].marker.remove();
+            markers.splice(index, 1);
+            saveMarkers();
+            updateMarkerList();
+        }
+
+        // 清除所有標記
+        function clearAllMarkers() {
+            if (confirm('確定要清除所有標記嗎？')) {
+                markers.forEach(m => m.marker.remove());
+                markers = [];
+                localStorage.removeItem(STORAGE_KEY);
+                updateMarkerList();
+            }
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', initMap);
+    </script>
 </body>
 </html>
