@@ -35,48 +35,69 @@
             <!-- 重複到第六次... -->
         </div>
         <button onclick="calculate()">開始占卦</button>
-        <div id="result" class="gua-box">
-            <!-- 結果顯示區 -->
+        <h3>####占卦結果####</h3>
+        <br><img id="aiImage" src="" style="max-width:300px;">
+        <p>卦序：<span id="hexagramOrder"></span></p>
+        <p>卦象：<span id="hexagramSymbol"></span></p>
+        <p>卦名：<span id="hexagramName"></span></p>
+        <p>卦意：<span id="hexagramMeaning"></span></p>
+        <p>三國故事：<span id="story"></span></p>
+        <p> ================== </p>
+        <h3>想想，這幅畫、這個故事</h3>
+         <p>或許，正悄悄呼應著你的心情呢？</p>
+        <p>易經裡，每一卦都有六個階段，就像心事的不同時刻。</p>
+        <p>你的故事，或許正落在其中某個特別的瞬間。</p>
+        <p>每個心結，都是一段等待被理解的旅程。</p>
+        <p>願這幅畫與故事，當作你前進路上的小小光亮！</p>
+        <h3>本網站以集思廣易，並不會留存你的資料，若有需要，請自行截圖</h3>
         </div>
     </div>
 
 <script>
-const guaData = {
-    63: {
-        name: "未濟卦",
-        meaning: "事未成，需慎終追遠",
-        wisdom: "審時度勢，待機而動",
-        story: "三國赤壁之戰前夜，諸葛亮夜觀天象得此卦，預示火攻之計將成"
-    }
-    // 可擴充其他63卦資料
-};
-
-function calculate() {
+  // 六十四卦資料庫
+let hexagrams = [];
+fetch('https://raw.githubusercontent.com/aidusu/3kingdom/main/hexagrams.json')
+  .then(response => response.json())
+  .then(data => {
+    hexagrams = data;
+    console.log('卦象資料載入完成', hexagrams);
+  })
+  .catch(error => {
+    console.error('讀取 JSON 失敗:', error);
+  });     
+  
+    // 計算卦象函式
+function calculateGua() {
+    // 取得六次選擇的值，id 分別為 "1" 到 "6"
     let binary = "";
-    for(let i=6; i>=1; i--){  // 關鍵的從右到左排列
+    for (let i = 6; i >= 1; i--) { // 注意：從第六次到第一次（右到左）
         const val = document.getElementById(i).value;
-        binary += (val.includes("正面")) ? "1" : "0";
+        // 判斷選項屬於哪一類
+        if (val === "三個正面" || val === "兩個正面") {
+            binary += "1";
+        } else {
+            binary += "0";
+        }
     }
-    
-    const guaOrder = parseInt(binary, 2);
-    const gua = guaData[guaOrder] || {
-        name: "卦名待補充",
-        meaning: "卦意待補充",
-        wisdom: "智慧解析待補充",
-        story: "三國故事待補充"
-    };
 
-    const resultHTML = `
-        <h3>卦序 ${guaOrder}</h3>
-        <div class="gua-symbol">${binary.split('').map(b => b==1?'⚊':'⚋').join('')}</div>
-        <p>卦名：${gua.name}</p>
-        <p>卦意：${gua.meaning}</p>
-        <p>智慧：${gua.wisdom}</p>
-        <p>三國故事：${gua.story}</p>
-    `;
-    
+    // 將二進位字串轉成十進位數字
+    const guaOrder = parseInt(binary, 2);
+
+    // 顯示結果
+    document.getElementById("result").innerHTML =
+        "二進位：" + binary + "<br>卦序：" + guaOrder;
     document.getElementById("result").style.display = "block";
-    document.getElementById("result").innerHTML = resultHTML;
+}
+    // 顯示結果
+        const result = hexagrams.find(h => h.order === hexagramIndex); 
+        document.getElementById('result').style.display = 'block';
+        document.getElementById('hexagramOrder').textContent = hexagramIndex;
+        document.getElementById('hexagramSymbol').textContent = result.symbol;
+        document.getElementById('hexagramName').textContent = result.name;
+        document.getElementById('hexagramMeaning').textContent = result.meaning;
+        document.getElementById('story').textContent = result.story;
+        document.getElementById('aiImage').src = result.image;
+
 }
 </script>
 </body>
