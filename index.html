@@ -6,7 +6,7 @@
     <style>
         body { font-family: 'Microsoft JhengHei', sans-serif; max-width: 800px; margin: 20px auto; padding: 20px }
         .container { border: 2px solid #8B4513; border-radius: 10px; padding: 20px; background: #FFF8DC }
-        .row { display: flex; margin: 10px 0; gap: 15px }
+        .row { display: flex; margin: 10px 0; gap: 15px; flex-wrap: wrap }
         select { padding: 5px; font-size: 16px; border: 1px solid #8B4513 }
         button { 
             background: #8B4513; color: white; padding: 12px 24px; 
@@ -27,46 +27,46 @@
             <div class="row">
                 <div>第一次：<select id="1"><option>三個正面</option><option>兩個正面</option><option>兩個反面</option><option>三個反面</option></select></div>
                 <div>第二次：<select id="2"><option>三個正面</option><option>兩個正面</option><option>兩個反面</option><option>三個反面</option></select></div>
-                <div>第三次：<select id="1"><option>三個正面</option><option>兩個正面</option><option>兩個反面</option><option>三個反面</option></select></div>
-                <div>第四次：<select id="2"><option>三個正面</option><option>兩個正面</option><option>兩個反面</option><option>三個反面</option></select></div>
-                <div>第五次：<select id="1"><option>三個正面</option><option>兩個正面</option><option>兩個反面</option><option>三個反面</option></select></div>
-                <div>第六次：<select id="2"><option>三個正面</option><option>兩個正面</option><option>兩個反面</option><option>三個反面</option></select></div>
+                <div>第三次：<select id="3"><option>三個正面</option><option>兩個正面</option><option>兩個反面</option><option>三個反面</option></select></div>
+                <div>第四次：<select id="4"><option>三個正面</option><option>兩個正面</option><option>兩個反面</option><option>三個反面</option></select></div>
+                <div>第五次：<select id="5"><option>三個正面</option><option>兩個正面</option><option>兩個反面</option><option>三個反面</option></select></div>
+                <div>第六次：<select id="6"><option>三個正面</option><option>兩個正面</option><option>兩個反面</option><option>三個反面</option></select></div>
             </div>
-            <!-- 重複到第六次... -->
         </div>
-        <button onclick="calculate()">開始占卦</button>
-        <h3>####占卦結果####</h3>
-        <br><img id="aiImage" src="" style="max-width:300px;">
-        <p>卦序：<span id="hexagramOrder"></span></p>
-        <p>卦象：<span id="hexagramSymbol"></span></p>
-        <p>卦名：<span id="hexagramName"></span></p>
-        <p>卦意：<span id="hexagramMeaning"></span></p>
-        <p>三國故事：<span id="story"></span></p>
-        <p> ================== </p>
-        <h3>想想，這幅畫、這個故事</h3>
-         <p>或許，正悄悄呼應著你的心情呢？</p>
-        <p>易經裡，每一卦都有六個階段，就像心事的不同時刻。</p>
-        <p>你的故事，或許正落在其中某個特別的瞬間。</p>
-        <p>每個心結，都是一段等待被理解的旅程。</p>
-        <p>願這幅畫與故事，當作你前進路上的小小光亮！</p>
-        <h3>本網站以集思廣易，並不會留存你的資料，若有需要，請自行截圖</h3>
+        <button onclick="calculateGua()">開始占卦</button>
+        <div id="result" class="gua-box">
+            <h3>####占卦結果####</h3>
+            <br><img id="aiImage" src="" style="max-width:300px;">
+            <p>卦序：<span id="hexagramOrder"></span></p>
+            <p>卦象：<span id="hexagramSymbol"></span></p>
+            <p>卦名：<span id="hexagramName"></span></p>
+            <p>卦意：<span id="hexagramMeaning"></span></p>
+            <p>三國故事：<span id="story"></span></p>
+            <p> ================== </p>
+            <h3>想想，這幅畫、這個故事</h3>
+             <p>或許，正悄悄呼應著你的心情呢？</p>
+            <p>易經裡，每一卦都有六個階段，就像心事的不同時刻。</p>
+            <p>你的故事，或許正落在其中某個特別的瞬間。</p>
+            <p>每個心結，都是一段等待被理解的旅程。</p>
+            <p>願這幅畫與故事，當作你前進路上的小小光亮！</p>
+            <h3>本網站以集思廣易，並不會留存你的資料，若有需要，請自行截圖</h3>
         </div>
     </div>
 
 <script>
-  // 六十四卦資料庫
+// 六十四卦資料庫
 let hexagrams = [];
 fetch('https://raw.githubusercontent.com/aidusu/3kingdom/main/hexagrams.json')
-  .then(response => response.json())
-  .then(data => {
-    hexagrams = data;
-    console.log('卦象資料載入完成', hexagrams);
-  })
-  .catch(error => {
-    console.error('讀取 JSON 失敗:', error);
-  });     
-  
-    // 計算卦象函式
+    .then(response => response.json())
+    .then(data => {
+        hexagrams = data;
+        console.log('卦象資料載入完成', hexagrams);
+    })
+    .catch(error => {
+        console.error('讀取 JSON 失敗:', error);
+    });     
+
+// 計算卦象函式
 function calculateGua() {
     // 取得六次選擇的值，id 分別為 "1" 到 "6"
     let binary = "";
@@ -81,15 +81,11 @@ function calculateGua() {
     }
 
     // 將二進位字串轉成十進位數字
-    const guaOrder = parseInt(binary, 2);
+    const hexagramIndex = parseInt(binary, 2);
 
     // 顯示結果
-    document.getElementById("result").innerHTML =
-        "二進位：" + binary + "<br>卦序：" + guaOrder;
-    document.getElementById("result").style.display = "block";
-}
-    // 顯示結果
-        const result = hexagrams.find(h => h.order === hexagramIndex); 
+    const result = hexagrams.find(h => h.order === hexagramIndex); 
+    if (result) {
         document.getElementById('result').style.display = 'block';
         document.getElementById('hexagramOrder').textContent = hexagramIndex;
         document.getElementById('hexagramSymbol').textContent = result.symbol;
@@ -97,9 +93,16 @@ function calculateGua() {
         document.getElementById('hexagramMeaning').textContent = result.meaning;
         document.getElementById('story').textContent = result.story;
         document.getElementById('aiImage').src = result.image;
-
+    } else {
+        document.getElementById('result').style.display = 'block';
+        document.getElementById('hexagramOrder').textContent = hexagramIndex;
+        document.getElementById('hexagramSymbol').textContent = '未找到對應卦象';
+        document.getElementById('hexagramName').textContent = '未找到對應卦象';
+        document.getElementById('hexagramMeaning').textContent = '未找到對應卦象';
+        document.getElementById('story').textContent = '未找到對應故事';
+        document.getElementById('aiImage').src = '';
+    }
 }
 </script>
 </body>
 </html>
-
