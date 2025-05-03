@@ -21,16 +21,21 @@
 </head>
 <body>
     <div class="container">
-        <h2>易經數位占卦系統</h2>
+        <h2>易經金錢占卦</h2>
+        <p>這是最方便的自助占卦，只要你準備三個銅板，圖像為正面，數字為反面。</p>
+        <p>請將銅板在雙手掌中搖一搖，然後撒向桌面。選擇三個銅板的呈現，三正面/兩正面一反面/兩反面一正面/三反面。
+           這是第一次，然後再撒第二次，第三次，依序到第六次。
+           完成六次後，按下「開始占卦」的按鈕。很快的，電腦就會呈現占卦的結果。
+        </p>
         <div id="selections">
             <!-- 六次選擇區 -->
             <div class="row">
-                <div>第一次：<select id="1"><option>三個正面</option><option>兩個正面</option><option>兩個反面</option><option>三個反面</option></select></div>
-                <div>第二次：<select id="2"><option>三個正面</option><option>兩個正面</option><option>兩個反面</option><option>三個反面</option></select></div>
-                <div>第三次：<select id="3"><option>三個正面</option><option>兩個正面</option><option>兩個反面</option><option>三個反面</option></select></div>
-                <div>第四次：<select id="4"><option>三個正面</option><option>兩個正面</option><option>兩個反面</option><option>三個反面</option></select></div>
-                <div>第五次：<select id="5"><option>三個正面</option><option>兩個正面</option><option>兩個反面</option><option>三個反面</option></select></div>
-                <div>第六次：<select id="6"><option>三個正面</option><option>兩個正面</option><option>兩個反面</option><option>三個反面</option></select></div>
+                <div>第一次：<select id="1"><option>三正面</option><option>兩正一反</option><option>兩反一正</option><option>三反面</option></select></div>
+                <div>第二次：<select id="2"><option>三正面</option><option>兩正一反</option><option>兩反一正</option><option>三反面</option></select></div>
+                <div>第三次：<select id="3"><option>三正面</option><option>兩正一反</option><option>兩反一正</option><option>三反面</option></select></div>
+                <div>第四次：<select id="4"><option>三正面</option><option>兩正一反</option><option>兩反一正</option><option>三反面</option></select></div>
+                <div>第五次：<select id="5"><option>三正面</option><option>兩正一反</option><option>兩反一正</option><option>三反面</option></select></div>
+                <div>第六次：<select id="6"><option>三正面</option><option>兩正一反</option><option>兩反一正</option><option>三反面</option></select></div>
             </div>
         </div>
        <button id="startBtn" onclick="calculateGua()" disabled>開始占卦</button>
@@ -83,7 +88,7 @@ function calculateGua() {
     let binary = "";
     for (let i = 6; i >= 1; i--) {
         const val = document.getElementById(i).value;
-        if (val === "三個正面" || val === "兩個正面") {
+        if (val === "三正面" || val === "兩正一反") {
             binary += "1";
         } else {
             binary += "0";
