@@ -66,17 +66,6 @@ fetch('https://raw.githubusercontent.com/aidusu/3kingdom/main/hexagrams.json')
     .then(data => {
         hexagrams = data;
         console.log('卦象資料載入完成', hexagrams);
-    })
-    .catch(error => {
-        console.error('讀取 JSON 失敗:', error);
-    });     
-
-// 計算卦象函式
-let hexagrams = [];
-fetch('https://raw.githubusercontent.com/aidusu/3kingdom/main/hexagrams.json')
-    .then(response => response.json())
-    .then(data => {
-        hexagrams = data;
         document.getElementById('startBtn').disabled = false; // 資料載入完才可按
     })
     .catch(error => {
@@ -94,15 +83,16 @@ function calculateGua() {
         }
     }
     const hexagramIndex = parseInt(binary, 2);
-    const result = hexagrams.find(h => h.order === hexagramIndex);
+    console.log('計算結果：', { binary, hexagramIndex }); // 除錯用
 
+    const result = hexagrams.find(h => h.order === hexagramIndex);
     document.getElementById('result').style.display = 'block';
     document.getElementById('hexagramOrder').textContent = hexagramIndex;
-    document.getElementById('hexagramSymbol').textContent = result ? result.symbol : '未找到對應卦象';
-    document.getElementById('hexagramName').textContent = result ? result.name : '未找到對應卦象';
-    document.getElementById('hexagramMeaning').textContent = result ? result.meaning : '未找到對應卦象';
-    document.getElementById('story').textContent = result ? result.story : '未找到對應故事';
-    document.getElementById('aiImage').src = result && result.image ? result.image : '';
+    document.getElementById('hexagramSymbol').textContent = result?.symbol || '未找到對應卦象';
+    document.getElementById('hexagramName').textContent = result?.name || '未找到對應卦象';
+    document.getElementById('hexagramMeaning').textContent = result?.meaning || '未找到對應卦象';
+    document.getElementById('story').textContent = result?.story || '未找到對應故事';
+    document.getElementById('aiImage').src = result?.image || '';
 }
 </script>
 </body>
