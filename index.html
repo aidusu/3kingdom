@@ -33,9 +33,10 @@
                 <div>第六次：<select id="6"><option>三個正面</option><option>兩個正面</option><option>兩個反面</option><option>三個反面</option></select></div>
             </div>
         </div>
-        <button onclick="calculateGua()">開始占卦</button>
-        <div id="result" class="gua-box">
+       <button id="startBtn" onclick="calculateGua()" disabled>開始占卦</button>
+    
             <h3>####占卦結果####</h3>
+            <div id="result" style="display:none;">
             <br><img id="aiImage" src="" style="max-width:300px;">
             <p>卦序：<span id="hexagramOrder"></span></p>
             <p>卦象：<span id="hexagramSymbol"></span></p>
@@ -67,41 +68,37 @@ fetch('https://raw.githubusercontent.com/aidusu/3kingdom/main/hexagrams.json')
     });     
 
 // 計算卦象函式
+let hexagrams = [];
+fetch('https://raw.githubusercontent.com/aidusu/3kingdom/main/hexagrams.json')
+    .then(response => response.json())
+    .then(data => {
+        hexagrams = data;
+        document.getElementById('startBtn').disabled = false; // 資料載入完才可按
+    })
+    .catch(error => {
+        alert('卦象資料載入失敗，請稍後再試');
+    });
+
 function calculateGua() {
-    // 取得六次選擇的值，id 分別為 "1" 到 "6"
     let binary = "";
-    for (let i = 6; i >= 1; i--) { // 注意：從第六次到第一次（右到左）
+    for (let i = 6; i >= 1; i--) {
         const val = document.getElementById(i).value;
-        // 判斷選項屬於哪一類
         if (val === "三個正面" || val === "兩個正面") {
             binary += "1";
         } else {
             binary += "0";
         }
     }
-
-    // 將二進位字串轉成十進位數字
     const hexagramIndex = parseInt(binary, 2);
+    const result = hexagrams.find(h => h.order === hexagramIndex);
 
-    // 顯示結果
-    const result = hexagrams.find(h => h.order === hexagramIndex); 
-    if (result) {
-        document.getElementById('result').style.display = 'block';
-        document.getElementById('hexagramOrder').textContent = hexagramIndex;
-        document.getElementById('hexagramSymbol').textContent = result.symbol;
-        document.getElementById('hexagramName').textContent = result.name;
-        document.getElementById('hexagramMeaning').textContent = result.meaning;
-        document.getElementById('story').textContent = result.story;
-        document.getElementById('aiImage').src = result.image;
-    } else {
-        document.getElementById('result').style.display = 'block';
-        document.getElementById('hexagramOrder').textContent = hexagramIndex;
-        document.getElementById('hexagramSymbol').textContent = '未找到對應卦象';
-        document.getElementById('hexagramName').textContent = '未找到對應卦象';
-        document.getElementById('hexagramMeaning').textContent = '未找到對應卦象';
-        document.getElementById('story').textContent = '未找到對應故事';
-        document.getElementById('aiImage').src = '';
-    }
+    document.getElementById('result').style.display = 'block';
+    document.getElementById('hexagramOrder').textContent = hexagramIndex;
+    document.getElementById('hexagramSymbol').textContent = result ? result.symbol : '未找到對應卦象';
+    document.getElementById('hexagramName').textContent = result ? result.name : '未找到對應卦象';
+    document.getElementById('hexagramMeaning').textContent = result ? result.meaning : '未找到對應卦象';
+    document.getElementById('story').textContent = result ? result.story : '未找到對應故事';
+    document.getElementById('aiImage').src = result && result.image ? result.image : '';
 }
 </script>
 </body>
