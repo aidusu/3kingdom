@@ -29,9 +29,7 @@
     <h2>旅遊小幫手登入</h2>
     <form id="loginForm" autocomplete="off">
         <label for="leaderId">團隊編號：</label>
-        <input type="text" id="leaderId" name="團隊編號"
-               pattern="[A-Z]{1}[0-9]{2}" maxlength="3" required
-               oninput="this.value = this.value.toUpperCase().slice(0,3);"><br>
+        <input type="text" id="leaderId" name="團隊編號" pattern="[A-Za-z]{1}[0-9]{2}" title="請輸入一個英文字及兩個阿拉伯數字" required><br>
         <label for="leaderName">領隊姓名：</label>
         <input type="text" id="leaderName" name="領隊姓名" required><br>
         <label for="userName">用戶姓名：</label>
