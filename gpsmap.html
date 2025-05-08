@@ -26,48 +26,49 @@
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    // 2. 取得 Google Sheets 資料
+    // 2. 載入 GPS 資料
     async function loadGPSData() {
-      // 請將下方網址換成你的 Google Sheets JSON 網址
+      // 請替換成你的 Google Sheets 對應網址
       const url = 'https://opensheet.elk.sh/1-MOX3XljMX2hjVAsoEmdCzCwPP5HwowBuzUPZEHkl2g/位置記錄';
 
       try {
         const res = await fetch(url);
         const json = await res.json();
+        console.log('載入資料', json);
 
-        // 假設第一列是標題，資料從第2列開始
-        const rows = json.values || json.feed?.entry?.map(e => [
-          e['gsx$時間']?.$t,
-          e['gsx$uuid']?.$t,
-          e['gsx$姓名']?.$t,
-          e['gsx$緯度']?.$t,
-          e['gsx$經度']?.$t
-        ]);
-
-        if (!rows || rows.length < 2) {
+        if (!Array.isArray(json) || json.length === 0) {
           alert('找不到資料！');
           return;
         }
-        const header = rows[0];
-        const dataRows = rows.slice(1);
-        // 取最後20筆
-        const last20 = dataRows.slice(-20);
+
+        // 取最後 20 筆資料
+        const last20 = json.slice(-20);
 
         last20.forEach(row => {
-          // 根據你的表格順序調整索引
-          const [uuid, name, lat, lng, time] = row.length === 5 ? row : [row[1], row[2], row[3], row[4], row[0]];
-          if (!lat || !lng || isNaN(lat) || isNaN(lng)) return;
-          const marker = L.marker([parseFloat(lat), parseFloat(lng)]).addTo(map);
+          const time = row['接收時間'];
+          const uuid = row['UUID'];
+          const name = row['姓名'];
+          const lat = parseFloat(row['緯度']);
+          const lng = parseFloat(row['經度']);
+
+          if (isNaN(lat) || isNaN(lng)) {
+            console.warn(`資料錯誤：${name} (${lat}, ${lng})`);
+            return;
+          }
+
+          const marker = L.marker([lat, lng]).addTo(map);
           marker.bindPopup(
             `<b>${name || ''}</b><br>UUID: ${uuid || ''}<br>時間: ${time || ''}`
           );
         });
       } catch (e) {
-        alert('資料載入失敗！');
+        alert('資料載入失敗，請查看 console。');
         console.error(e);
       }
     }
-loadGPSData();
+
+    // 3. 呼叫載入函式
+    loadGPSData();
   </script>
 </body>
 </html>
