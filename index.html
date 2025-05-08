@@ -1,99 +1,55 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <title>易經數位占卦</title>
-    <style>
-        body { font-family: 'Microsoft JhengHei', sans-serif; max-width: 800px; margin: 20px auto; padding: 20px }
-        .container { border: 2px solid #8B4513; border-radius: 10px; padding: 20px; background: #FFF8DC }
-        .row { display: flex; margin: 10px 0; gap: 15px; flex-wrap: wrap }
-        select { padding: 5px; font-size: 16px; border: 1px solid #8B4513 }
-        button { 
-            background: #8B4513; color: white; padding: 12px 24px; 
-            border: none; border-radius: 5px; cursor: pointer;
-            transition: transform 0.2s;
-        }
-        button:hover { transform: scale(1.05) }
-        #result { margin-top: 20px; display: none }
-        .gua-box { background: #FAEBD7; padding: 15px; border-radius: 8px }
-        .gua-symbol { font-size: 2em; letter-spacing: 0.2em }
-    </style>
+  <meta charset="UTF-8">
+  <title>GPS 定位示範</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    #location { font-size: 1.2em; color: green; }
+    #error { color: red; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h2>易經金錢占卦</h2>
-        <p>這是最方便的自助占卦，只要你準備三個銅板，圖像為正面，數字為反面。</p>
-        <p>請將銅板在雙手掌中搖一搖，然後撒向桌面。選擇三個銅板的呈現，三正面/兩正面一反面/兩反面一正面/三反面。
-           這是第一次，然後再撒第二次，第三次，依序到第六次。
-           完成六次後，按下「開始占卦」的按鈕。很快的，電腦就會呈現占卦的結果。 </p>
-        <div id="selections">
-            <!-- 六次選擇區 -->
-            <div class="row">
-                <div>第一次：<select id="1"><option>三正面</option><option>兩正一反</option><option>兩反一正</option><option>三反面</option></select></div>
-                <div>第二次：<select id="2"><option>三正面</option><option>兩正一反</option><option>兩反一正</option><option>三反面</option></select></div>
-                <div>第三次：<select id="3"><option>三正面</option><option>兩正一反</option><option>兩反一正</option><option>三反面</option></select></div>
-                <div>第四次：<select id="4"><option>三正面</option><option>兩正一反</option><option>兩反一正</option><option>三反面</option></select></div>
-                <div>第五次：<select id="5"><option>三正面</option><option>兩正一反</option><option>兩反一正</option><option>三反面</option></select></div>
-                <div>第六次：<select id="6"><option>三正面</option><option>兩正一反</option><option>兩反一正</option><option>三反面</option></select></div>
-            </div>
-        </div>
-       <button id="startBtn" onclick="calculateGua()" disabled>開始占卦</button>
-    
-            <h3>####占卦結果####</h3>
-            <div id="result" style="display:none;">
-            <br><img id="aiImage" src="" style="max-width:300px;">
-            <p>卦序：<span id="hexagramOrder"></span></p>
-            <p>卦象：<span id="hexagramSymbol"></span></p>
-            <p>卦名：<span id="hexagramName"></span></p>
-            <p>卦意：<span id="hexagramMeaning"></span></p>
-            <p>三國故事：<span id="story"></span></p>
-            <p> ================== </p>
-            <h3>想想，這幅畫、這個故事</h3>
-             <p>或許，正悄悄呼應著你的心情呢？</p>
-            <p>易經裡，每一卦都有六個階段，就像心事的不同時刻。</p>
-            <p>你的故事，或許正落在其中某個特別的瞬間。</p>
-            <p>每個心結，都是一段等待被理解的旅程。</p>
-            <p>願這幅畫與故事，當作你前進路上的小小光亮！</p>
-            <h3>本網站以集思廣易，並不會留存你的資料，若有需要，請自行截圖</h3>
-        </div>
-    </div>
+  <h1>取得手機 GPS 位置</h1>
+  <button onclick="getLocation()">點我取得位置</button>
+  <p id="location">尚未取得位置...</p>
+  <p id="error"></p>
 
-<script>
-// 六十四卦資料庫
-let hexagrams = [];
-fetch('https://raw.githubusercontent.com/aidusu/3kingdom/main/hexagrams.json')
-    .then(response => response.json())
-    .then(data => {
-        hexagrams = data;
-        console.log('卦象資料載入完成', hexagrams);
-        document.getElementById('startBtn').disabled = false; // 資料載入完才可按
-    })
-    .catch(error => {
-        alert('卦象資料載入失敗，請稍後再試');
-    });
+  <script>
+    function getLocation() {
+      const locationEl = document.getElementById("location");
+      const errorEl = document.getElementById("error");
 
-function calculateGua() {
-    let binary = "";
-    for (let i = 6; i >= 1; i--) {
-        const val = document.getElementById(i).value;
-        if (val === "三正面" || val === "兩正一反") {
-            binary += "1";
-        } else {
-            binary += "0";
-        }
+      if (navigator.geolocation) {
+        locationEl.textContent = "正在取得位置中...";
+        navigator.geolocation.getCurrentPosition(
+          function(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            locationEl.textContent = `目前位置：緯度 ${latitude.toFixed(6)}，經度 ${longitude.toFixed(6)}`;
+          },
+          function(error) {
+            switch (error.code) {
+              case error.PERMISSION_DENIED:
+                errorEl.textContent = "使用者拒絕提供位置。";
+                break;
+              case error.POSITION_UNAVAILABLE:
+                errorEl.textContent = "無法取得位置資訊。";
+                break;
+              case error.TIMEOUT:
+                errorEl.textContent = "取得位置逾時。";
+                break;
+              default:
+                errorEl.textContent = "發生未知錯誤。";
+                break;
+            }
+            locationEl.textContent = "位置取得失敗。";
+          }
+        );
+      } else {
+        errorEl.textContent = "這個裝置不支援定位功能。";
+      }
     }
-    const hexagramIndex = parseInt(binary, 2);
-    console.log('計算結果：', { binary, hexagramIndex }); // 除錯用
-
-    const result = hexagrams.find(h => h.order === hexagramIndex);
-    document.getElementById('result').style.display = 'block';
-    document.getElementById('hexagramOrder').textContent = hexagramIndex;
-    document.getElementById('hexagramSymbol').textContent = result?.symbol || '未找到對應卦象';
-    document.getElementById('hexagramName').textContent = result?.name || '未找到對應卦象';
-    document.getElementById('hexagramMeaning').textContent = result?.meaning || '未找到對應卦象';
-    document.getElementById('story').textContent = result?.story || '未找到對應故事';
-    document.getElementById('aiImage').src = result?.image || '';
-}
-</script>
+  </script>
 </body>
 </html>
