@@ -82,7 +82,7 @@ document.getElementById('loginForm').onsubmit = function(e) {
     const userName = document.getElementById('userName').value;
     const uuid = document.getElementById('uuidField').value;
 
-    fetch('YOUR_WEBAPP_URL', { // 替換為您的 Google Apps Script 網址
+    fetch('https://script.google.com/macros/s/AKfycbxqanrf454TM43GQGiddLCes5-WWRS6NS9QPU4CsINygwNq6R8eI1sWkqLl_cyQFASh/exec', { // 替換為您的 Google Apps Script 網址
         method: 'POST',
         body: formData
     })
