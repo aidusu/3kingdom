@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>GPS 地圖標記展示</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <style>
+    #map { height: 80vh; width: 100%; }
+    body { font-family: "Noto Sans TC", Arial, sans-serif; }
+  </style>
+</head>
+<body>
+  <h2>GPS 位置標記地圖</h2>
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script>
+    // 1. 初始化地圖
+    const map = L.map('map').setView([23.5, 121], 7); // 台灣中心點
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // 2. 取得 Google Sheets 資料
+    async function loadGPSData() {
+      // 請將下方網址換成你的 Google Sheets JSON 網址
+      const url = 'YOUR_GOOGLE_SHEETS_JSON_URL';
+
+      try {
+        const res = await fetch(url);
+        const json = await res.json();
+
+        // 假設第一列是標題，資料從第2列開始
+        const rows = json.values || json.feed?.entry?.map(e => [
+          e['gsx$時間']?.$t,
+          e['gsx$uuid']?.$t,
+          e['gsx$姓名']?.$t,
+          e['gsx$緯度']?.$t,
+          e['gsx$經度']?.$t
+        ]);
+
+        if (!rows || rows.length < 2) {
+          alert('找不到資料！');
+          return;
+        }
+        const header = rows[0];
+        const dataRows = rows.slice(1);
+        // 取最後20筆
+        const last20 = dataRows.slice(-20);
+
+        last20.forEach(row => {
+          // 根據你的表格順序調整索引
+          const [uuid, name, lat, lng, time] = row.length === 5 ? row : [row[1], row[2], row[3], row[4], row[0]];
+          if (!lat || !lng || isNaN(lat) || isNaN(lng)) return;
+          const marker = L.marker([parseFloat(lat), parseFloat(lng)]).addTo(map);
+          marker.bindPopup(
+            `<b>${name || ''}</b><br>UUID: ${uuid || ''}<br>時間: ${time || ''}`
+          );
+        });
+      } catch (e) {
+        alert('資料載入失敗！');
+        console.error(e);
+      }
+    }
