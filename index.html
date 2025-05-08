@@ -2,53 +2,78 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <title>GPS 定位示範</title>
+  <title>GPS 傳送範例</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    #location { font-size: 1.2em; color: green; }
+    body { font-family: Arial; padding: 20px; }
+    input, button { padding: 8px; font-size: 1em; margin-top: 10px; }
+    #output { margin-top: 20px; color: green; }
     #error { color: red; }
   </style>
 </head>
 <body>
-  <h1>取得手機 GPS 位置</h1>
-  <button onclick="getLocation()">點我取得位置</button>
-  <p id="location">尚未取得位置...</p>
-  <p id="error"></p>
+  <h2>輸入名字並傳送 GPS 位置</h2>
+
+  <label>名字：</label>
+  <input type="text" id="name" placeholder="請輸入你的名字" />
+  <br>
+  <button onclick="submitData()">取得並送出位置</button>
+
+  <div id="output">尚未送出資料</div>
+  <div id="error"></div>
 
   <script>
-    function getLocation() {
-      const locationEl = document.getElementById("location");
+    function submitData() {
+      const name = document.getElementById("name").value.trim();
+      const outputEl = document.getElementById("output");
       const errorEl = document.getElementById("error");
 
-      if (navigator.geolocation) {
-        locationEl.textContent = "正在取得位置中...";
-        navigator.geolocation.getCurrentPosition(
-          function(position) {
-            const latitude = position.coords.latitude;
-            const longitude = position.coords.longitude;
-            locationEl.textContent = `目前位置：緯度 ${latitude.toFixed(6)}，經度 ${longitude.toFixed(6)}`;
-          },
-          function(error) {
-            switch (error.code) {
-              case error.PERMISSION_DENIED:
-                errorEl.textContent = "使用者拒絕提供位置。";
-                break;
-              case error.POSITION_UNAVAILABLE:
-                errorEl.textContent = "無法取得位置資訊。";
-                break;
-              case error.TIMEOUT:
-                errorEl.textContent = "取得位置逾時。";
-                break;
-              default:
-                errorEl.textContent = "發生未知錯誤。";
-                break;
-            }
-            locationEl.textContent = "位置取得失敗。";
-          }
-        );
-      } else {
-        errorEl.textContent = "這個裝置不支援定位功能。";
+      if (!name) {
+        errorEl.textContent = "請輸入你的名字。";
+        return;
       }
+
+      if (!navigator.geolocation) {
+        errorEl.textContent = "瀏覽器不支援 GPS 定位。";
+        return;
+      }
+
+      outputEl.textContent = "正在取得位置...";
+      errorEl.textContent = "";
+
+      navigator.geolocation.getCurrentPosition(
+        function(position) {
+          const lat = position.coords.latitude.toFixed(6);
+          const lon = position.coords.longitude.toFixed(6);
+          const now = new Date();
+          const time = now.toTimeString().split(' ')[0]; // HH:MM:SS
+
+          outputEl.textContent = `名字：${name}，緯度：${lat}，經度：${lon}，時間：${time}`;
+
+          // === 傳送資料到後端（修改成你的網址）===
+          fetch("https://script.google.com/macros/s/你的AppScript網址/exec", {
+            method: "POST",
+            mode: "no-cors", // Google Sheets 要 no-cors
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              name: name,
+              latitude: lat,
+              longitude: lon,
+              time: time
+            })
+          })
+          .then(() => {
+            outputEl.textContent += "\n✅ 資料已送出！";
+          })
+          .catch((err) => {
+            errorEl.textContent = "❌ 資料送出失敗：" + err;
+          });
+        },
+        function(error) {
+          errorEl.textContent = "定位失敗：" + error.message;
+        }
+      );
     }
   </script>
 </body>
