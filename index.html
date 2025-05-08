@@ -2,79 +2,86 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <title>GPS 傳送範例</title>
+  <title>GPS + UUID 傳送器</title>
   <style>
-    body { font-family: Arial; padding: 20px; }
-    input, button { padding: 8px; font-size: 1.5em; margin-top: 10px; }
-    #output { margin-top: 20px; color: green; }
-    #error { color: red; }
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    label, input, button { display: block; margin-top: 10px; font-size: 16px; }
+    input { padding: 6px; width: 250px; }
+    button { padding: 10px 20px; margin-top: 15px; }
+    #output { margin-top: 20px; white-space: pre-wrap; color: green; }
+    #error { color: red; margin-top: 10px; }
   </style>
 </head>
 <body>
-  <h2>輸入名字並傳送 GPS 位置</h2>
 
-  <label>名字：</label>
-  <input type="text" id="name" placeholder="請輸入你的名字" />
-  <br>
-  <button onclick="submitData()">取得並送出位置</button>
+  <h2>上傳 GPS 定位資訊</h2>
 
-  <div id="output">尚未送出資料</div>
+  <label for="name">你的姓名（可選填）:</label>
+  <input type="text" id="name" placeholder="例如：小明" />
+
+  <button onclick="sendGPS()">取得位置並送出</button>
+
+  <div id="output">尚未執行任何動作</div>
   <div id="error"></div>
 
   <script>
-    function submitData() {
-      const name = document.getElementById("name").value.trim();
-      const outputEl = document.getElementById("output");
-      const errorEl = document.getElementById("error");
+    // 產生或取得裝置唯一識別 UUID
+    let uuid = localStorage.getItem("deviceUUID");
+    if (!uuid) {
+      uuid = crypto.randomUUID();
+      localStorage.setItem("deviceUUID", uuid);
+    }
 
-      if (!name) {
-        errorEl.textContent = "請輸入你的名字。";
-        return;
-      }
+    function sendGPS() {
+      const output = document.getElementById("output");
+      const error = document.getElementById("error");
+      const name = document.getElementById("name").value.trim();
+
+      output.textContent = "正在取得 GPS 位置...";
+      error.textContent = "";
 
       if (!navigator.geolocation) {
-        errorEl.textContent = "瀏覽器不支援 GPS 定位。";
+        error.textContent = "⚠️ 瀏覽器不支援 GPS 定位";
         return;
       }
 
-      outputEl.textContent = "正在取得位置...";
-      errorEl.textContent = "";
-
       navigator.geolocation.getCurrentPosition(
-        function(position) {
+        (position) => {
           const lat = position.coords.latitude.toFixed(6);
           const lon = position.coords.longitude.toFixed(6);
-          const now = new Date();
-          const time = now.toTimeString().split(' ')[0]; // HH:MM:SS
+          const timestamp = new Date().toISOString();
 
-          outputEl.textContent = `名字：${name}，緯度：${lat}，經度：${lon}，時間：${time}`;
+          const payload = {
+            uuid: uuid,
+            name: name || "",  // 使用者姓名（可為空）
+            latitude: lat,
+            longitude: lon,
+            timestamp: timestamp,
+            userAgent: navigator.userAgent,
+            language: navigator.language
+          };
 
-          // === 傳送資料到後端（修改成你的網址）===
-          fetch("https://script.google.com/macros/s/你的AppScript網址/exec", {
+          output.textContent = `📍 裝置 UUID：${uuid}\n姓名：${name || "(未填)"}\n緯度：${lat}\n經度：${lon}\n時間：${timestamp}\n\n資料已準備送出...`;
+
+          fetch("https://script.google.com/macros/s/你的部署網址/exec", {
             method: "POST",
-            mode: "no-cors", // Google Sheets 要 no-cors
+            mode: "no-cors",
             headers: {
               "Content-Type": "application/json"
             },
-            body: JSON.stringify({
-              name: name,
-              latitude: lat,
-              longitude: lon,
-              time: time
-            })
-          })
-          .then(() => {
-            outputEl.textContent += "\n✅ 資料已送出！";
-          })
-          .catch((err) => {
-            errorEl.textContent = "❌ 資料送出失敗：" + err;
+            body: JSON.stringify(payload)
+          }).then(() => {
+            output.textContent += "\n✅ 資料已送出！";
+          }).catch((err) => {
+            error.textContent = "❌ 傳送失敗：" + err;
           });
         },
-        function(error) {
-          errorEl.textContent = "定位失敗：" + error.message;
+        (err) => {
+          error.textContent = "❌ 定位失敗：" + err.message;
         }
       );
     }
   </script>
+
 </body>
 </html>
