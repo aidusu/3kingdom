@@ -16,6 +16,13 @@
             margin-top: 20px;
             color: green;
         }
+        .info-list {
+            margin-top: 12px;
+            color: #333;
+        }
+        .info-list p {
+            margin: 2px 0;
+        }
     </style>
 </head>
 <body>
@@ -69,6 +76,12 @@ document.getElementById('loginForm').onsubmit = function(e) {
     var form = e.target;
     var formData = new FormData(form);
 
+    // 取得用戶輸入的資料
+    const leaderId = document.getElementById('leaderId').value;
+    const leaderName = document.getElementById('leaderName').value;
+    const userName = document.getElementById('userName').value;
+    const uuid = document.getElementById('uuidField').value;
+
     fetch('YOUR_WEBAPP_URL', { // 替換為您的 Google Apps Script 網址
         method: 'POST',
         body: formData
@@ -76,7 +89,15 @@ document.getElementById('loginForm').onsubmit = function(e) {
     .then(response => response.json())
     .then(data => {
         if(data.result === 'success') {
-            document.getElementById('result').innerHTML = '資料已成功送出！';
+            document.getElementById('result').innerHTML = `
+                資料已成功送出！
+                <div class="info-list">
+                    <p>團隊編號：${leaderId}</p>
+                    <p>領隊姓名：${leaderName}</p>
+                    <p>手機UUID：${uuid}</p>
+                    <p>用戶姓名：${userName}</p>
+                </div>
+            `;
             form.reset();
             // 送出後再補回UUID
             document.getElementById('uuidField').value = getUUID();
@@ -90,5 +111,4 @@ document.getElementById('loginForm').onsubmit = function(e) {
 };
 </script>
 </body>
-</html>
 </html>
