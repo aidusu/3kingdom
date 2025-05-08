@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>旅遊小幫手登入</title>
+    <style>
+        input[type="text"] {
+            text-transform: uppercase;
+        }
+        label {
+            display: inline-block;
+            width: 100px;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h2>旅遊小幫手登入</h2>
+    <form id="loginForm">
+        <label for="leaderId">團隊編號：</label>
+        <input type="text" id="leaderId" name="團隊編號" pattern="[A-Za-z]{1}[0-9]{2}" maxlength="3" required
+               oninput="this.value = this.value.toUpperCase();"><br>
+        <label for="leaderName">領隊姓名：</label>
+        <input type="text" id="leaderName" name="領隊姓名" required><br>
+        <label for="userName">用戶姓名：</label>
+        <input type="text" id="userName" name="用戶姓名" required><br>
+        <input type="hidden" name="手機UUID" id="uuidField">
+        <input type="hidden" name="時間" id="timeField">
+        <button type="submit">完成登入</button>
+    </form>
+    <div id="result" style="margin-top:20px;color:green;"></div>
+
+<script>
+function getUUID() {
+    // 模擬UUID
+    return 'uuid-' + Math.random().toString(36).substr(2, 12);
+}
+
+document.getElementById('uuidField').value = getUUID();
+
+document.getElementById('loginForm').onsubmit = function(e) {
+    e.preventDefault();
+
+    // 重新產生UUID（每次登入都不同）
+    document.getElementById('uuidField').value = getUUID();
+
+    // 取得當下時間（格式：YYYY-MM-DD HH:mm:ss）
+    const now = new Date();
+    const pad = n => n < 10 ? '0' + n : n;
+    const timeStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    document.getElementById('timeField').value = timeStr;
+
+    var form = e.target;
+    var formData = new FormData(form);
+
+    fetch('YOUR_WEBAPP_URL', { // 請替換為您的 Google Apps Script 網址
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.result === 'success') {
+            document.getElementById('result').innerHTML = '資料已成功送出！';
+            form.reset();
+        } else {
+            document.getElementById('result').innerHTML = '發生錯誤：' + data.error;
+        }
+    })
+    .catch(error => {
+        document.getElementById('result').innerHTML = '發生錯誤：' + error;
+    });
+};
+</script>
+</body>
+</html>
