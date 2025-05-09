@@ -16,6 +16,9 @@
 
   <h2>上傳 GPS 定位資訊</h2>
 
+  <label for="teamCode">團隊編號（必填）:</label>
+  <input type="text" id="teamCode" placeholder="例如：TEAM2024" required />
+
   <label for="name">你的姓名（可選填）:</label>
   <input type="text" id="name" placeholder="例如：小明" />
 
@@ -35,10 +38,17 @@
     function sendGPS() {
       const output = document.getElementById("output");
       const error = document.getElementById("error");
+      const teamCode = document.getElementById("teamCode").value.trim();
       const name = document.getElementById("name").value.trim();
 
       output.textContent = "正在取得 GPS 位置...";
       error.textContent = "";
+
+      // 驗證必填欄位
+      if (!teamCode) {
+        error.textContent = "⚠️ 請輸入團隊編號";
+        return;
+      }
 
       if (!navigator.geolocation) {
         error.textContent = "⚠️ 瀏覽器不支援 GPS 定位";
@@ -53,7 +63,8 @@
 
           const payload = {
             uuid: uuid,
-            name: name || "",  // 使用者姓名（可為空）
+            teamCode: teamCode,  // 新增團隊編號
+            name: name || "",  
             latitude: lat,
             longitude: lon,
             timestamp: timestamp,
@@ -61,7 +72,7 @@
             language: navigator.language
           };
 
-          output.textContent = `📍 裝置 UUID：${uuid}\n姓名：${name || "(未填)"}\n緯度：${lat}\n經度：${lon}\n時間：${timestamp}\n\n資料已準備送出...`;
+          output.textContent = `📍 裝置 UUID：${uuid}\n團隊編號：${teamCode}\n姓名：${name || "(未填)"}\n緯度：${lat}\n經度：${lon}\n時間：${timestamp}\n\n資料已準備送出...`;
 
           fetch("https://script.google.com/macros/s/AKfycbyRzoezqL7jB9YQ83kJQFv_AEgJMDfbu5xVE7cKZZLBfCXkyhPGIhO963NRUqQOsh4W/exec", {
             method: "POST",
