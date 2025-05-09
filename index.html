@@ -62,14 +62,12 @@
           const timestamp = new Date().toISOString();
 
           const payload = {
-            uuid: uuid,
             teamCode: teamCode,  // 新增團隊編號
+            uuid: uuid,
             name: name || "",  
             latitude: lat,
             longitude: lon,
             timestamp: timestamp,
-            userAgent: navigator.userAgent,
-            language: navigator.language
           };
 
           output.textContent = `📍 裝置 UUID：${uuid}\n團隊編號：${teamCode}\n姓名：${name || "(未填)"}\n緯度：${lat}\n經度：${lon}\n時間：${timestamp}\n\n資料已準備送出...`;
