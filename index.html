@@ -35,6 +35,26 @@
       localStorage.setItem("deviceUUID", uuid);
     }
 
+    // 將 Date 物件格式化為台北時區 YYYY/MM/DD HH:MM
+    function formatTaipeiTime(date) {
+      // 取得台北時區的年月日時分
+      const options = {
+        timeZone: 'Asia/Taipei',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      };
+      // 例如 "2025/05/09 22:18"
+      // 部分瀏覽器會回傳 "2025/05/09 22:18:00"，我們只取到分鐘
+      let str = date.toLocaleString('zh-TW', options);
+      // 只取到分鐘（去掉秒數）
+      str = str.replace(/(\d{2}):(\d{2}):\d{2}$/, '$1:$2');
+      return str;
+    }
+
     function sendGPS() {
       const output = document.getElementById("output");
       const error = document.getElementById("error");
@@ -59,18 +79,19 @@
         (position) => {
           const lat = position.coords.latitude.toFixed(6);
           const lon = position.coords.longitude.toFixed(6);
-          const timestamp = new Date().toISOString();
+          const now = new Date();
+          const taipeiTime = formatTaipeiTime(now);
 
           const payload = {
-            teamCode: teamCode,  // 新增團隊編號
+            teamCode: teamCode,
             uuid: uuid,
-            name: name || "",  
+            name: name || "",
             latitude: lat,
             longitude: lon,
-            timestamp: timestamp,
+            timestamp: taipeiTime,
           };
 
-          output.textContent = `📍 裝置 UUID：${uuid}\n團隊編號：${teamCode}\n姓名：${name || "(未填)"}\n緯度：${lat}\n經度：${lon}\n時間：${timestamp}\n\n資料已準備送出...`;
+          output.textContent = `📍 裝置 UUID：${uuid}\n團隊編號：${teamCode}\n姓名：${name || "(未填)"}\n緯度：${lat}\n經度：${lon}\n時間：${taipeiTime}\n\n資料已準備送出...`;
 
           fetch("https://script.google.com/macros/s/AKfycbxPsfpen-LN9nNaRyNAvYLqcElIZRGekaMkaBG0VYBP8Jkt6BlQMZd_CAeP4wBwjHQ/exec", {
             method: "POST",
