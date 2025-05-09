@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>GPS + UUID 傳送器</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    label, input, button { display: block; margin-top: 10px; font-size: 16px; }
+    input { padding: 6px; width: 250px; }
+    button { padding: 10px 20px; margin-top: 15px; }
+    #output { margin-top: 20px; white-space: pre-wrap; color: green; }
+    #error { color: red; margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+  <h2>回報 GPS 定位資訊</h2>
+  <p>團隊編號可視為你的照護機構或家族代碼，方便照顧者辨識</p>
+  <label for="teamCode">團隊編號（必填）:</label>
+  <input type="text" id="teamCode" placeholder="例如：A31，B22" required />
+
+  <label for="name">你的姓名（可選填）:</label>
+  <input type="text" id="name" placeholder="例如：小明" />
+
+  <button onclick="sendGPS()">取得位置並送出</button>
+
+  <div id="output">尚未執行任何動作</div>
+  <div id="error"></div>
+
+  <script>
+    // 產生或取得裝置唯一識別 UUID
+    let uuid = localStorage.getItem("deviceUUID");
+    if (!uuid) {
+      uuid = crypto.randomUUID();
+      localStorage.setItem("deviceUUID", uuid);
+    }
+
+    function sendGPS() {
+      const output = document.getElementById("output");
+      const error = document.getElementById("error");
+      const teamCode = document.getElementById("teamCode").value.trim();
+      const name = document.getElementById("name").value.trim();
+
+      output.textContent = "正在取得 GPS 位置...";
+      error.textContent = "";
+
+      // 驗證必填欄位
+      if (!teamCode) {
+        error.textContent = "⚠️ 請輸入團隊編號";
+        return;
+      }
+
+      if (!navigator.geolocation) {
+        error.textContent = "⚠️ 瀏覽器不支援 GPS 定位";
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude.toFixed(6);
+          const lon = position.coords.longitude.toFixed(6);
+          const timestamp = new Date().toISOString();
+
+          const payload = {
+            teamCode: teamCode,  // 新增團隊編號
+            uuid: uuid,
+            name: name || "",  
+            latitude: lat,
+            longitude: lon,
+            timestamp: timestamp,
+          };
+
+          output.textContent = `📍 裝置 UUID：${uuid}\n團隊編號：${teamCode}\n姓名：${name || "(未填)"}\n緯度：${lat}\n經度：${lon}\n時間：${timestamp}\n\n資料已準備送出...`;
+
+          fetch("https://script.google.com/macros/s/AKfycbxPsfpen-LN9nNaRyNAvYLqcElIZRGekaMkaBG0VYBP8Jkt6BlQMZd_CAeP4wBwjHQ/exec", {
+            method: "POST",
+            mode: "no-cors",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+          }).then(() => {
+            output.textContent += "\n✅ 資料已送出！";
+          }).catch((err) => {
+            error.textContent = "❌ 傳送失敗：" + err;
+          });
+        },
+        (err) => {
+          error.textContent = "❌ 定位失敗：" + err.message;
+        }
+      );
+    }
+  </script>
+
+</body>
+</html>
