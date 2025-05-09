@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>團隊位置地圖</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <style>
+    #map { height: 70vh; }
+    .hidden { display: none; }
+    .error { color: red; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <!-- 登入表單 -->
+  <div id="loginForm">
+    <h3>團隊地圖驗證</h3>
+    <input type="text" id="teamCode" placeholder="輸入團隊編號">
+    <button onclick="verifyTeam()">驗證</button>
+    <div id="errorMsg" class="error hidden"></div>
+  </div>
+
+  <!-- 地圖容器 -->
+  <div id="map" class="hidden"></div>
+
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script>
+    let map; // 地圖全域變數
+
+    // 團隊驗證函式
+    async function verifyTeam() {
+      const teamCode = document.getElementById('teamCode').value;
+      const errorMsg = document.getElementById('errorMsg');
+      
+      try {
+        // 同時取得兩個 Google Sheets 資料
+        const [teamData, gpsData] = await Promise.all([
+          fetch('https://opensheet.elk.sh/1-t1FGwvnQ3h0V4GIq3z4EMCi0TN1CBXze7PEDHHK8zY/工作表1').then(r => r.json()),
+          fetch('https://opensheet.elk.sh/1-MOX3XljMX2hjVAsoEmdCzCwPP5HwowBuzUPZEHkl2g/位置記錄').then(r => r.json())
+        ]);
+
+        // 驗證邏輯
+        const validUser = teamData.find(row => row.團隊編號 === teamCode);
+        const userGPS = gpsData.find(row => row.UUID === validUser?.UUID);
+
+        if (!validUser || !userGPS) {
+          throw new Error('驗證失敗');
+        }
+
+        // 顯示地圖
+        initMap(userGPS.緯度, userGPS.經度);
+        plotTeamMembers(gpsData.filter(row => row.團隊編號 === teamCode));
+        
+      } catch (error) {
+        errorMsg.textContent = '對不起，你尚未登入此團隊或更換過手機，基於隱私不能顯示地圖';
+        errorMsg.classList.remove('hidden');
+        if(map) map.remove();
+      }
+    }
+
+    // 初始化地圖
+    function initMap(lat, lng) {
+      document.getElementById('loginForm').classList.add('hidden');
+      document.getElementById('map').classList.remove('hidden');
+      
+      map = L.map('map').setView([lat, lng], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    }
+
+    // 標記團隊成員
+    function plotTeamMembers(members) {
+      members.forEach(member => {
+        const marker = L.marker([member.緯度, member.經度]).addTo(map)
+          .bindPopup(`<b>${member.姓名}</b><br>最後更新: ${member.時間}`);
+      });
+    }
+  </script>
+</body>
+</html>
