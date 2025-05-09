@@ -49,17 +49,17 @@
           const uuid = row['UUID'];
           const name = row['姓名'];
           const lat = parseFloat(row['緯度']);
-          const lng = parseFloat(row['經度']);
+          const lon = parseFloat(row['經度']);
           const timestamp = row['時間'];
           
           if (isNaN(lat) || isNaN(lng)) {
-            console.warn(`資料錯誤：${name} (${lat}, ${lng})`);
+            console.warn(`資料錯誤：${name} (${lat}, ${lon})`);
             return;
           }
 
-          const marker = L.marker([lat, lng]).addTo(map);
+          const marker = L.marker([lat, lon]).addTo(map);
           marker.bindPopup(
-            `<b>${name || ''}</b><br>UUID: ${uuid || ''}<br>時間: ${time || ''}`
+            `<b>${name || ''}</b><br>UUID: ${uuid || ''}<br>時間: ${timestamp || ''}`
           );
         });
       } catch (e) {
