@@ -14,7 +14,7 @@ xml
 <body>
   <!-- 登入表單 -->
   <div id="loginForm">
-    <h3>團隊地圖驗證</h3>
+    <h3>團隊位置地圖</h3>
     <input type="text" id="teamCode" placeholder="輸入團隊編號">
     <button onclick="verifyTeam()">驗證</button>
     <div id="errorMsg" class="error hidden"></div>
@@ -36,7 +36,7 @@ xml
         // 同時取得兩個 Google Sheets 資料
         const [teamData, gpsData] = await Promise.all([
           fetch('https://opensheet.elk.sh/1-t1FGwvnQ3h0V4GIq3z4EMCi0TN1CBXze7PEDHHK8zY/工作表1').then(r => r.json()),
-          fetch('https://opensheet.elk.sh/1-MOX3XljMX2hjVAsoEmdCzCwPP5HwowBuzUPZEHkl2g/工作表1').then(r => r.json())
+          fetch('https://opensheet.elk.sh/1OLTU06kihkC3XwrphR4asT4-6vdcoKOBxNN94USOlso/位置記錄').then(r => r.json())
         ]);
 
         // 驗證邏輯
