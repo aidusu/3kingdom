@@ -1,96 +1,124 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <title>GPS + UUID 傳送器</title>
+  <title>GPS 地圖標記展示</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    label, input, button { display: block; margin-top: 10px; font-size: 16px; }
-    input { padding: 6px; width: 250px; }
-    button { padding: 10px 20px; margin-top: 15px; }
-    #output { margin-top: 20px; white-space: pre-wrap; color: green; }
-    #error { color: red; margin-top: 10px; }
+    #map { height: 80vh; width: 100%; }
+    body { font-family: "Noto Sans TC", Arial, sans-serif; }
+    #taipei-time { font-size: 1.2em; margin-bottom: 10px; color: #333; }
   </style>
 </head>
 <body>
+  <h2>GPS 位置標記地圖</h2>
+  <div id="taipei-time"></div>
+  <div id="map"></div>
 
-  <h2>回報 GPS 定位資訊</h2>
-  <p>團隊編號可視為你的照護機構或家族代碼，方便照顧者辨識</p>
-  <label for="teamCode">團隊編號（必填）:</label>
-  <input type="text" id="teamCode" placeholder="例如：A31，B22" required />
-
-  <label for="name">你的姓名（可選填）:</label>
-  <input type="text" id="name" placeholder="例如：小明" />
-
-  <button onclick="sendGPS()">取得位置並送出</button>
-
-  <div id="output">尚未執行任何動作</div>
-  <div id="error"></div>
-
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script>
-    // 產生或取得裝置唯一識別 UUID
-    let uuid = localStorage.getItem("deviceUUID");
-    if (!uuid) {
-      uuid = crypto.randomUUID();
-      localStorage.setItem("deviceUUID", uuid);
+    // 顯示台北時間（格式：YYYY/MM/DD HH:mm:ss）
+    function showTaipeiTime() {
+      const now = new Date();
+      // 取得台北時區的年月日時分秒
+      const options = {
+        timeZone: 'Asia/Taipei',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      };
+      // 格式：2025/05/09 22:07:00
+      const taipeiTime = now.toLocaleString('zh-TW', options).replace(/\//g, '/').replace(',', '');
+      document.getElementById('taipei-time').textContent = `台北時間：${taipeiTime}`;
     }
+    showTaipeiTime();
+    setInterval(showTaipeiTime, 1000);
 
-    function sendGPS() {
-      const output = document.getElementById("output");
-      const error = document.getElementById("error");
-      const teamCode = document.getElementById("teamCode").value.trim();
-      const name = document.getElementById("name").value.trim();
+    // 1. 初始化地圖
+    const map = L.map('map').setView([23.5, 121], 7); // 台灣中心點
 
-      output.textContent = "正在取得 GPS 位置...";
-      error.textContent = "";
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
 
-      // 驗證必填欄位
-      if (!teamCode) {
-        error.textContent = "⚠️ 請輸入團隊編號";
-        return;
-      }
-
-      if (!navigator.geolocation) {
-        error.textContent = "⚠️ 瀏覽器不支援 GPS 定位";
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const lat = position.coords.latitude.toFixed(6);
-          const lon = position.coords.longitude.toFixed(6);
-          const timestamp = new Date().toISOString();
-
-          const payload = {
-            teamCode: teamCode,  // 新增團隊編號
-            uuid: uuid,
-            name: name || "",  
-            latitude: lat,
-            longitude: lon,
-            timestamp: timestamp,
-          };
-
-          output.textContent = `📍 裝置 UUID：${uuid}\n團隊編號：${teamCode}\n姓名：${name || "(未填)"}\n緯度：${lat}\n經度：${lon}\n時間：${timestamp}\n\n資料已準備送出...`;
-
-          fetch("https://script.google.com/macros/s/AKfycbzYzJK5W0gPZ9MM_-Uu-2K7L3wGU01EefJn_Nfx3i0l-ViaAki4TTmi2kDsEZsqy_O_Gg/exec", {
-            method: "POST",
-            mode: "no-cors",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
-          }).then(() => {
-            output.textContent += "\n✅ 資料已送出！";
-          }).catch((err) => {
-            error.textContent = "❌ 傳送失敗：" + err;
-          });
-        },
-        (err) => {
-          error.textContent = "❌ 定位失敗：" + err.message;
+    // 2. 深色顏色池與姓名分配邏輯
+    const deepColors = [
+      '#8B0000', '#00008B', '#006400', '#4B0082', '#2F4F4F',
+      '#800000', '#191970', '#483D8B', '#2E0854', '#0B3D91'
+    ];
+    const nameColorMap = {};
+    function getDeepColorForName(name) {
+      if (!nameColorMap[name]) {
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) {
+          hash += name.charCodeAt(i);
         }
-      );
+        nameColorMap[name] = deepColors[hash % deepColors.length];
+      }
+      return nameColorMap[name];
     }
-  </script>
 
+    // 3. 載入 GPS 資料
+    async function loadGPSData() {
+      const url = 'https://opensheet.elk.sh/1OLTU06kihkC3XwrphR4asT4-6vdcoKOBxNN94USOlso/位置記錄';
+
+      try {
+        const res = await fetch(url);
+        const json = await res.json();
+        console.log('載入資料', json);
+
+        if (!Array.isArray(json) || json.length === 0) {
+          alert('找不到資料！');
+          return;
+        }
+
+        // 取最後 20 筆資料
+        const last20 = json.slice(-20);
+
+        last20.forEach(row => {
+          const teamCode = row['團隊編號'];
+          const uuid = row['UUID'];
+          const name = row['姓名'];
+          const lat = parseFloat(row['緯度']);
+          const lng = parseFloat(row['經度']);
+          const time = row['時間'];
+          
+          if (isNaN(lat) || isNaN(lng)) {
+            console.warn(`資料錯誤：${name} (${lat}, ${lng})`);
+            return;
+          }
+
+          // 依姓名取得深色
+          const color = getDeepColorForName(name);
+
+          // 使用 circleMarker 畫出有顏色的標記
+          const marker = L.circleMarker([lat, lng], {
+            radius: 10,
+            color: color,
+            fillColor: color,
+            fillOpacity: 0.8
+          }).addTo(map);
+
+          marker.bindPopup(
+            `<b>${name || ''}</b><br>UUID: ${uuid || ''}<br>時間: ${time || ''}`
+          );
+        });
+      } catch (e) {
+        alert('資料載入失敗，請查看 console。');
+        console.error(e);
+      }
+    }
+
+    // 4. 呼叫載入函式
+    loadGPSData();
+  </script>
 </body>
 </html>
