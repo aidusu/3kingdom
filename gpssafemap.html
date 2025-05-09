@@ -1,3 +1,4 @@
+xml
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -35,7 +36,7 @@
         // 同時取得兩個 Google Sheets 資料
         const [teamData, gpsData] = await Promise.all([
           fetch('https://opensheet.elk.sh/1-t1FGwvnQ3h0V4GIq3z4EMCi0TN1CBXze7PEDHHK8zY/工作表1').then(r => r.json()),
-          fetch('https://opensheet.elk.sh/1-MOX3XljMX2hjVAsoEmdCzCwPP5HwowBuzUPZEHkl2g/位置記錄').then(r => r.json())
+          fetch('https://opensheet.elk.sh/1-MOX3XljMX2hjVAsoEmdCzCwPP5HwowBuzUPZEHkl2g/工作表1').then(r => r.json())
         ]);
 
         // 驗證邏輯
