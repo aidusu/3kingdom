@@ -92,9 +92,9 @@
             fillColor: color,
             fillOpacity: 0.8
           }).addTo(map);
-
+          
           marker.bindPopup(
-            `<b>${name || ''}</b><br>UUID: ${uuid || ''}<br>時間: ${time || ''}`
+    `<b>${name || ''}</b><br>團隊編號: ${teamCode || ''}<br>UUID: ${uuid || ''}<br>時間: ${time || ''}`
           );
         });
       } catch (e) {
