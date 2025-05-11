@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>團隊狀態查詢系統</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: "Segoe UI", Arial, "微軟正黑體", sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f0f2f5;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        #teamId {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        button {
+            padding: 12px 25px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        #result {
+            padding: 20px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            display: none;
+        }
+        .loading {
+            text-align: center;
+            color: #7f8c8d;
+            display: none;
+        }
+        .error {
+            color: #e74c3c;
+            background: #fadbd8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>團隊狀態查詢系統</h1>
+        <div class="search-box">
+            <input type="text" id="teamId" placeholder="輸入團隊編號 (例：A01)" 
+                   pattern="[A-Za-z]{1}\d{2}" title="格式：1個英文字母+2位數字">
+            <button onclick="searchTeam()">查詢</button>
+        </div>
+        <div class="loading">查詢中...</div>
+        <div id="result"></div>
+    </div>
+
+<script>
+function searchTeam() {
+    const teamId = document.getElementById('teamId').value.toUpperCase();
+    const resultDiv = document.getElementById('result');
+    const loading = document.querySelector('.loading');
+
+    if (!teamId.match(/^[A-Za-z]\d{2}$/)) {
+        showError('團隊編號格式錯誤，請使用1個英文字母+2位數字');
+        return;
+    }
+
+    loading.style.display = 'block';
+    resultDiv.style.display = 'none';
+
+    // 呼叫Google Apps Script API
+    fetch('https://script.google.com/macros/s/AKfycbxF2ntED_MNlpcJAnvblX42Pq9MboDx3EjOk6TcIPSjJWo9dITYcHhw30_-_lmQbsQD/exec?teamId=' + encodeURIComponent(teamId))
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showError(data.error);
+        } else {
+            showResult(data);
+        }
+    })
+    .catch(error => {
+        showError('連線失敗，請稍後再試');
+    })
+    .finally(() => {
+        loading.style.display = 'none';
+    });
+}
+
+function showResult(data) {
+    const resultDiv = document.getElementById('result');
+    let html = '';
+
+    if (data.exists) {
+        html = `
+            <h3>團隊編號：${data.teamId}</h3>
+            <p>領隊姓名：<strong>${data.leader}</strong></p>
+            <p>最後註冊時間：${data.lastRegistration}</p>
+            <p>已註冊人數：${data.memberCount}</p>
+        `;
+    } else {
+        html = `<p class="not-found">此團隊編號尚未被使用</p>`;
+    }
+
+    resultDiv.innerHTML = html;
+    resultDiv.style.display = 'block';
+}
+
+function showError(message) {
+    const resultDiv = document.getElementById('result');
+    resultDiv.innerHTML = `<div class="error">${message}</div>`;
+    resultDiv.style.display = 'block';
+}
+</script>
+</body>
+</html>
