@@ -133,7 +133,18 @@ function getTaipeiTime() {
   now.setHours(now.getHours() + 8); // 轉換為台北時間
   return `${now.getFullYear()}:${pad(now.getMonth()+1)}:${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
 }
+// 補零函式 (必要)
+function pad(n) {
+  return n < 10 ? '0' + n : n;
+}
 
+// 頁面初始化
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('uuidField').value = getUUID();
+  document.getElementById('timeField').value = getTaipeiTime();
+});
+
+     
 // 地理定位功能增加錯誤處理
 function getGeolocation() {
     return new Promise((resolve, reject) => {
@@ -152,32 +163,30 @@ function getGeolocation() {
     });
 }
 
-// 表單提交處理（重點修改部分）
+// 表單提交處理
 document.getElementById('loginForm').onsubmit = async function(e) {
-    e.preventDefault();
-    
-    try {
-        // 獲取地理座標（失敗時設為預設值）
-        const coords = await getGeolocation().catch(() => ({
-            latitude: 25.047760,  // 台北車站預設緯度
-            longitude: 121.517000 // 台北車站預設經度
-        }));
-        
-        // 設定隱藏欄位值
-        document.getElementById('latField').value = coords.latitude.toFixed(6);
-        document.getElementById('lngField').value = coords.longitude.toFixed(6);
-        document.getElementById('timeField').value = getTaipeiTime();
+  e.preventDefault();
+  
+  try {
+    const coords = await getGeolocation().catch(() => ({
+      latitude: 25.047760,
+      longitude: 121.517000
+    }));
 
-        // 構建請求參數
-        const formData = new FormData(this);
-        
-        // 修改請求URL加入action參數
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbyB_MOvxqFWZjz1eM5E2NLXVp0Gt7OzGryDQGIpl_kfjtuloKvErgYjsfUbzS8yG8mh/exec?action=submit';
-        
-        const response = await fetch(scriptURL, {
-            method: 'POST',
-            body: formData
-        });
+    // 更新隱藏欄位值
+    document.getElementById('latField').value = coords.latitude.toFixed(6);
+    document.getElementById('lngField').value = coords.longitude.toFixed(6);
+    document.getElementById('timeField').value = getTaipeiTime();
+
+    const formData = new FormData(this);
+    const scriptURL = 'https://script.google.com/macros/s/你的ID/exec';
+    const params = new URLSearchParams();
+    params.append('action', 'submit');
+
+    const response = await fetch(`${scriptURL}?${params.toString()}`, {
+      method: 'POST',
+      body: formData
+    });
         
         // 處理回應
         const data = await response.json();
