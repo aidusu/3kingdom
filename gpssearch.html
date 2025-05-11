@@ -12,10 +12,10 @@
             background: #f0f2f5;
         }
         .container {
-            max-width: 600px;
-            margin: 20px auto;
+            max-width: 480px;
+            margin: 32px auto;
             background: white;
-            padding: 25px;
+            padding: 25px 16px 32px 16px;
             border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
@@ -24,12 +24,12 @@
             color: #2c3e50;
             margin-bottom: 30px;
         }
-        .search-box {
+        form {
             display: flex;
             gap: 10px;
             margin-bottom: 25px;
         }
-        #teamId {
+        input[type="text"] {
             flex: 1;
             padding: 12px;
             border: 2px solid #3498db;
@@ -44,20 +44,23 @@
             border-radius: 8px;
             cursor: pointer;
             transition: background 0.3s;
+            font-size: 16px;
         }
         button:hover {
             background: #2980b9;
+        }
+        .loading {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 12px;
+            display: none;
         }
         #result {
             padding: 20px;
             border-radius: 8px;
             background: #f8f9fa;
             display: none;
-        }
-        .loading {
-            text-align: center;
-            color: #7f8c8d;
-            display: none;
+            margin-top: 12px;
         }
         .error {
             color: #e74c3c;
@@ -66,26 +69,42 @@
             border-radius: 8px;
             margin-top: 15px;
         }
+        @media (max-width: 600px) {
+            .container {
+                max-width: 98vw;
+                padding: 12px 2vw 16px 2vw;
+            }
+            form {
+                flex-direction: column;
+                gap: 8px;
+            }
+            button {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>團隊狀態查詢系統</h1>
-        <div class="search-box">
-            <input type="text" id="teamId" placeholder="輸入團隊編號 (例：A01)" 
-                   pattern="[A-Za-z]{1}\d{2}" title="格式：1個英文字母+2位數字">
-            <button onclick="searchTeam()">查詢</button>
-        </div>
-        <div class="loading">查詢中...</div>
+        <form id="searchForm" autocomplete="off">
+            <input type="text" id="teamId" name="teamId" placeholder="輸入團隊編號 (例：A01)" 
+                   pattern="[A-Za-z]{1}\d{2}" title="格式：1個英文字母+2位數字" required>
+            <button type="submit">查詢</button>
+        </form>
+        <div class="loading" id="loading">查詢中...</div>
         <div id="result"></div>
     </div>
 
 <script>
-function searchTeam() {
-    const teamId = document.getElementById('teamId').value.toUpperCase();
+document.getElementById('searchForm').onsubmit = function(e) {
+    e.preventDefault();
+    const teamIdInput = document.getElementById('teamId');
+    const teamId = teamIdInput.value.trim().toUpperCase();
     const resultDiv = document.getElementById('result');
-    const loading = document.querySelector('.loading');
+    const loading = document.getElementById('loading');
 
+    // 格式驗證
     if (!teamId.match(/^[A-Za-z]\d{2}$/)) {
         showError('團隊編號格式錯誤，請使用1個英文字母+2位數字');
         return;
@@ -95,7 +114,7 @@ function searchTeam() {
     resultDiv.style.display = 'none';
 
     // 呼叫Google Apps Script API
-    fetch('https://script.google.com/macros/s/AKfycbxF2ntED_MNlpcJAnvblX42Pq9MboDx3EjOk6TcIPSjJWo9dITYcHhw30_-_lmQbsQD/exec?teamId=' + encodeURIComponent(teamId))
+    fetch('https://script.google.com/macros/s/AKfycbwN4oPHxy9D_PKFloJ1-ZnPtBp1Y8jacqa-G_mUpLD5GtRdR70CiF3TuLqbv6mf_yI7/exec?teamId=' + encodeURIComponent(teamId))
     .then(response => response.json())
     .then(data => {
         if (data.error) {
@@ -110,23 +129,21 @@ function searchTeam() {
     .finally(() => {
         loading.style.display = 'none';
     });
-}
+};
 
 function showResult(data) {
     const resultDiv = document.getElementById('result');
     let html = '';
-
     if (data.exists) {
         html = `
             <h3>團隊編號：${data.teamId}</h3>
-            <p>領隊姓名：<strong>${data.leader}</strong></p>
-            <p>最後註冊時間：${data.lastRegistration}</p>
-            <p>已註冊人數：${data.memberCount}</p>
+            <p>領隊姓名：<strong>${data.leader || '（無資料）'}</strong></p>
+            <p>最後註冊時間：${data.lastRegistration || '（無資料）'}</p>
+            <p>已註冊人數：${data.memberCount || 0}</p>
         `;
     } else {
         html = `<p class="not-found">此團隊編號尚未被使用</p>`;
     }
-
     resultDiv.innerHTML = html;
     resultDiv.style.display = 'block';
 }
