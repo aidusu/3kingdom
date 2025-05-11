@@ -1,9 +1,87 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <!-- 樣式部分保持不變 -->
+     <meta charset="UTF-8">
+    <title>團隊註冊系統</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <style>
-        /* 原有CSS樣式保留 */
+        body {
+            font-family: "Segoe UI", "Arial", "微軟正黑體", sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f5f6fa;
+        }
+        .container {
+            max-width: 420px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 24px 12px 16px 12px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin-top: 18vw;
+        }
+        h2 {
+            text-align: center;
+            font-size: 1.3em;
+            margin-bottom: 24px;
+            letter-spacing: 2px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 1em;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 14px 10px;
+            margin-bottom: 18px;
+            border: 1.5px solid #d6d6d6;
+            border-radius: 6px;
+            font-size: 1.1em;
+            box-sizing: border-box;
+            background: #f9f9f9;
+        }
+        button[type="submit"] {
+            width: 100%;
+            padding: 16px 0;
+            background: #007bff;
+            color: #fff;
+            font-size: 1.15em;
+            border: none;
+            border-radius: 6px;
+            margin-top: 8px;
+            cursor: pointer;
+            letter-spacing: 2px;
+        }
+        button[type="submit"]:active {
+            background: #0056b3;
+        }
+        #result {
+            margin-top: 28px;
+            color: green;
+            text-align: center;
+            font-size: 1em;
+        }
+        .info-list {
+            margin-top: 12px;
+            color: #333;
+            font-size: 0.98em;
+        }
+        @media (max-width: 480px) {
+            .container {
+                margin-top: 32px;
+                padding: 12px 4vw 8px 4vw;
+                border-radius: 0;
+                box-shadow: none;
+            }
+            h2 {
+                font-size: 1.1em;
+            }
+            input[type="text"], button[type="submit"] {
+                font-size: 1em;
+                padding: 12px 8px;
+            }
+        }
     </style>
 </head>
 <body>
