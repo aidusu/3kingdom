@@ -114,7 +114,7 @@ document.getElementById('searchForm').onsubmit = function(e) {
     resultDiv.style.display = 'none';
 
     // 呼叫Google Apps Script API
-    fetch('https://script.google.com/macros/s/AKfycbyl-XluqmBVm7OBnMiFTCymc8DwN0Tw8J-KRK-YOtpZnkUTYYXCgSnwbagkxPcaX3ZZ/exec?teamId=' + encodeURIComponent(teamId))
+    fetch('https://script.google.com/macros/s/AKfycbzJJ20068vfRv5I3I1_DFvbf5dOQ_FMdCWVSpBusdoYyp7k5YHJQYsFY2l0CsnmpCWd/exec?teamId=' + encodeURIComponent(teamId))
     .then(response => response.json())
     .then(data => {
         if (data.error) {
