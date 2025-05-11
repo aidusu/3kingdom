@@ -86,7 +86,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>團隊狀態查詢系統</h1>
+        <h1>團隊編號查詢系統</h1>
         <form id="searchForm" autocomplete="off">
             <input type="text" id="teamId" name="teamId" placeholder="輸入團隊編號 (例：A01)" 
                    pattern="[A-Za-z]{1}\d{2}" title="格式：1個英文字母+2位數字" required>
@@ -150,7 +150,7 @@ function showResult(data) {
     let html = '';
     if (data.exists) {
         html = `
-            <p>團隊編號：輸入正確</p>
+            <p>這個『團隊編號』已被使用</p>
             <p>領隊姓名：<strong>${data.leader || '（無資料）'}</strong></p>
             <p>最後註冊時間：${data.lastRegistration || '（無資料）'}</p>
             <p>已註冊人數：${data.memberCount || 0}</p>
@@ -158,7 +158,7 @@ function showResult(data) {
         `;
     } else {
         html = `
-            <p class="not-found">此團隊編號尚未被使用</p>
+            <p class="not-found">這個『團隊編號』未被使用, 可以新增使用!</p>
             <p class="query-time">查詢時間：${data.queryTime}</p>
         `;
     }
