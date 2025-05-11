@@ -111,7 +111,21 @@
 
 <script>
 // 強化版 UUID 生成（支援更多瀏覽器）
-function getUUID() { /* 原有內容保持不變 */ }
+function getUUID() {
+    let uuid = localStorage.getItem("deviceUUID");
+    if (!uuid) {
+        if (window.crypto?.randomUUID) {
+            uuid = crypto.randomUUID();
+        } else {
+            const array = new Uint8Array(16);
+            window.crypto.getRandomValues(array);
+            uuid = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
+        }
+        localStorage.setItem("deviceUUID", uuid);
+    }
+    return uuid;
+}
+
 
 // 修改時間格式為 yyyy:MM:dd hh:mm
 function getTaipeiTime() {
