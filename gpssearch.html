@@ -150,7 +150,7 @@ function showResult(data) {
     let html = '';
     if (data.exists) {
         html = `
-            <h3>團隊編號：輸入正確</h3>
+            <p>團隊編號：${data.teamId}</p>
             <p>領隊姓名：<strong>${data.leader || '（無資料）'}</strong></p>
             <p>最後註冊時間：${data.lastRegistration || '（無資料）'}</p>
             <p>已註冊人數：${data.memberCount || 0}</p>
