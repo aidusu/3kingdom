@@ -85,6 +85,7 @@
     </style>
 </head>
 <body>
+<body>
     <div class="container">
         <h1>團隊狀態查詢系統</h1>
         <form id="searchForm" autocomplete="off">
@@ -97,6 +98,17 @@
     </div>
 
 <script>
+// 新增時間生成函式區塊
+function getTaipeiTime() {
+  const now = new Date();
+  now.setHours(now.getHours() + 8); // 轉換為台北時間
+  return `${now.getFullYear()}:${pad(now.getMonth()+1)}:${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+}
+
+function pad(n) {
+  return n < 10 ? '0' + n : n;
+}
+
 document.getElementById('searchForm').onsubmit = function(e) {
     e.preventDefault();
     const teamIdInput = document.getElementById('teamId');
@@ -104,7 +116,6 @@ document.getElementById('searchForm').onsubmit = function(e) {
     const resultDiv = document.getElementById('result');
     const loading = document.getElementById('loading');
 
-    // 格式驗證
     if (!teamId.match(/^[A-Za-z]\d{2}$/)) {
         showError('團隊編號格式錯誤，請使用1個英文字母+2位數字');
         return;
@@ -113,13 +124,17 @@ document.getElementById('searchForm').onsubmit = function(e) {
     loading.style.display = 'block';
     resultDiv.style.display = 'none';
 
-    // 呼叫Google Apps Script API
+    // 在發送請求前取得當前台北時間
+    const queryTime = getTaipeiTime();
+
     fetch('https://script.google.com/macros/s/AKfycbyB_MOvxqFWZjz1eM5E2NLXVp0Gt7OzGryDQGIpl_kfjtuloKvErgYjsfUbzS8yG8mh/exec?teamId=' + encodeURIComponent(teamId))
     .then(response => response.json())
     .then(data => {
         if (data.error) {
             showError(data.error);
         } else {
+            // 將查詢時間加入顯示資料
+            data.queryTime = queryTime;
             showResult(data);
         }
     })
@@ -140,9 +155,13 @@ function showResult(data) {
             <p>領隊姓名：<strong>${data.leader || '（無資料）'}</strong></p>
             <p>最後註冊時間：${data.lastRegistration || '（無資料）'}</p>
             <p>已註冊人數：${data.memberCount || 0}</p>
+            <p class="query-time">查詢時間：${data.queryTime}</p>
         `;
     } else {
-        html = `<p class="not-found">此團隊編號尚未被使用</p>`;
+        html = `
+            <p class="not-found">此團隊編號尚未被使用</p>
+            <p class="query-time">查詢時間：${data.queryTime}</p>
+        `;
     }
     resultDiv.innerHTML = html;
     resultDiv.style.display = 'block';
