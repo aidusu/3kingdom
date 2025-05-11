@@ -3,32 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <title>團隊註冊系統</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        /* 原有樣式保留 */
-        input[type="text"] { text-transform: uppercase; }
-        label { display: inline-block; width: 100px; margin-bottom: 8px; }
-        #result { margin-top: 20px; color: green; }
-        .info-list { margin-top: 12px; color: #333; }
-        .info-list p { margin: 2px 0; }
+        body {
+            font-family: "Segoe UI", "Arial", "微軟正黑體", sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f7f7f7;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 24px 16px 16px 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin-top: 32px;
+        }
+        h2 {
+            text-align: center;
+            font-size: 1.5em;
+            margin-bottom: 24px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 1em;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 8px;
+            margin-bottom: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+        button[type="submit"] {
+            width: 100%;
+            padding: 14px 0;
+            background: #007bff;
+            color: #fff;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 4px;
+            margin-top: 8px;
+            cursor: pointer;
+        }
+        button[type="submit"]:active {
+            background: #0056b3;
+        }
+        #result {
+            margin-top: 24px;
+            color: green;
+            text-align: center;
+            font-size: 1em;
+        }
+        .info-list {
+            margin-top: 12px;
+            color: #333;
+            font-size: 0.95em;
+        }
+        @media (max-width: 480px) {
+            .container {
+                margin-top: 12px;
+                padding: 12px 4px 8px 4px;
+            }
+            h2 {
+                font-size: 1.2em;
+            }
+            input[type="text"], button[type="submit"] {
+                font-size: 1em;
+            }
+        }
     </style>
 </head>
 <body>
-    <h2>團隊註冊系統</h2>
-    <form id="loginForm" autocomplete="off">
-        <label for="leaderId">團隊編號：</label>
-        <input type="text" id="leaderId" name="團隊編號" pattern="[A-Za-z]{1}[0-9]{2}" 
-               title="請輸入一個英文字及兩個阿拉伯數字" required><br>
-        <label for="leaderName">領隊姓名：</label>
-        <input type="text" id="leaderName" name="領隊" required><br>
-        <label for="userName">用戶姓名：</label>
-        <input type="text" id="userName" name="姓名" required><br>
-        <input type="hidden" name="UUID" id="uuidField">
-        <input type="hidden" name="緯度" id="latField">
-        <input type="hidden" name="經度" id="lngField">
-        <input type="hidden" name="時間" id="timeField">
-        <button type="submit">完成註冊</button>
-    </form>
-    <div id="result"></div>
+    <div class="container">
+        <h2>團隊註冊系統</h2>
+        <form id="loginForm" autocomplete="off">
+            <label for="leaderId">團隊編號</label>
+            <input type="text" id="leaderId" name="團隊編號" pattern="[A-Za-z]{1}[0-9]{2}" title="請輸入一個英文字及兩個阿拉伯數字" required>
+            <label for="leaderName">領隊姓名</label>
+            <input type="text" id="leaderName" name="領隊" required>
+            <label for="userName">用戶姓名</label>
+            <input type="text" id="userName" name="姓名" required>
+            <input type="hidden" name="UUID" id="uuidField">
+            <input type="hidden" name="緯度" id="latField">
+            <input type="hidden" name="經度" id="lngField">
+            <input type="hidden" name="時間" id="timeField">
+            <button type="submit">完成註冊</button>
+        </form>
+        <div id="result"></div>
 
 <script>
 // 強化版 UUID 生成（支援更多瀏覽器）
