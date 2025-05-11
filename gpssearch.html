@@ -85,7 +85,6 @@
     </style>
 </head>
 <body>
-<body>
     <div class="container">
         <h1>團隊狀態查詢系統</h1>
         <form id="searchForm" autocomplete="off">
@@ -101,7 +100,7 @@
 // 新增時間生成函式區塊
 function getTaipeiTime() {
   const now = new Date();
-  now.setHours(now.getHours() + 8); // 轉換為台北時間
+  now.setHours(now.getHours()); // 轉換為台北時間
   return `${now.getFullYear()}:${pad(now.getMonth()+1)}:${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
 }
 
