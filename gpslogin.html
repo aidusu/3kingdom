@@ -2,111 +2,117 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>團隊編號與姓名</title>
+    <title>團隊註冊系統</title>
     <style>
-        input[type="text"] {
-            text-transform: uppercase;
-        }
-        label {
-            display: inline-block;
-            width: 100px;
-            margin-bottom: 8px;
-        }
-        #result {
-            margin-top: 20px;
-            color: green;
-        }
-        .info-list {
-            margin-top: 12px;
-            color: #333;
-        }
-        .info-list p {
-            margin: 2px 0;
-        }
+        /* 原有樣式保留 */
+        input[type="text"] { text-transform: uppercase; }
+        label { display: inline-block; width: 100px; margin-bottom: 8px; }
+        #result { margin-top: 20px; color: green; }
+        .info-list { margin-top: 12px; color: #333; }
+        .info-list p { margin: 2px 0; }
     </style>
 </head>
 <body>
-    <h2>團隊編號與姓名登入</h2>
+    <h2>團隊註冊系統</h2>
     <form id="loginForm" autocomplete="off">
         <label for="leaderId">團隊編號：</label>
-        <input type="text" id="leaderId" name="團隊編號" pattern="[A-Za-z]{1}[0-9]{2}" title="請輸入一個英文字及兩個阿拉伯數字" required><br>
+        <input type="text" id="leaderId" name="團隊編號" pattern="[A-Za-z]{1}[0-9]{2}" 
+               title="請輸入一個英文字及兩個阿拉伯數字" required><br>
         <label for="leaderName">領隊姓名：</label>
-        <input type="text" id="leaderName" name="領隊姓名" required><br>
+        <input type="text" id="leaderName" name="領隊" required><br>
         <label for="userName">用戶姓名：</label>
-        <input type="text" id="userName" name="用戶姓名" required><br>
-        <input type="hidden" name="手機UUID" id="uuidField">
+        <input type="text" id="userName" name="姓名" required><br>
+        <input type="hidden" name="UUID" id="uuidField">
+        <input type="hidden" name="緯度" id="latField">
+        <input type="hidden" name="經度" id="lngField">
         <input type="hidden" name="時間" id="timeField">
-        <button type="submit">完成登入</button>
+        <button type="submit">完成註冊</button>
     </form>
     <div id="result"></div>
 
 <script>
-// 產生或取得裝置唯一識別 UUID
+// 強化版 UUID 生成（支援更多瀏覽器）
 function getUUID() {
     let uuid = localStorage.getItem("deviceUUID");
     if (!uuid) {
-        if (window.crypto && crypto.randomUUID) {
+        if (window.crypto?.randomUUID) {
             uuid = crypto.randomUUID();
         } else {
-            // 若瀏覽器不支援 crypto.randomUUID
-            uuid = 'uuid-' + Math.random().toString(36).substr(2, 12);
+            const array = new Uint8Array(16);
+            window.crypto.getRandomValues(array);
+            uuid = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
         }
         localStorage.setItem("deviceUUID", uuid);
     }
     return uuid;
 }
 
-// 頁面載入時設定 UUID 欄位
-document.getElementById('uuidField').value = getUUID();
-
-document.getElementById('loginForm').onsubmit = function(e) {
-    e.preventDefault();
-
-    // 確保 UUID 欄位正確
-    document.getElementById('uuidField').value = getUUID();
-
-    // 取得當下時間（格式：YYYY-MM-DD HH:mm:ss）
+// 台北時間格式化
+function getTaipeiTime() {
     const now = new Date();
-    const pad = n => n < 10 ? '0' + n : n;
-    const timeStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-    document.getElementById('timeField').value = timeStr;
+    now.setHours(now.getHours() + 8); // UTC+8 轉換
+    return now.toISOString().slice(0, 16).replace('T', ' ');
+}
 
-    var form = e.target;
-    var formData = new FormData(form);
+// 地理定位功能
+function getGeolocation() {
+    return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+            reject('此瀏覽器不支援地理定位功能');
+        } else {
+            navigator.geolocation.getCurrentPosition(
+                position => resolve(position.coords),
+                error => reject(`定位失敗：${error.message}`),
+                { timeout: 10000 }
+            );
+        }
+    });
+}
 
-    // 取得用戶輸入的資料
-    const leaderId = document.getElementById('leaderId').value;
-    const leaderName = document.getElementById('leaderName').value;
-    const userName = document.getElementById('userName').value;
-    const uuid = document.getElementById('uuidField').value;
+// 頁面初始化
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('uuidField').value = getUUID();
+});
 
-    fetch('https://script.google.com/macros/s/AKfycbxqanrf454TM43GQGiddLCes5-WWRS6NS9QPU4CsINygwNq6R8eI1sWkqLl_cyQFASh/exec', { // 替換為您的 Google Apps Script 網址
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
+// 表單提交處理
+document.getElementById('loginForm').onsubmit = async function(e) {
+    e.preventDefault();
+    
+    try {
+        const coords = await getGeolocation();
+        document.getElementById('latField').value = coords.latitude.toFixed(6);
+        document.getElementById('lngField').value = coords.longitude.toFixed(6);
+        document.getElementById('timeField').value = getTaipeiTime();
+
+        const formData = new FormData(this);
+        const response = await fetch('https://script.google.com/macros/s/AKfycbxF2ntED_MNlpcJAnvblX42Pq9MboDx3EjOk6TcIPSjJWo9dITYcHhw30_-_lmQbsQD/exec', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
         if(data.result === 'success') {
             document.getElementById('result').innerHTML = `
-                資料已成功送出！
+                <strong>註冊成功！</strong>
                 <div class="info-list">
-                    <p>團隊編號：${leaderId}</p>
-                    <p>領隊姓名：${leaderName}</p>
-                    <p>手機UUID：${uuid}</p>
-                    <p>用戶姓名：${userName}</p>
+                    <p>團隊編號：${formData.get('團隊編號')}</p>
+                    <p>領隊姓名：${formData.get('領隊')}</p>
+                    <p>用戶姓名：${formData.get('姓名')}</p>
+                    <p>裝置 UUID：${formData.get('UUID')}</p>
+                    <p>定位座標：${formData.get('緯度')}, ${formData.get('經度')}</p>
+                    <p>註冊時間：${formData.get('時間')}</p>
                 </div>
             `;
-            form.reset();
-            // 送出後再補回UUID
-            document.getElementById('uuidField').value = getUUID();
+            this.reset();
         } else {
-            document.getElementById('result').innerHTML = '發生錯誤：' + data.error;
+            throw new Error(data.error || '未知錯誤');
         }
-    })
-    .catch(error => {
-        document.getElementById('result').innerHTML = '發生錯誤：' + error;
-    });
+    } catch (error) {
+        document.getElementById('result').innerHTML = 
+            `<span style="color:red">錯誤：${error.message}</span>`;
+    }
 };
 </script>
 </body>
 </html>
+
