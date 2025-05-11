@@ -49,7 +49,7 @@ document.getElementById('searchForm').onsubmit = function(e) {
     loading.style.display = 'block';
     resultDiv.style.display = 'none';
 
-    fetch('你的AppsScript網址?teamId=' + encodeURIComponent(teamId))
+    fetch('https://script.google.com/macros/s/AKfycbzAKKpt5UaZR6Yhmx1NjwvcBi4QDK6KgInvkoXQAW7JJa3rdiAXAKRi6MAsUhxhKTUs/exec?teamId=' + encodeURIComponent(teamId))
     .then(response => response.json())
     .then(data => {
         const resultHTML = data.exists ? `
