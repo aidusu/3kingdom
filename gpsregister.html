@@ -116,7 +116,7 @@ function getUUID() { /* 原有內容保持不變 */ }
 // 修改時間格式為 yyyy:MM:dd hh:mm
 function getTaipeiTime() {
     const now = new Date();
-    now.setHours(now.getHours() + 8); // UTC+8 轉換
+    now.setHours(now.getHours() + 0); // UTC+8 轉換
     return `${now.getFullYear()}:${(now.getMonth()+1).toString().padStart(2,'0')}:${now.getDate().toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
 }
 
