@@ -52,7 +52,8 @@
     // 驗證與顯示主邏輯
     async function validateAndShow() {
       const teamCode = document.getElementById('teamInput').value.trim();
-      const uuid = document.getElementById('uuidInput').value.trim();
+       let uuid = document.getElementById('uuidInput').value.trim();
+       uuid = uuid.slice(0, 5); // 只取前 5 碼
       
       if (!teamCode || !uuid) {
         showError('請填寫所有欄位');
@@ -61,8 +62,6 @@
 
       try {
         // 第一步：驗證團隊編號與UUID
-       let uuid = document.getElementById('uuidInput').value.trim();
-       uuid = uuid.slice(0, 5); // 只取前 7 碼
        const isValid = await verifyCredentials(teamCode, uuid); 
         if (!isValid) {
           showError('驗證失敗，無效的團隊編號或UUID');
