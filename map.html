@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>團隊成員位置地圖</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <style>
+    #map { height: 90vh; width: 100%; }
+    body { margin: 0; font-family: "Noto Sans TC", sans-serif; }
+    #info { padding: 1em; text-align: center; background: #f4f4f4; }
+  </style>
+</head>
+<body>
+
+  <div id="info">正在載入地圖資料...</div>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script>
+    // 解析 URL 參數
+    function getQueryParam(key) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(key);
+    }
+
+    const team = getQueryParam("team");
+    const uuidPrefix = getQueryParam("uuid");
+
+    if (!team || !uuidPrefix) {
+      document.getElementById("info").textContent = "❌ 缺少參數，無法顯示地圖。";
+      throw new Error("缺少參數");
+    }
+
+    // 初始化地圖
+    const map = L.map('map').setView([23.5, 121], 7);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    const markerLayer = L.layerGroup().addTo(map);
+
+    // 取得資料
+    async function loadAndShowData() {
+      const url = 'https://opensheet.elk.sh/1SP7mminCBogb2bZQ3XPvU4cptKYa2ye80YYXLIzlcEU/位置記錄';
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        // 過濾符合的資料（同一團隊、UUID前五碼）
+        const filtered = data.filter(row =>
+          row['團隊編號']?.trim() === team &&
+          row['UUID']?.toUpperCase().startsWith(uuidPrefix)
+        );
+
+        if (filtered.length === 0) {
+          document.getElementById("info").textContent = "⚠️ 找不到符合資料的成員位置。";
+          return;
+        }
+
+        document.getElementById("info").textContent = `團隊 ${team} - 成員位置`;
+
+        // 每位成員只顯示最新的一筆資料
+        const latestRecords = {};
+        filtered.forEach(row => {
+          const name = row['姓名'];
+          if (!latestRecords[name] || row['時間'] > latestRecords[name]['時間']) {
+            latestRecords[name] = row;
+          }
+        });
+
+        const points = [];
+        Object.values(latestRecords).forEach(row => {
+          const lat = parseFloat(row['緯度']);
+          const lng = parseFloat(row['經度']);
+          const name = row['姓名'];
+          const time = row['時間'];
+
+          if (!isNaN(lat) && !isNaN(lng)) {
+            const marker = L.marker([lat, lng])
+              .bindPopup(`<strong>${name}</strong><br>時間：${time}`)
+              .addTo(markerLayer);
+            points.push([lat, lng]);
+          }
+        });
+
+        if (points.length > 0) {
+          map.fitBounds(points, { padding: [30, 30], maxZoom: 16 });
+        }
+
+      } catch (err) {
+        console.error(err);
+        document.getElementById("info").textContent = "❌ 系統錯誤，無法載入資料。";
+      }
+    }
+
+    loadAndShowData();
+  </script>
+
+</body>
+</html>
