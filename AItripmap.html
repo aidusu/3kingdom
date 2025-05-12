@@ -18,7 +18,7 @@
   <h2>團隊位置驗證與呈現</h2>
   <div class="input-group">
     <input type="text" id="teamInput" placeholder="團隊編號" required>
-    <input type="text" id="uuidInput" placeholder="UUID" required>
+    <input type="text" id="uuidInput" placeholder="UUID" maxlength="7" required>
     <button onclick="validateAndShow()">查詢位置</button>
   </div>
   <div id="errorMsg"></div>
@@ -61,7 +61,9 @@
 
       try {
         // 第一步：驗證團隊編號與UUID
-        const isValid = await verifyCredentials(teamCode, uuid);
+       let uuid = document.getElementById('uuidInput').value.trim();
+       uuid = uuid.slice(0, 7); // 只取前 7 碼
+       const isValid = await verifyCredentials(teamCode, uuid); 
         if (!isValid) {
           showError('驗證失敗，無效的團隊編號或UUID');
           return;
