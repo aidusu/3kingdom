@@ -131,7 +131,12 @@
         if (isNaN(lat) || isNaN(lng)) return;
 
         // 標記創建邏輯保持不變
-        const marker = L.circleMarker([lat, lng], {/* 原有樣式 */});
+        const marker = L.circleMarker([lat, lng], {
+  radius: 8,
+  color: getDeepColorForName(row['姓名']),
+  fillColor: getDeepColorForName(row['姓名']),
+  fillOpacity: 0.7
+}).bindPopup(`${row['姓名']}<br>時間：${row['時間']});
         marker.addTo(markersLayer);
         points.push([lat, lng]);
       });
