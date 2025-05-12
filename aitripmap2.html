@@ -10,12 +10,12 @@
     body { font-family: "Noto Sans TC", Arial, sans-serif; }
     #filterForm { margin-bottom: 1em; }
     .input-group { margin: 10px 0; }
-    label { display: inline-block; width: 100px; }
+    label { display: inline-block; width: 120px; }
   </style>
 </head>
 <body>
-  <h2>分組更新的回報位置圖</h2>
-  <p>團體旅遊，透過共設編號看到團員最新位置。</p>
+  <h2>團員位置圖（依據團隊編號查詢）</h2>
+  <p>請輸入UUID辨識，可以看得到同團成員的位置。</p>
   
   <form id="filterForm">
     <div class="input-group">
@@ -46,9 +46,27 @@
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    // 顏色分配邏輯保持不變
-    const deepColors = [/* 原有顏色陣列 */];
+     // 2. 深色顏色池與姓名分配邏輯
+    const deepColors = [
+      '#8B0000', '#00008B', '#006400', '#4B0082', '#2F4F4F',
+      '#800000', '#191970', '#483D8B', '#2E0854', '#0B3D91'
+    ];
     const nameColorMap = {};
+    function getDeepColorForName(name) {
+      if (!nameColorMap[name]) {
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) {
+          hash += name.charCodeAt(i);
+        }
+        nameColorMap[name] = deepColors[hash % deepColors.length];
+      }
+      return nameColorMap[name];
+    }
+    // 3. 標記圖層管理
+    let markersLayer = L.layerGroup().addTo(map);
+
+    // 4. 載入 GPS 資料
+    let allData = [];
 
     // 強化版資料載入
     async function loadGPSData() {
