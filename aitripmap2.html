@@ -62,11 +62,6 @@
       }
       return nameColorMap[name];
     }
-    // 3. 標記圖層管理
-    let markersLayer = L.layerGroup().addTo(map);
-
-    // 4. 載入 GPS 資料
-    let allData = [];
 
     // 強化版資料載入
     async function loadGPSData() {
