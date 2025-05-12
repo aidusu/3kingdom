@@ -131,15 +131,19 @@
         if (isNaN(lat) || isNaN(lng)) return;
 
         // 標記創建邏輯保持不變
+        const color = getDeepColorForName(name);
         const marker = L.circleMarker([lat, lng], {
-  radius: 8,
-  color: getDeepColorForName(row['姓名']),
-  fillColor: getDeepColorForName(row['姓名']),
-  fillOpacity: 0.7
-}).bindPopup(`${row['姓名']}<br>時間：${row['時間']});
+          radius: 10,
+          color: color,
+          fillColor: color,
+          fillOpacity: 0.8
+        });
+        marker.bindPopup(
+          `<b>${name || ''}</b><br>UUID: ${uuid || ''}<br>時間: ${time || ''}`
+        );
         marker.addTo(markersLayer);
-        points.push([lat, lng]);
       });
+
 
       if (points.length > 0) {
         map.fitBounds(points, { padding: [30, 30], maxZoom: 15 });
