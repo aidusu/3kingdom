@@ -80,7 +80,7 @@
 
     // 後端驗證函式
     async function verifyCredentials(teamCode, uuid) {
-      const verificationUrl = 'https://script.google.com/macros/s/AKfycbyxuK9nHPqroyDjWAOImYBUApnduWCydM6L5x2YVt0GzBydy5n5MS3sGGtMYd88wuhseA/exec';
+      const verificationUrl = 'https://script.google.com/macros/s/AKfycbwaSSKthl2pfZZIvyu0wie-z9L2_xSZJMUbmPfmrGJdaR2uYzX_p1n3Tr-DBOHDfrAkhw/exec';
       const response = await fetch(`${verificationUrl}?team=${encodeURIComponent(teamCode)}&uuid=${encodeURIComponent(uuid)}`);
       const result = await response.json();
       return result.status === 'success';
