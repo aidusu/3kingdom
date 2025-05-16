@@ -44,12 +44,12 @@
   </style>
 </head>
 <body>
-  <h2>AICare 回報上傳GPS位置</h2>
-  <label for="teamCode">團隊編號:</label>
-  <input type="text" id="teamCode" placeholder="例如：C13" required />
+  <h2>myTrip 打卡上傳GPS位置</h2>
+  <label for="teamCode">旅行代碼（必填）:</label>
+  <input type="text" id="teamCode" placeholder="例如：J25，C24" required />
 
-  <label for="name">你的暱稱:</label>
-  <input type="text" id="name" placeholder="例如：阿芳，小華" />
+  <label for="name">打卡地標（可選填）:</label>
+  <input type="text" id="name" placeholder="例如：瀑布，美食" />
 
   <button onclick="sendGPS()">取得位置並送出</button>
 
@@ -122,7 +122,7 @@
 
           output.textContent = `📍 裝置 UUID：${uuid}\n團隊編號：${teamCode}\n姓名：${name || "(未填)"}\n緯度：${lat}\n經度：${lon}\n時間：${taipeiTime}\n\n資料已準備送出...`;
 
-          fetch("https://script.google.com/macros/s/AKfycbwaSSKthl2pfZZIvyu0wie-z9L2_xSZJMUbmPfmrGJdaR2uYzX_p1n3Tr-DBOHDfrAkhw/exec", {
+          fetch("https://script.google.com/macros/s/AKfycbx4YIRx1aqB8f-3DXQSF3Jk4xrKsL3yO14-2y_MR0uLHfiJOa4PJsMhG-l2l-fb7rI1/exec", {
             method: "POST",
             mode: "no-cors",
             headers: {
