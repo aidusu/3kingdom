@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"><!-- 新增 -->
+  <title>GPS + UUID 傳送器</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      padding: 4vw; 
+      margin: 0;
+      background: #f8f8f8;
+    }
+    label, input, button { 
+      display: block; 
+      margin-top: 4vw; 
+      font-size: 1.1rem; 
+    }
+    input { 
+      padding: 1em; 
+      width: 100%; 
+      box-sizing: border-box;
+      max-width: 400px;
+    }
+    button { 
+      padding: 1em; 
+      margin-top: 6vw; 
+      width: 100%;
+      font-size: 1.1rem;
+    }
+    #output, #error {
+      margin-top: 5vw;
+      font-size: 1rem;
+      word-break: break-all;
+    }
+    @media (max-width: 600px) {
+      body {
+        padding: 3vw;
+      }
+      label, input, button {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>AICare 回報上傳GPS位置</h2>
+  <label for="teamCode">團隊編號:</label>
+  <input type="text" id="teamCode" placeholder="例如：C13" required />
+
+  <label for="name">你的暱稱:</label>
+  <input type="text" id="name" placeholder="例如：阿芳，小華" />
+
+  <button onclick="sendGPS()">取得位置並送出</button>
+
+  <div id="output">尚未執行任何動作</div>
+  <div id="error"></div>
+  <!-- JS 內容不變 -->
+  <script>
+    // 產生或取得裝置唯一識別 UUID
+    let uuid = localStorage.getItem("deviceUUID");
+    if (!uuid) {
+      uuid = crypto.randomUUID();
+      localStorage.setItem("deviceUUID", uuid);
+    }
+
+    // 將 Date 物件格式化為台北時區 YYYY/MM/DD HH:MM
+    function formatTaipeiTime(date) {
+      // 取得台北時區的年月日時分
+      const options = {
+        timeZone: 'Asia/Taipei',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      };
+      // 例如 "2025/05/09 22:18"
+      // 部分瀏覽器會回傳 "2025/05/09 22:18:00"，我們只取到分鐘
+      let str = date.toLocaleString('zh-TW', options);
+      // 只取到分鐘（去掉秒數）
+      str = str.replace(/(\d{2}):(\d{2}):\d{2}$/, '$1:$2');
+      return str;
+    }
+
+    function sendGPS() {
+      const output = document.getElementById("output");
+      const error = document.getElementById("error");
+      const teamCode = document.getElementById("teamCode").value.trim();
+      const name = document.getElementById("name").value.trim();
+
+      output.textContent = "正在取得 GPS 位置...";
+      error.textContent = "";
+
+      // 驗證必填欄位
+      if (!teamCode) {
+        error.textContent = "⚠️ 請輸入團隊編號";
+        return;
+      }
+
+      if (!navigator.geolocation) {
+        error.textContent = "⚠️ 瀏覽器不支援 GPS 定位";
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude.toFixed(6);
+          const lon = position.coords.longitude.toFixed(6);
+          const now = new Date();
+          const taipeiTime = formatTaipeiTime(now);
+
+          const payload = {
+            teamCode: teamCode,
+            uuid: uuid,
+            name: name || "",
+            latitude: lat,
+            longitude: lon,
+            timestamp: taipeiTime,
+          };
+
+          output.textContent = `📍 裝置 UUID：${uuid}\n團隊編號：${teamCode}\n姓名：${name || "(未填)"}\n緯度：${lat}\n經度：${lon}\n時間：${taipeiTime}\n\n資料已準備送出...`;
+
+          fetch("https://script.google.com/macros/s/AKfycbwaSSKthl2pfZZIvyu0wie-z9L2_xSZJMUbmPfmrGJdaR2uYzX_p1n3Tr-DBOHDfrAkhw/exec", {
+            method: "POST",
+            mode: "no-cors",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+          }).then(() => {
+            output.textContent += "\n✅ 資料已送出！";
+          }).catch((err) => {
+            error.textContent = "❌ 傳送失敗：" + err;
+          });
+        },
+        (err) => {
+          error.textContent = "❌ 定位失敗：" + err.message;
+        }
+      );
+    }
+  </script>
+
+</body>
+</html>
