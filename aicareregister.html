@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+     <meta charset="UTF-8">
+    <title>團隊註冊系統</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <style>
+        body {
+            font-family: "Segoe UI", "Arial", "微軟正黑體", sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f5f6fa;
+        }
+        .container {
+            max-width: 420px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 24px 12px 16px 12px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin-top: 18vw;
+        }
+        h2 {
+            text-align: center;
+            font-size: 1.3em;
+            margin-bottom: 24px;
+            letter-spacing: 2px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 1em;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 14px 10px;
+            margin-bottom: 18px;
+            border: 1.5px solid #d6d6d6;
+            border-radius: 6px;
+            font-size: 1.1em;
+            box-sizing: border-box;
+            background: #f9f9f9;
+        }
+        button[type="submit"] {
+            width: 100%;
+            padding: 16px 0;
+            background: #007bff;
+            color: #fff;
+            font-size: 1.15em;
+            border: none;
+            border-radius: 6px;
+            margin-top: 8px;
+            cursor: pointer;
+            letter-spacing: 2px;
+        }
+        button[type="submit"]:active {
+            background: #0056b3;
+        }
+        #result {
+            margin-top: 28px;
+            color: green;
+            text-align: center;
+            font-size: 1em;
+        }
+        .info-list {
+            margin-top: 12px;
+            color: #333;
+            font-size: 0.98em;
+        }
+        @media (max-width: 480px) {
+            .container {
+                margin-top: 32px;
+                padding: 12px 4vw 8px 4vw;
+                border-radius: 0;
+                box-shadow: none;
+            }
+            h2 {
+                font-size: 1.1em;
+            }
+            input[type="text"], button[type="submit"] {
+                font-size: 1em;
+                padding: 12px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>團隊註冊系統</h2>
+        <form id="loginForm" autocomplete="off">
+            <!-- 表單欄位保持不變 -->
+            <label for="leaderId">團隊編號</label>
+            <input type="text" id="leaderId" name="團隊編號" pattern="[A-Za-z]{1}[0-9]{2}" title="請輸入一個英文字及兩個阿拉伯數字" required>
+            
+            <label for="leaderName">領隊代號</label>
+            <input type="text" id="leaderName" name="領隊" required>
+            
+            <label for="userName">你的暱稱</label>
+            <input type="text" id="userName" name="姓名" required>
+            
+            <!-- 隱藏欄位保持不變 -->
+            <input type="hidden" name="UUID" id="uuidField">
+            <input type="hidden" name="緯度" id="latField">
+            <input type="hidden" name="經度" id="lngField">
+            <input type="hidden" name="時間" id="timeField">
+            
+            <button type="submit">完成註冊</button>
+        </form>
+        <div id="result"></div>
+    </div>
+
+<script>
+// 強化版 UUID 生成（支援更多瀏覽器）
+function getUUID() {
+    let uuid = localStorage.getItem("deviceUUID");
+    if (!uuid) {
+        if (window.crypto?.randomUUID) {
+            uuid = crypto.randomUUID();
+        } else {
+            const array = new Uint8Array(16);
+            window.crypto.getRandomValues(array);
+            uuid = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
+        }
+        localStorage.setItem("deviceUUID", uuid);
+    }
+    return uuid;
+}
+
+
+// 修改時間格式為 yyyy:MM:dd hh:mm
+function getTaipeiTime() {
+  const now = new Date();
+  now.setHours(now.getHours()); // 轉換為台北時間
+  return `${now.getFullYear()}:${pad(now.getMonth()+1)}:${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+}
+// 補零函式 (必要)
+function pad(n) {
+  return n < 10 ? '0' + n : n;
+}
+
+// 頁面初始化
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('uuidField').value = getUUID();
+  document.getElementById('timeField').value = getTaipeiTime();
+});
+
+     
+// 地理定位功能增加錯誤處理
+function getGeolocation() {
+    return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+            reject('此瀏覽器不支援地理定位功能');
+        } else {
+            navigator.geolocation.getCurrentPosition(
+                position => resolve(position.coords),
+                error => reject(`定位失敗：${error.message}`),
+                { 
+                    timeout: 10000,
+                    maximumAge: 60000  // 增加快取時間
+                }
+            );
+        }
+    });
+}
+
+// 表單提交處理
+document.getElementById('loginForm').onsubmit = async function(e) {
+  e.preventDefault();
+  
+  try {
+    const coords = await getGeolocation().catch(() => ({
+      latitude: 25.047760,
+      longitude: 121.517000
+    }));
+
+    // 更新隱藏欄位值
+    document.getElementById('latField').value = coords.latitude.toFixed(6);
+    document.getElementById('lngField').value = coords.longitude.toFixed(6);
+    document.getElementById('timeField').value = getTaipeiTime();
+
+    const formData = new FormData(this);
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbzAKKpt5UaZR6Yhmx1NjwvcBi4QDK6KgInvkoXQAW7JJa3rdiAXAKRi6MAsUhxhKTUs/exec';
+    const params = new URLSearchParams();
+    params.append('action', 'submit');
+
+    const response = await fetch(`${scriptURL}?${params.toString()}`, {
+      method: 'POST',
+      body: formData
+    });
+        
+        // 處理回應
+        const data = await response.json();
+        if(data.result === 'success') {
+            document.getElementById('result').innerHTML = `
+                <strong>註冊成功！</strong>
+                <div class="info-list">
+                    <p>團隊編號：${formData.get('團隊編號')}</p>
+                    <p>領隊姓名：${formData.get('領隊')}</p>
+                    <p>用戶姓名：${formData.get('姓名')}</p>
+                    <p>裝置 UUID：${formData.get('UUID')}</p>
+                    <p>定位座標：${formData.get('緯度')}, ${formData.get('經度')}</p>
+                    <p>註冊時間：${formData.get('時間')}</p>
+                </div>
+            `;
+            this.reset();
+            
+            // 保留UUID（避免重置後重新生成）
+            document.getElementById('uuidField').value = getUUID();
+        } else {
+            throw new Error(data.error || '伺服器回傳未知錯誤');
+        }
+    } catch (error) {
+        document.getElementById('result').innerHTML = 
+            `<span style="color:red;font-weight:500">錯誤：${error.message}</span>`;
+        console.error('提交錯誤:', error);
+    }
+};
+</script>
+</body>
+</html>
