@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>查詢團隊位置</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: "Noto Sans TC", Arial, sans-serif;
+      padding: 2em;
+    }
+    form {
+      max-width: 400px;
+      margin: auto;
+      background: #f8f8f8;
+      padding: 1.5em;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .input-group {
+      margin: 1em 0;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.3em;
+    }
+    input {
+      width: 100%;
+      padding: 0.5em;
+      font-size: 1em;
+    }
+    button {
+      width: 100%;
+      padding: 0.7em;
+      font-size: 1em;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .message {
+      margin-top: 1em;
+      text-align: center;
+      color: red;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>AICare查詢團隊位置</h2>
+  <p>請輸入團體編號與 UUID 前五碼：</p>
+
+  <form id="queryForm">
+    <div class="input-group">
+      <label for="teamInput">團體編號：</label>
+      <input type="text" id="teamInput" required>
+    </div>
+    <div class="input-group">
+      <label for="uuidInput">UUID 前五碼：</label>
+      <input type="text" id="uuidInput" required pattern="[A-Fa-f0-9]{5}" title="請輸入 UUID 的前五碼">
+    </div>
+    <button type="submit">查詢位置</button>
+  </form>
+
+  <div class="message" id="message"></div>
+
+  <script>
+    let data = [];
+
+    async function loadGPSData() {
+      const url = 'https://opensheet.elk.sh/1SP7mminCBogb2bZQ3XPvU4cptKYa2ye80YYXLIzlcEU/位置記錄';
+      try {
+        const res = await fetch(url);
+        data = await res.json();
+        console.log("資料載入成功，共有筆數：", data.length);
+      } catch (e) {
+        document.getElementById('message').textContent = '❌ 無法載入資料，請稍後再試。';
+      }
+    }
+
+    loadGPSData();
+
+    document.getElementById('queryForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const team = document.getElementById('teamInput').value.trim();
+      const uuid = document.getElementById('uuidInput').value.trim().slice(0,5).toUpperCase();
+
+      const match = data.find(row => 
+        row['團隊編號']?.trim() === team &&
+        row['UUID']?.toUpperCase().startsWith(uuid)
+      );
+
+      if (match) {
+        // 驗證通過，導向 map.html
+        window.location.href = `http://aidusu.github.io/3kingdom/aitripmap2.html?team=${encodeURIComponent(team)}&uuid=${encodeURIComponent(uuid)}`;
+      } else {
+        // 顯示錯誤訊息
+        document.getElementById('message').textContent = '⚠️ 你可能不屬於這個團隊，請確認輸入是否正確。';
+      }
+    });
+  </script>
+
+</body>
+</html>
