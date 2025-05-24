@@ -45,6 +45,7 @@
           body: JSON.stringify({ memberId, uuid })
         });
         const data = await response.json();
+        const redirectUrl = "https://sites.google.com/view/adtrip/%E6%9F%A5%E7%9C%8B%E5%9C%B0%E5%9C%96";
 
         if (data.status === 'success') {
           resultDiv.style.color = 'green';
