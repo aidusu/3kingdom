@@ -4,83 +4,46 @@
   <meta charset="UTF-8">
   <title>會員登入驗證</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {
-      font-family: Arial, "微軟正黑體", sans-serif;
-      background: #f9f9f9;
-      padding: 2em;
-    }
-    .container {
-      max-width: 400px;
-      margin: auto;
-      background: #fff;
-      padding: 2em;
-      border-radius: 8px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.1);
-    }
-    input, button {
-      width: 100%;
-      font-size: 1rem;
-      margin: 0.5em 0;
-      padding: 0.6em;
-    }
-    .success { color: green; }
-    .error { color: red; }
-  </style>
 </head>
 <body>
-  <div class="container">
-    <h2>會員登入驗證</h2>
-    <form id="loginForm" method="POST" target="hidden_iframe"
-      action="https://script.google.com/macros/s/AKfycbwTgcUBjl_porXbBca-CBj8hlsgMcc_dTTxjrPHU4znnZUExz0kCHN6C4GxtMuyrC1r/exec">
-      <label for="memberId">會員編號：</label>
-      <input type="text" name="memberId" id="memberId" required>
-      <input type="hidden" name="uuid" id="uuid">
-      <button type="submit">送出</button>
-    </form>
-    <p id="result"></p>
-    <iframe name="hidden_iframe" style="display:none;" onload="handleResponse()"></iframe>
-  </div>
+  <h2>會員登入驗證</h2>
+  <form id="loginForm" method="POST" action="https://script.google.com/macros/s/YOUR_DEPLOYED_SCRIPT_ID/exec" target="result_iframe">
+    <input type="text" name="memberId" placeholder="會員編號" required>
+    <input type="hidden" name="uuid" id="uuid">
+    <button type="submit">送出</button>
+  </form>
+
+  <iframe name="result_iframe" style="display:none;" onload="checkResult()"></iframe>
+  <p id="resultMsg"></p>
 
   <script>
-    function getUUID() {
-      let uuid = localStorage.getItem("deviceUUID");
-      if (!uuid) {
-        if (window.crypto?.randomUUID) {
-          uuid = crypto.randomUUID();
-        } else {
-          const array = new Uint8Array(16);
-          window.crypto.getRandomValues(array);
-          uuid = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
-        }
-        localStorage.setItem("deviceUUID", uuid);
-      }
+    document.getElementById("uuid").value = localStorage.getItem("deviceUUID") || (function () {
+      const uuid = crypto.randomUUID();
+      localStorage.setItem("deviceUUID", uuid);
       return uuid;
-    }
+    })();
 
-    // 初始化 UUID
-    document.getElementById("uuid").value = getUUID();
-
-    // 透過 URL fragment 傳回結果顯示
-    function handleResponse() {
+    function checkResult() {
       const hash = window.location.hash;
-      const result = document.getElementById("result");
-      if (hash.includes("success")) {
-        result.textContent = "✅ 驗證成功，歡迎登入！";
-        result.className = "success";
-      } else if (hash.includes("uuid")) {
-        result.textContent = "❌ 裝置 UUID 不正確";
-        result.className = "error";
-      } else if (hash.includes("notfound")) {
-        result.textContent = "❌ 查無此會員編號";
-        result.className = "error";
-      } else if (hash.includes("error")) {
-        result.textContent = "❌ 發生錯誤，請稍後再試";
-        result.className = "error";
+      const result = document.getElementById("resultMsg");
+
+      if (hash === "#success") {
+        result.textContent = "✅ 驗證成功";
+        result.style.color = "green";
+      } else if (hash === "#uuid") {
+        result.textContent = "❌ UUID 不符";
+        result.style.color = "red";
+      } else if (hash === "#notfound") {
+        result.textContent = "❌ 查無會員";
+        result.style.color = "red";
+      } else if (hash === "#error") {
+        result.textContent = "❌ 發生錯誤";
+        result.style.color = "red";
       }
-      // 清除 hash
+      // 清掉 hash
       history.replaceState(null, "", " ");
     }
   </script>
 </body>
 </html>
+
