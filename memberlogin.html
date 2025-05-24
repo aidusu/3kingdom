@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>會員登入驗證</title>
+  <title>成員身分驗證</title>
   <style>
     body { font-family: Arial, "微軟正黑體", sans-serif; padding: 2em; background: #f9f9f9; }
     .container { max-width: 400px; margin: auto; background: #fff; padding: 2em; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
@@ -13,15 +13,15 @@
 </head>
 <body>
   <div class="container">
-    <h2>會員登入驗證</h2>
-    <form method="GET" action="https://script.google.com/macros/s/AKfycbyoTIDuSPjVgXfJ0btRy2lbJHqO23wqxt__BbMEwrhWyuaqXaM6-fVh06kPP6IHO2wV/exec">
-      <label for="memberId">團隊編號：</label>
+    <h2>成員身分驗認證</h2>
+    <form method="GET" action="https://script.google.com/macros/s/AKfycbz1bdTqDqHsmb1Ngz6GmP_NFCHykpcpz2ygqNawsU4gQR2pyIuJp1jMHltFRQkXYT56/exec">
+      <label for="memberId">姓名或編號：</label>
       <input type="text" name="memberId" id="memberId" required />
 
       <label for="uuid">本機 UUID：</label>
       <input type="text" name="uuid" id="uuid" readonly />
 
-      <button type="submit">送出驗證</button>
+      <button type="submit">送出認證</button>
     </form>
   </div>
 
