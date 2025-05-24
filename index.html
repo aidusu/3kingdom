@@ -160,7 +160,8 @@
                 }
             } catch (error) {
                 resultDiv.className = "error";
-                resultDiv.textContent = "連線失敗，請稍後再試";
+                resultDiv.textContent = "連線失敗，請稍後再試\n錯誤：" + error.message;
+;
             }
         }
     </script>
