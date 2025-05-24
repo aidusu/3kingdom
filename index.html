@@ -1,146 +1,87 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"><!-- 新增 -->
-  <title>GPS + UUID 傳送器</title>
-  <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      padding: 4vw; 
-      margin: 0;
-      background: #f8f8f8;
-    }
-    label, input, button { 
-      display: block; 
-      margin-top: 4vw; 
-      font-size: 1.1rem; 
-    }
-    input { 
-      padding: 1em; 
-      width: 100%; 
-      box-sizing: border-box;
-      max-width: 400px;
-    }
-    button { 
-      padding: 1em; 
-      margin-top: 6vw; 
-      width: 100%;
-      font-size: 1.1rem;
-    }
-    #output, #error {
-      margin-top: 5vw;
-      font-size: 1rem;
-      word-break: break-all;
-    }
-    @media (max-width: 600px) {
-      body {
-        padding: 3vw;
-      }
-      label, input, button {
-        font-size: 1rem;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>會員登入驗證</title>
+    <style>
+        body { font-family: Arial, "微軟正黑體", sans-serif; margin: 40px; }
+        .container { max-width: 400px; margin: 0 auto; }
+        label, input, button { display: block; width: 100%; margin-bottom: 15px; }
+        #uuid { color: #2a5d9f; font-weight: bold; margin-bottom: 15px; }
+        #result { margin-top: 20px; padding: 10px; }
+        .success { background: #dff0d8; color: #3c763d; }
+        .error { background: #f2dede; color: #a94442; }
+    </style>
 </head>
 <body>
-  <h2>AI Trip 回報上傳GPS位置</h2>
-  <label for="teamCode">團隊編號（必填）:</label>
-  <input type="text" id="teamCode" placeholder="例如：A31，B32" required />
+    <div class="container">
+        <h2>會員登入驗證</h2>
+        <label for="memberId">會員編號：</label>
+        <input type="text" id="memberId" placeholder="請輸入會員編號">
+        <button onclick="submitForm()">送出</button>
+        <div>本機 UUID：<span id="uuid"></span></div>
+        <div id="result"></div>
+    </div>
 
-  <label for="name">你的姓名（可選填）:</label>
-  <input type="text" id="name" placeholder="例如：Tom，May" />
-
-  <button onclick="sendGPS()">取得位置並送出</button>
-
-  <div id="output">尚未執行任何動作</div>
-  <div id="error"></div>
-  <!-- JS 內容不變 -->
-  <script>
-    // 產生或取得裝置唯一識別 UUID
-    let uuid = localStorage.getItem("deviceUUID");
-    if (!uuid) {
-      uuid = crypto.randomUUID();
-      localStorage.setItem("deviceUUID", uuid);
-    }
-
-    // 將 Date 物件格式化為台北時區 YYYY/MM/DD HH:MM
-    function formatTaipeiTime(date) {
-      // 取得台北時區的年月日時分
-      const options = {
-        timeZone: 'Asia/Taipei',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      };
-      // 例如 "2025/05/09 22:18"
-      // 部分瀏覽器會回傳 "2025/05/09 22:18:00"，我們只取到分鐘
-      let str = date.toLocaleString('zh-TW', options);
-      // 只取到分鐘（去掉秒數）
-      str = str.replace(/(\d{2}):(\d{2}):\d{2}$/, '$1:$2');
-      return str;
-    }
-
-    function sendGPS() {
-      const output = document.getElementById("output");
-      const error = document.getElementById("error");
-      const teamCode = document.getElementById("teamCode").value.trim();
-      const name = document.getElementById("name").value.trim();
-
-      output.textContent = "正在取得 GPS 位置...";
-      error.textContent = "";
-
-      // 驗證必填欄位
-      if (!teamCode) {
-        error.textContent = "⚠️ 請輸入團隊編號";
-        return;
-      }
-
-      if (!navigator.geolocation) {
-        error.textContent = "⚠️ 瀏覽器不支援 GPS 定位";
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const lat = position.coords.latitude.toFixed(6);
-          const lon = position.coords.longitude.toFixed(6);
-          const now = new Date();
-          const taipeiTime = formatTaipeiTime(now);
-
-          const payload = {
-            teamCode: teamCode,
-            uuid: uuid,
-            name: name || "",
-            latitude: lat,
-            longitude: lon,
-            timestamp: taipeiTime,
-          };
-
-          output.textContent = `📍 裝置 UUID：${uuid}\n團隊編號：${teamCode}\n姓名：${name || "(未填)"}\n緯度：${lat}\n經度：${lon}\n時間：${taipeiTime}\n\n資料已準備送出...`;
-
-          fetch("https://script.google.com/macros/s/AKfycbx4YIRx1aqB8f-3DXQSF3Jk4xrKsL3yO14-2y_MR0uLHfiJOa4PJsMhG-l2l-fb7rI1/exec", {
-            method: "POST",
-            mode: "no-cors",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
-          }).then(() => {
-            output.textContent += "\n✅ 資料已送出！";
-          }).catch((err) => {
-            error.textContent = "❌ 傳送失敗：" + err;
-          });
-        },
-        (err) => {
-          error.textContent = "❌ 定位失敗：" + err.message;
+    <script>
+        // 產生或取得本機 UUID
+        function getUUID() {
+            let uuid = localStorage.getItem("deviceUUID");
+            if (!uuid) {
+                if (window.crypto?.randomUUID) {
+                    uuid = crypto.randomUUID();
+                } else {
+                    const array = new Uint8Array(16);
+                    window.crypto.getRandomValues(array);
+                    uuid = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
+                }
+                localStorage.setItem("deviceUUID", uuid);
+            }
+            return uuid;
         }
-      );
-    }
-  </script>
 
+        // 頁面載入時顯示 UUID
+        document.getElementById('uuid').textContent = getUUID();
+
+        // 送出表單
+        async function submitForm() {
+            const memberId = document.getElementById('memberId').value.trim();
+            const uuid = getUUID();
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = "";
+            resultDiv.className = "";
+
+            if (!memberId) {
+                resultDiv.className = "error";
+                resultDiv.textContent = "請輸入會員編號";
+                return;
+            }
+
+            try {
+                const response = await fetch('YOUR_GOOGLE_APPS_SCRIPT_URL', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ memberId, uuid })
+                });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    resultDiv.className = "success";
+                    resultDiv.textContent = "驗證成功，正在跳轉...";
+                    setTimeout(() => {
+                        window.location.href = "http://www.aitrip.idv.tw";
+                    }, 1000);
+                } else {
+                    resultDiv.className = "error";
+                    resultDiv.textContent = "驗證失敗：" + (data.message || "請確認會員編號與裝置是否正確");
+                }
+            } catch (error) {
+                resultDiv.className = "error";
+                resultDiv.textContent = "連線失敗，請稍後再試";
+            }
+        }
+    </script>
 </body>
 </html>
+
+
