@@ -2,69 +2,41 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <title>會員登入驗證</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>會員登入驗證</title>
+  <style>
+    body { font-family: Arial, "微軟正黑體", sans-serif; padding: 2em; background: #f9f9f9; }
+    .container { max-width: 400px; margin: auto; background: #fff; padding: 2em; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    input, button { font-size: 1.1rem; padding: 0.6em; width: 100%; margin-top: 1em; }
+    label { display: block; margin-top: 1.2em; font-size: 1.1rem; }
+  </style>
 </head>
 <body>
-  <h2>會員登入驗證</h2>
-  <label for="memberId">會員編號：</label>
-  <input type="text" id="memberId" placeholder="請輸入會員編號" />
-  <button onclick="submitForm()">送出</button>
-  <div id="result" style="margin-top:1em;color:red;"></div>
+  <div class="container">
+    <h2>會員登入驗證</h2>
+    <form method="GET" action="https://script.google.com/macros/s/AKfycbyoTIDuSPjVgXfJ0btRy2lbJHqO23wqxt__BbMEwrhWyuaqXaM6-fVh06kPP6IHO2wV/exec">
+      <label for="memberId">團隊編號：</label>
+      <input type="text" name="memberId" id="memberId" required />
+
+      <label for="uuid">本機 UUID：</label>
+      <input type="text" name="uuid" id="uuid" readonly />
+
+      <button type="submit">送出驗證</button>
+    </form>
+  </div>
 
   <script>
-    // 取得或產生 UUID
+    // 自動產生或取得本機 uuid
     function getUUID() {
       let uuid = localStorage.getItem("deviceUUID");
       if (!uuid) {
-        if (window.crypto?.randomUUID) {
-          uuid = crypto.randomUUID();
-        } else {
-          const array = new Uint8Array(16);
-          window.crypto.getRandomValues(array);
-          uuid = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
-        }
+        uuid = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36);
         localStorage.setItem("deviceUUID", uuid);
       }
       return uuid;
     }
 
-    async function submitForm() {
-      const memberId = document.getElementById('memberId').value.trim();
-      const uuid = getUUID();
-      const resultDiv = document.getElementById('result');
-      resultDiv.textContent = "";
-      if (!memberId) {
-        resultDiv.textContent = "請輸入會員編號";
-        return;
-      }
-      try {
-        const response = await fetch('https://script.google.com/macros/s/AKfycbxfRG8YFYCKWHJz6A3PQS3s5yXNs919h-KHn6TzQGX_jKc8de5yDYD0VN-IQZIqTC3y/exec', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ memberId, uuid })
-        });
-        const data = await response.json();
-
-        if (data.status === 'success') {
-          resultDiv.style.color = 'green';
-          resultDiv.textContent = "驗證成功，正在導向...";
-          // 導向後端指定的頁面
-          setTimeout(() => {
-            window.location.href = data.redirectUrl;
-          }, 1000);
-        } else {
-          resultDiv.style.color = 'red';
-          resultDiv.textContent = "驗證失敗：" + (data.message || "請確認會員編號與裝置是否正確");
-        }
-      } catch (error) {
-        resultDiv.style.color = 'red';
-        resultDiv.textContent = "連線失敗，請稍後再試";
-      }
-    }
+    document.getElementById("uuid").value = getUUID();
   </script>
 </body>
 </html>
-
-
-
