@@ -1,172 +1,42 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <title>會員登入驗證</title>
-    <!-- 重點1：加入viewport設定 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        :root {
-            font-size: 16px;
-        }
-        body {
-            font-family: Arial, "微軟正黑體", sans-serif;
-            margin: 0;
-            padding: 0;
-            background: #f9f9f9;
-        }
-        .container {
-            max-width: 400px;
-            margin: 5vh auto 0 auto;
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-            padding: 2rem 1.5rem 2rem 1.5rem;
-        }
-        h2 {
-            font-size: 1.7rem;
-            margin-bottom: 1.2rem;
-        }
-        label {
-            font-size: 1.1rem;
-            margin-bottom: 0.3rem;
-        }
-        input[type="text"] {
-            font-size: 1.1rem;
-            padding: 0.7em;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            margin-bottom: 1.1rem;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        button {
-            font-size: 1.1rem;
-            padding: 0.7em;
-            border: none;
-            border-radius: 6px;
-            background: #2a5d9f;
-            color: #fff;
-            cursor: pointer;
-            width: 100%;
-            margin-bottom: 1.2rem;
-            transition: background 0.2s;
-        }
-        button:hover {
-            background: #184172;
-        }
-        #uuid {
-            color: #2a5d9f;
-            font-weight: bold;
-            margin-bottom: 1rem;
-            word-break: break-all;
-            font-size: 1.05rem;
-        }
-        #result {
-            margin-top: 1.2rem;
-            padding: 0.9em;
-            border-radius: 6px;
-            font-size: 1.08rem;
-        }
-        .success {
-            background: #dff0d8;
-            color: #3c763d;
-        }
-        .error {
-            background: #f2dede;
-            color: #a94442;
-        }
-
-        /* 重點2：手機螢幕調整字體與間距 */
-        @media (max-width: 600px) {
-            :root {
-                font-size: 18px;
-            }
-            .container {
-                max-width: 98vw;
-                padding: 1.2rem 0.5rem 1.5rem 0.5rem;
-                margin-top: 2vh;
-            }
-            h2 {
-                font-size: 1.35rem;
-            }
-            label, input, button, #uuid, #result {
-                font-size: 1rem;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>會員登入驗證</title>
+  <style>
+    body { font-family: Arial, "微軟正黑體", sans-serif; padding: 2em; background: #f9f9f9; }
+    .container { max-width: 400px; margin: auto; background: #fff; padding: 2em; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    input, button { font-size: 1.1rem; padding: 0.6em; width: 100%; margin-top: 1em; }
+    label { display: block; margin-top: 1.2em; font-size: 1.1rem; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h2>會員登入驗證</h2>
-        <label for="memberId">會員編號：</label>
-        <input type="text" id="memberId" placeholder="請輸入會員編號">
-        <button onclick="submitForm()">送出</button>
-        <div>本機 UUID：<span id="uuid"></span></div>
-        <div id="result"></div>
-    </div>
+  <div class="container">
+    <h2>會員登入驗證</h2>
+    <form method="GET" action="https://script.google.com/macros/s/你的_DEPLOY_URL/exec">
+      <label for="memberId">會員編號：</label>
+      <input type="text" name="memberId" id="memberId" required />
 
-    <script>
-        // 產生或取得本機 UUID
-        function getUUID() {
-            let uuid = localStorage.getItem("deviceUUID");
-            if (!uuid) {
-                if (window.crypto?.randomUUID) {
-                    uuid = crypto.randomUUID();
-                } else {
-                    const array = new Uint8Array(16);
-                    window.crypto.getRandomValues(array);
-                    uuid = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
-                }
-                localStorage.setItem("deviceUUID", uuid);
-            }
-            return uuid;
-        }
+      <label for="uuid">本機 UUID：</label>
+      <input type="text" name="uuid" id="uuid" readonly />
 
-        // 頁面載入時顯示 UUID
-        document.getElementById('uuid').textContent = getUUID();
+      <button type="submit">送出驗證</button>
+    </form>
+  </div>
 
-        // 送出表單
-        async function submitForm() {
-            const memberId = document.getElementById('memberId').value.trim();
-            const uuid = getUUID();
-            const resultDiv = document.getElementById('result');
-            resultDiv.textContent = "";
-            resultDiv.className = "";
+  <script>
+    // 自動產生或取得本機 uuid
+    function getUUID() {
+      let uuid = localStorage.getItem("deviceUUID");
+      if (!uuid) {
+        uuid = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36);
+        localStorage.setItem("deviceUUID", uuid);
+      }
+      return uuid;
+    }
 
-            if (!memberId) {
-                resultDiv.className = "error";
-                resultDiv.textContent = "請輸入會員編號";
-                return;
-            }
-
-            try {
-                const response = await fetch('https://script.google.com/macros/s/AKfycbzKkWErVhUn7fD-YylaP-YTAPdhh13ym-Ip_EJneA56rrxqf79d8peF6ZnsoASlyfyp/exec', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ memberId, uuid })
-                });
-                const data = await response.json();
-
-                if (data.status === 'success') {
-                    resultDiv.className = "success";
-                    resultDiv.textContent = "驗證成功，正在跳轉...";
-                    setTimeout(() => {
-                        window.location.href = "http://www.aitrip.idv.tw";
-                    }, 1000);
-                } else {
-                    resultDiv.className = "error";
-                    resultDiv.textContent = "驗證失敗：" + (data.message || "請確認會員編號與裝置是否正確");
-                }
-            } catch (error) {
-                resultDiv.className = "error";
-                resultDiv.textContent = "連線失敗，請稍後再試\n錯誤：" + error.message;
-;
-            }
-        }
-    </script>
+    document.getElementById("uuid").value = getUUID();
+  </script>
 </body>
 </html>
-
-
-
