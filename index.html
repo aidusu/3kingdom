@@ -141,8 +141,7 @@
             }
 
             try {
-                const response = await fetch('https://script.google.com/macros/s/AKfycbzKkWErVhUn7fD-YylaP-YTAPdhh13ym-Ip_EJneA56rrxqf79d8peF6ZnsoASlyfyp/exec
-', {
+                const response = await fetch('https://script.google.com/macros/s/AKfycbzKkWErVhUn7fD-YylaP-YTAPdhh13ym-Ip_EJneA56rrxqf79d8peF6ZnsoASlyfyp/exec', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ memberId, uuid })
