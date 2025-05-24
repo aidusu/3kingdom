@@ -3,14 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <title>會員登入驗證</title>
+    <!-- 重點1：加入viewport設定 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { font-family: Arial, "微軟正黑體", sans-serif; margin: 40px; }
-        .container { max-width: 400px; margin: 0 auto; }
-        label, input, button { display: block; width: 100%; margin-bottom: 15px; }
-        #uuid { color: #2a5d9f; font-weight: bold; margin-bottom: 15px; }
-        #result { margin-top: 20px; padding: 10px; }
-        .success { background: #dff0d8; color: #3c763d; }
-        .error { background: #f2dede; color: #a94442; }
+        :root {
+            font-size: 16px;
+        }
+        body {
+            font-family: Arial, "微軟正黑體", sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f9f9f9;
+        }
+        .container {
+            max-width: 400px;
+            margin: 5vh auto 0 auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            padding: 2rem 1.5rem 2rem 1.5rem;
+        }
+        h2 {
+            font-size: 1.7rem;
+            margin-bottom: 1.2rem;
+        }
+        label {
+            font-size: 1.1rem;
+            margin-bottom: 0.3rem;
+        }
+        input[type="text"] {
+            font-size: 1.1rem;
+            padding: 0.7em;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            margin-bottom: 1.1rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            font-size: 1.1rem;
+            padding: 0.7em;
+            border: none;
+            border-radius: 6px;
+            background: #2a5d9f;
+            color: #fff;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 1.2rem;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #184172;
+        }
+        #uuid {
+            color: #2a5d9f;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            word-break: break-all;
+            font-size: 1.05rem;
+        }
+        #result {
+            margin-top: 1.2rem;
+            padding: 0.9em;
+            border-radius: 6px;
+            font-size: 1.08rem;
+        }
+        .success {
+            background: #dff0d8;
+            color: #3c763d;
+        }
+        .error {
+            background: #f2dede;
+            color: #a94442;
+        }
+
+        /* 重點2：手機螢幕調整字體與間距 */
+        @media (max-width: 600px) {
+            :root {
+                font-size: 18px;
+            }
+            .container {
+                max-width: 98vw;
+                padding: 1.2rem 0.5rem 1.5rem 0.5rem;
+                margin-top: 2vh;
+            }
+            h2 {
+                font-size: 1.35rem;
+            }
+            label, input, button, #uuid, #result {
+                font-size: 1rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -83,5 +166,6 @@
     </script>
 </body>
 </html>
+
 
 
