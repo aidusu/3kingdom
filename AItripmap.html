@@ -4,147 +4,124 @@
   <meta charset="UTF-8">
   <title>GPS 地圖標記展示</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
   <style>
-    #map { height: 70vh; width: 100%; }
-    body { font-family: "Noto Sans TC", Arial, sans-serif; margin: 20px; }
-    .input-group { margin-bottom: 15px; }
-    input { padding: 8px; margin-right: 10px; width: 200px; }
-    #errorMsg { color: #dc3545; margin-top: 10px; display: none; }
-    button { padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 4px; }
+    #map { height: 80vh; width: 100%; }
+    body { font-family: "Noto Sans TC", Arial, sans-serif; }
+    #filterForm { margin-bottom: 1em; }
   </style>
 </head>
 <body>
-  <h2>團隊位置驗證與呈現</h2>
-  <div class="input-group">
-    <input type="text" id="teamInput" placeholder="團隊編號" required>
-    <input type="text" id="uuidInput" placeholder="UUID 前5碼" maxlength="5" required>
-    <button onclick="validateAndShow()">查詢位置</button>
-  </div>
-  <div id="errorMsg"></div>
+  <h2>AITrip 安心出遊，看見你我</h2>
+  <p>海外旅遊，登山揪團，讓領隊或夥伴們知道彼此位置!</p> 
+  <form id="filterForm">
+    <label for="teamInput">團隊編號：</label>
+    <input type="text" id="teamInput" required>
+    <button type="submit">查詢</button>
+  </form>
   <div id="map"></div>
 
+  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
   <script>
-    let map;
-    let markersLayer;
+    // 1. 初始化地圖
+    const map = L.map('map').setView([24, 121], 8); // 台灣中心點
 
-    // 初始化地圖
-    function initMap() {
-      map = L.map('map').setView([23.5, 121], 7);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 18,
-        attribution: '© OpenStreetMap contributors'
-      }).addTo(map);
-      markersLayer = L.layerGroup().addTo(map);
-    }
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
 
-    // 顏色分配邏輯
-    const deepColors = ['#8B0000', '#00008B', '#006400', '#4B0082', '#2F4F4F'];
+    // 2. 深色顏色池與姓名分配邏輯
+    const deepColors = [
+      '#8B0000', '#00008B', '#006400', '#4B0082', '#2F4F4F',
+      '#800000', '#191970', '#483D8B', '#2E0854', '#0B3D91'
+    ];
     const nameColorMap = {};
-    function getColorForName(name) {
+    function getDeepColorForName(name) {
       if (!nameColorMap[name]) {
-        nameColorMap[name] = deepColors[Object.keys(nameColorMap).length % deepColors.length];
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) {
+          hash += name.charCodeAt(i);
+        }
+        nameColorMap[name] = deepColors[hash % deepColors.length];
       }
       return nameColorMap[name];
     }
 
-    // 驗證與顯示主邏輯
-    async function validateAndShow() {
-      const teamCode = document.getElementById('teamInput').value.trim();
-       let uuid = document.getElementById('uuidInput').value.trim();
-       uuid = uuid.slice(0, 5); // 只取前 5 碼
-      
-      if (!teamCode || !uuid) {
-        showError('請填寫所有欄位');
-        return;
-      }
+    // 3. 標記圖層管理
+    let markersLayer = L.layerGroup().addTo(map);
 
-      try {
-        // 第一步：驗證團隊編號與UUID
-       const isValid = await verifyCredentials(teamCode, uuid); 
-        if (!isValid) {
-          showError('驗證失敗，無效的團隊編號或UUID');
-          return;
-        }
-
-        // 第二步：載入資料並顯示地圖
-        const data = await loadGPSData();
-        showTeamMarkers(data, teamCode);
-        hideError();
-      } catch (error) {
-        showError('系統錯誤，請稍後再試');
-        console.error(error);
-      }
-    }
-
-    // 後端驗證函式
-    async function verifyCredentials(teamCode, uuid) {
-      const verificationUrl = 'https://script.google.com/macros/s/AKfycbwaSSKthl2pfZZIvyu0wie-z9L2_xSZJMUbmPfmrGJdaR2uYzX_p1n3Tr-DBOHDfrAkhw/exec';
-      const response = await fetch(`${verificationUrl}?team=${encodeURIComponent(teamCode)}&uuid=${encodeURIComponent(uuid)}`);
-      const result = await response.json();
-      return result.status === 'success';
-    }
-
-    // 資料載入
+    // 4. 載入 GPS 資料
+    let allData = [];
     async function loadGPSData() {
-      const dataUrl = 'https://opensheet.elk.sh/1SP7mminCBogb2bZQ3XPvU4cptKYa2ye80YYXLIzlcEU/位置記錄';
-      const response = await fetch(dataUrl);
-      return await response.json();
+      const url = 'https://opensheet.elk.sh/1OLTU06kihkC3XwrphR4asT4-6vdcoKOBxNN94USOlso/位置記錄';
+      try {
+        const res = await fetch(url);
+        allData = await res.json();
+        // 預設不顯示任何標記，需用戶查詢
+      } catch (e) {
+        alert('資料載入失敗，請查看 console。');
+        console.error(e);
+      }
     }
 
-    // 地圖標記顯示
-    function showTeamMarkers(data, teamCode) {
+    // 5. 篩選並顯示標記
+    function showTeamMarkers(teamCode) {
       markersLayer.clearLayers();
 
-      const filteredData = data.filter(row => 
-        row['團隊編號'] === teamCode
-      );
+      // 依團體編號過濾
+      const filtered = allData.filter(row => row['團隊編號'] === teamCode);
 
-      const latestData = filteredData.reduce((acc, row) => {
+      // 依姓名分組，取每人最新一筆（假設「時間」欄為字串且格式可排序）
+      const latestByName = {};
+      filtered.forEach(row => {
         const name = row['姓名'];
-        if (!acc[name] || new Date(row['時間']) > new Date(acc[name]['時間'])) {
-          acc[name] = row;
+        if (!latestByName[name] || row['時間'] > latestByName[name]['時間']) {
+          latestByName[name] = row;
         }
-        return acc;
-      }, {});
-
-      Object.values(latestData).forEach(row => {
-        const lat = parseFloat(row['緯度']);
-        const lng = parseFloat(row['經度']);
-        if (isNaN(lat) || isNaN(lng)) return;
-
-        const marker = L.circleMarker([lat, lng], {
-          radius: 10,
-          color: getColorForName(row['姓名']),
-          fillOpacity: 0.8
-        }).bindPopup(`<b>${row['姓名']}</b><br>最後更新：${row['時間']}`);
-        
-        markersLayer.addLayer(marker);
       });
 
-      if (Object.keys(latestData).length > 0) {
-        const bounds = markersLayer.getBounds();
-        map.fitBounds(bounds.isValid() ? bounds : [[23.5, 121]]);
+      // 顯示標記
+      Object.values(latestByName).forEach(row => {
+        const name = row['姓名'];
+        const lat = parseFloat(row['緯度']);
+        const lng = parseFloat(row['經度']);
+        const uuid = row['UUID'];
+        const time = row['時間'];
+        if (isNaN(lat) || isNaN(lng)) return;
+
+        const color = getDeepColorForName(name);
+        const marker = L.circleMarker([lat, lng], {
+          radius: 10,
+          color: color,
+          fillColor: color,
+          fillOpacity: 0.8
+        });
+        marker.bindPopup(
+          `<b>${name || ''}</b><br>UUID: ${uuid || ''}<br>時間: ${time || ''}`
+        );
+        marker.addTo(markersLayer);
+      });
+
+      // 若有資料則自動縮放
+      const points = Object.values(latestByName).map(row => [parseFloat(row['緯度']), parseFloat(row['經度'])]);
+      if (points.length > 0) {
+        map.fitBounds(points, { maxZoom: 18 });
       }
     }
 
-    // 錯誤處理
-    function showError(message) {
-      const errorDiv = document.getElementById('errorMsg');
-      errorDiv.textContent = message;
-      errorDiv.style.display = 'block';
-      markersLayer.clearLayers();
-    }
+    // 6. 表單事件
+    document.getElementById('filterForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const teamCode = document.getElementById('teamInput').value.trim();
+      if (!teamCode) return;
+      showTeamMarkers(teamCode);
+    });
 
-    function hideError() {
-      document.getElementById('errorMsg').style.display = 'none';
-    }
-
-    // 初始化
-    initMap();
+    // 7. 載入資料
+    loadGPSData();
   </script>
 </body>
 </html>
-
-
