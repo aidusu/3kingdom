@@ -95,7 +95,7 @@
             <input type="hidden" name="時間" id="timeField">
 
             <label for="leaderId">團隊編號</label>
-            <input type="text" id="leaderId" name="團隊編號" pattern="[A-Za-z]{1}[0-9]{2}" title="請輸入一個英文字及兩個阿拉伯數字" required>
+           <input type="text" id="leaderId" name="團隊編號" required>
 
             <label for="leaderName">領隊姓名</label>
             <input type="text" id="leaderName" name="領隊姓名" required>
@@ -144,7 +144,7 @@ document.getElementById('registerForm').onsubmit = async function(e) {
     const formData = new FormData(this);
 
     // 這裡填入你自己的 GAS 部署網址
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbzAKKpt5UaZR6Yhmx1NjwvcBi4QDK6KgInvkoXQAW7JJa3rdiAXAKRi6MAsUhxhKTUs/exec';
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbwofqsLip7AhBHTn4VnKyS7Djzlo2Ys5mNnoGox1RtHU9HZiD-754MurcEXMU_OmPuj/exec';
     const params = new URLSearchParams();
     params.append('action', 'submit');
 
