@@ -2,85 +2,123 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>團隊資料精確查詢系統</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <title>團隊資料查詢系統</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        /* 樣式保持不變，參考之前的程式碼 */
+        body { 
+            font-family: "微軟正黑體", sans-serif;
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .form-group {
+            margin: 1.5rem 0;
+        }
+        input {
+            width: 100%;
+            padding: 0.8rem;
+            margin: 0.5rem 0;
+            border: 2px solid #4CAF50;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1.1rem;
+        }
+        #result {
+            margin-top: 2rem;
+            padding: 1rem;
+            border-radius: 4px;
+        }
+        .error { background: #ffebee; color: #b71c1c; }
+        .success { background: #e8f5e9; color: #2e7d32; }
+        .member-item {
+            padding: 1rem;
+            margin: 1rem 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>團隊資料查詢系統</h2>
-        <div class="form-group">
-            <input type="text" id="teamId" placeholder="團隊編號" required>
-            <input type="text" id="leaderName" placeholder="領隊姓名" required>
-            <button onclick="searchData()">立即查詢</button>
-        </div>
-        <div class="result-box" id="results"></div>
+    <h1>團隊資料查詢</h1>
+    <div class="form-group">
+        <input type="text" id="teamId" placeholder="輸入團隊編號" required>
+        <input type="text" id="leaderName" placeholder="輸入領隊姓名" required>
+        <button onclick="searchTeam()">立即查詢</button>
     </div>
+    <div id="result"></div>
 
 <script>
-async function searchData() {
+function searchTeam() {
     const teamId = document.getElementById('teamId').value.trim();
     const leaderName = document.getElementById('leaderName').value.trim();
-    const resultsDiv = document.getElementById('results');
+    const resultDiv = document.getElementById('result');
+    
+    resultDiv.innerHTML = '<div class="loading">查詢中...</div>';
 
-    // 清空先前結果
-    resultsDiv.innerHTML = '<div class="loading">查詢中...</div>';
+    // 使用 URL 參數傳遞 action 類型
+    const url = `https://script.google.com/macros/s/AKfycbzjGQIjyn8gteLSyhWJls8-tuRNmoekgWM-gfUq-DfiTKJFvhciUFxMYVTazkbc66QI_A/exec?action=team_search`;
 
-    try {
-        const response = await fetch('https://script.google.com/macros/s/AKfycbz-uLpdenmn7G3G_GBaV3Bkm0oYqBfFjQsGBXixPMEJQbWuhidlqTGNxrrilyz63YS6/exec?action=search', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 團隊編號: teamId, 領隊姓名: leaderName })
-        });
-
-        if (!response.ok) throw new Error(`網路錯誤: ${response.status}`);
-        
-        const data = await response.json();
-        
-        if(data.result === 'success') {
+    fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            團隊編號: teamId,
+            領隊姓名: leaderName 
+        })
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('網路錯誤');
+        return response.json();
+    })
+    .then(data => {
+        if (data.result === 'success') {
             showResults(data.members);
-        } else if(data.errorType) {
-            handleSpecificError(data.errorType, data.message);
         } else {
-            throw new Error(data.message || '未知錯誤');
+            showError(data.message);
         }
-    } catch (error) {
-        resultsDiv.innerHTML = `<div class="error">錯誤: ${error.message}</div>`;
-    }
-}
-
-function handleSpecificError(errorType, message) {
-    const resultsDiv = document.getElementById('results');
-    let errorHTML = '';
-    
-    switch(errorType) {
-        case 'TEAM_NOT_FOUND':
-            errorHTML = `<div class="error">❌ 查無此團隊編號: ${message}</div>`;
-            break;
-        case 'LEADER_NOT_MATCH':
-            errorHTML = `<div class="error">❌ 查無此領隊姓名: ${message}</div>`;
-            break;
-        default:
-            errorHTML = `<div class="error">錯誤: ${message}</div>`;
-    }
-    
-    resultsDiv.innerHTML = errorHTML;
+    })
+    .catch(error => {
+        showError(error.message);
+    });
 }
 
 function showResults(members) {
-    const resultsDiv = document.getElementById('results');
-    
-    if(members.length === 0) {
-        resultsDiv.innerHTML = '<div class="info">⚠️ 查無任何成員資料</div>';
-        return;
-    }
+    const resultDiv = document.getElementById('result');
+    resultDiv.className = 'success';
+    resultDiv.innerHTML = `
+        <h3>查詢結果 (共 ${members.length} 筆)</h3>
+        ${members.map(member => `
+            <div class="member-item">
+                <p>會員編號: ${member.會員編號}</p>
+                <p>UUID: ${member.UUID}</p>
+                <p>註冊時間: ${member.時間}</p>
+            </div>
+        `).join('')}
+    `;
+}
 
-    // 顯示結果的HTML結構（參考之前的程式碼）
+function showError(message) {
+    const resultDiv = document.getElementById('result');
+    resultDiv.className = 'error';
+    resultDiv.innerHTML = `
+        <h3>查詢失敗</h3>
+        <p>${message}</p>
+        <button onclick="location.reload()">重新查詢</button>
+    `;
 }
 </script>
 </body>
 </html>
+
 
 
