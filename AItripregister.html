@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-     <meta charset="UTF-8">
+    <meta charset="UTF-8">
     <title>團隊註冊系統</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <style>
@@ -87,30 +87,26 @@
 <body>
     <div class="container">
         <h2>團隊註冊系統</h2>
-        <form id="loginForm" autocomplete="off">
-            <!-- 表單欄位保持不變 -->
+        <form id="registerForm" autocomplete="off">
+            <label for="userName">會員編號</label>
+            <input type="text" id="userName" name="會員編號" required>
+
+            <input type="hidden" name="UUID" id="uuidField">
+            <input type="hidden" name="時間" id="timeField">
+
             <label for="leaderId">團隊編號</label>
             <input type="text" id="leaderId" name="團隊編號" pattern="[A-Za-z]{1}[0-9]{2}" title="請輸入一個英文字及兩個阿拉伯數字" required>
-            
+
             <label for="leaderName">領隊姓名</label>
-            <input type="text" id="leaderName" name="領隊" required>
-            
-            <label for="userName">用戶姓名</label>
-            <input type="text" id="userName" name="姓名" required>
-            
-            <!-- 隱藏欄位保持不變 -->
-            <input type="hidden" name="UUID" id="uuidField">
-            <input type="hidden" name="緯度" id="latField">
-            <input type="hidden" name="經度" id="lngField">
-            <input type="hidden" name="時間" id="timeField">
-            
+            <input type="text" id="leaderName" name="領隊姓名" required>
+
             <button type="submit">完成註冊</button>
         </form>
         <div id="result"></div>
     </div>
 
 <script>
-// 強化版 UUID 生成（支援更多瀏覽器）
+// UUID 產生
 function getUUID() {
     let uuid = localStorage.getItem("deviceUUID");
     if (!uuid) {
@@ -126,85 +122,50 @@ function getUUID() {
     return uuid;
 }
 
-
-// 修改時間格式為 yyyy:MM:dd hh:mm
+// 時間格式 yyyy:MM:dd hh:mm
 function getTaipeiTime() {
-  const now = new Date();
-  now.setHours(now.getHours()); // 轉換為台北時間
-  return `${now.getFullYear()}:${pad(now.getMonth()+1)}:${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    const now = new Date();
+    return `${now.getFullYear()}:${pad(now.getMonth()+1)}:${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
 }
-// 補零函式 (必要)
-function pad(n) {
-  return n < 10 ? '0' + n : n;
-}
+function pad(n) { return n < 10 ? '0' + n : n; }
 
 // 頁面初始化
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('uuidField').value = getUUID();
-  document.getElementById('timeField').value = getTaipeiTime();
+    document.getElementById('uuidField').value = getUUID();
+    document.getElementById('timeField').value = getTaipeiTime();
 });
 
-     
-// 地理定位功能增加錯誤處理
-function getGeolocation() {
-    return new Promise((resolve, reject) => {
-        if (!navigator.geolocation) {
-            reject('此瀏覽器不支援地理定位功能');
-        } else {
-            navigator.geolocation.getCurrentPosition(
-                position => resolve(position.coords),
-                error => reject(`定位失敗：${error.message}`),
-                { 
-                    timeout: 10000,
-                    maximumAge: 60000  // 增加快取時間
-                }
-            );
-        }
-    });
-}
+document.getElementById('registerForm').onsubmit = async function(e) {
+    e.preventDefault();
 
-// 表單提交處理
-document.getElementById('loginForm').onsubmit = async function(e) {
-  e.preventDefault();
-  
-  try {
-    const coords = await getGeolocation().catch(() => ({
-      latitude: 25.047760,
-      longitude: 121.517000
-    }));
-
-    // 更新隱藏欄位值
-    document.getElementById('latField').value = coords.latitude.toFixed(6);
-    document.getElementById('lngField').value = coords.longitude.toFixed(6);
+    // 更新時間
     document.getElementById('timeField').value = getTaipeiTime();
 
     const formData = new FormData(this);
+
+    // 這裡填入你自己的 GAS 部署網址
     const scriptURL = 'https://script.google.com/macros/s/AKfycbzAKKpt5UaZR6Yhmx1NjwvcBi4QDK6KgInvkoXQAW7JJa3rdiAXAKRi6MAsUhxhKTUs/exec';
     const params = new URLSearchParams();
     params.append('action', 'submit');
 
-    const response = await fetch(`${scriptURL}?${params.toString()}`, {
-      method: 'POST',
-      body: formData
-    });
-        
-        // 處理回應
+    try {
+        const response = await fetch(`${scriptURL}?${params.toString()}`, {
+            method: 'POST',
+            body: formData
+        });
         const data = await response.json();
         if(data.result === 'success') {
             document.getElementById('result').innerHTML = `
                 <strong>註冊成功！</strong>
                 <div class="info-list">
-                    <p>團隊編號：${formData.get('團隊編號')}</p>
-                    <p>領隊姓名：${formData.get('領隊')}</p>
-                    <p>用戶姓名：${formData.get('姓名')}</p>
-                    <p>裝置 UUID：${formData.get('UUID')}</p>
-                    <p>定位座標：${formData.get('緯度')}, ${formData.get('經度')}</p>
+                    <p>會員編號：${formData.get('會員編號')}</p>
+                    <p>UUID：${formData.get('UUID')}</p>
                     <p>註冊時間：${formData.get('時間')}</p>
+                    <p>團隊編號：${formData.get('團隊編號')}</p>
+                    <p>領隊姓名：${formData.get('領隊姓名')}</p>
                 </div>
             `;
             this.reset();
-            
-            // 保留UUID（避免重置後重新生成）
             document.getElementById('uuidField').value = getUUID();
         } else {
             throw new Error(data.error || '伺服器回傳未知錯誤');
@@ -218,3 +179,4 @@ document.getElementById('loginForm').onsubmit = async function(e) {
 </script>
 </body>
 </html>
+
