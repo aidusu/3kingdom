@@ -1,42 +1,30 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>會員登入驗證</title>
-  <style>
-    body { font-family: Arial, "微軟正黑體", sans-serif; padding: 2em; background: #f9f9f9; }
-    .container { max-width: 400px; margin: auto; background: #fff; padding: 2em; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    input, button { font-size: 1.1rem; padding: 0.6em; width: 100%; margin-top: 1em; }
-    label { display: block; margin-top: 1.2em; font-size: 1.1rem; }
-  </style>
+  <meta charset="UTF-8">
+  <title>Google Sheet 句子搜尋</title>
 </head>
 <body>
-  <div class="container">
-    <h2>會員登入驗證</h2>
-    <form method="GET" action="https://script.google.com/macros/s/AKfycbwyD_MK03ahx7SgCGD9vjZCGtijhQeolYrhmr1g8vnX-uwYZ3UlZvJqzkG8YSUOVAGv/exec">
-      <label for="memberId">團隊編號：</label>
-      <input type="text" name="memberId" id="memberId" required />
-
-      <label for="uuid">本機 UUID：</label>
-      <input type="text" name="uuid" id="uuid" readonly />
-
-      <button type="submit">送出驗證</button>
-    </form>
-  </div>
+  <input type="text" id="keyword" placeholder="輸入關鍵字">
+  <button onclick="search()">搜尋</button>
+  <ul id="results"></ul>
 
   <script>
-    // 自動產生或取得本機 uuid
-    function getUUID() {
-      let uuid = localStorage.getItem("deviceUUID");
-      if (!uuid) {
-        uuid = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36);
-        localStorage.setItem("deviceUUID", uuid);
-      }
-      return uuid;
+    function search() {
+      var q = document.getElementById('keyword').value;
+      fetch('https://script.google.com/macros/s/AKfycbyu89kQW-5ZzeNMI6knEBaNeXdbv4dyPu-paei2F-MRdt70lELpbf2l65vlbtowbB1o/exec?q=' + encodeURIComponent(q))
+        .then(response => response.json())
+        .then(data => {
+          var ul = document.getElementById('results');
+          ul.innerHTML = '';
+          data.forEach(function(sentence) {
+            var li = document.createElement('li');
+            li.textContent = sentence;
+            ul.appendChild(li);
+          });
+        });
     }
-
-    document.getElementById("uuid").value = getUUID();
   </script>
 </body>
 </html>
+
