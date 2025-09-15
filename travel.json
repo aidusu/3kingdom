@@ -3,189 +3,189 @@
         "lat": 27.18333,
         "lng": 78.01667,
         "label": "Agra",
-        "date": "2025-01-30",
-        "note": "S&H Global Trip"
+        "date": "2006",
+        "note": "印度"
     },
     {
         "lat": 26.91962,
         "lng": 75.78781,
         "label": "Jaipur",
-        "date": "2025-01-30",
-        "note": "S&H Global Trip"
+        "date": "2006",
+        "note": "印度"
     },
     {
         "lat": 7.290572,
         "lng": 80.633728,
         "label": "Kandy",
-        "date": "2025-01-30",
-        "note": "S&H Global Trip"
+        "date": "1999",
+        "note": "斯里蘭卡"
     },
     {
         "lat": 55.8652,
         "lng": -4.25763,
         "label": "Glasgow",
-        "date": "2025-01-30",
+        "date": "2018",
         "note": "S&H Global Trip"
     },
     {
         "lat": 54.59682,
         "lng": -5.92541,
         "label": "Belfast",
-        "date": "2025-01-30",
-        "note": "S&H Global Trip"
+        "date": "2018",
+        "note": ""
     },
     {
         "lat": 49.9,
         "lng": 2.3,
         "label": "Amiens",
-        "date": "2025-01-30",
+        "date": "2012",
         "note": "S&H Global Trip"
     },
     {
         "lat": 48.5846,
         "lng": 7.7507,
         "label": "Strasbourg",
-        "date": "2025-01-30",
+        "date": "2004",
         "note": "S&H Global Trip"
     },
     {
         "lat": 47.0505,
         "lng": 8.3064,
         "label": "Luzern",
-        "date": "2025-01-30",
+        "date": "2004",
         "note": "S&H Global Trip"
     },
     {
         "lat": 46.6839,
         "lng": 7.8664,
         "label": "Interlaken",
-        "date": "2025-01-30",
+        "date": "2004",
         "note": "S&H Global Trip"
     },
     {
         "lat": 50.1109,
         "lng": 8.6821,
         "label": "Frankfurt am Main",
-        "date": "2025-01-30",
+        "date": "2016",
         "note": "S&H Global Trip"
     },
     {
         "lat": 52.3705,
         "lng": 9.7332,
         "label": "Hannover",
-        "date": "2025-01-30",
+        "date": "2016",
         "note": "S&H Global Trip"
     },
     {
         "lat": 53.0758,
         "lng": 8.8072,
         "label": "Bremen",
-        "date": "2025-01-30",
+        "date": "2016",
         "note": "S&H Global Trip"
     },
     {
         "lat": 51.3402,
         "lng": 12.3601,
         "label": "Leipzig",
-        "date": "2025-01-30",
+        "date": "2016",
         "note": "S&H Global Trip"
     },
     {
         "lat": 40.5507,
         "lng": 14.2426,
         "label": "Capri",
-        "date": "2025-01-30",
+        "date": "2007",
         "note": "S&H Global Trip"
     },
     {
         "lat": 43.5263,
         "lng": 5.4454,
         "label": "Aix-en-Provence",
-        "date": "2025-01-30",
+        "date": "2001",
         "note": "S&H Global Trip"
     },
     {
         "lat": 43.7031,
         "lng": 7.2661,
         "label": "Nice",
-        "date": "2025-01-30",
+        "date": "2001",
         "note": "S&H Global Trip"
     },
     {
         "lat": 39.8581,
         "lng": -4.0226,
         "label": "Toledo",
-        "date": "2025-01-30",
+        "date": "2019",
         "note": "S&H Global Trip"
     },
     {
         "lat": 37.3828,
         "lng": -5.9732,
         "label": "Sevilla",
-        "date": "2025-01-30",
+        "date": "2019",
         "note": "S&H Global Trip"
     },
     {
         "lat": 37.1781,
         "lng": -3.6008,
         "label": "Granada",
-        "date": "2025-01-30",
+        "date": "2019",
         "note": "S&H Global Trip"
     },
     {
         "lat": 36.175,
         "lng": -115.137,
         "label": "Las Vegas",
-        "date": "2025-01-30",
+        "date": "1994",
         "note": "S&H Global Trip"
     },
     {
         "lat": 37.7749,
         "lng": -122.4194,
         "label": "San Francisco",
-        "date": "2025-01-30",
+        "date": "1994",
         "note": "S&H Global Trip"
     },
     {
         "lat": 39.9255,
         "lng": 32.8663,
         "label": "Ankara",
-        "date": "2025-01-30",
+        "date": "2025",
         "note": "S&H Global Trip"
     },
     {
         "lat": 36.8848,
         "lng": 30.704,
         "label": "Antalya",
-        "date": "2025-01-30",
+        "date": "2025",
         "note": "S&H Global Trip"
     },
     {
         "lat": 37.8746,
         "lng": 32.4932,
         "label": "Konya",
-        "date": "2025-01-30",
+        "date": "2025",
         "note": "S&H Global Trip"
     },
     {
         "lat": 37.7765,
         "lng": 29.0864,
         "label": "Denizli",
-        "date": "2025-01-30",
+        "date": "2025",
         "note": "S&H Global Trip"
     },
     {
         "lat": 41.0082,
         "lng": 28.9784,
         "label": "Istanbul",
-        "date": "2025-01-30",
+        "date": "2025",
         "note": "S&H Global Trip"
     },
     {
         "lat": 38.4192,
         "lng": 27.1287,
         "label": "Izmir",
-        "date": "2025-01-30",
+        "date": "2025",
         "note": "S&H Global Trip"
     },
     {
@@ -206,63 +206,63 @@
         "lat": 56.3175,
         "lng": 38.1342,
         "label": "金環小鎮",
-        "date": "2024",
+        "date": "2015",
         "note": "俄羅斯"
     },
     {
         "lat": 64.1466,
         "lng": -21.9426,
         "label": "雷克雅未克",
-        "date": "2024",
-        "note": "冰島"
+        "date": "2023",
+        "note": "SUNNY ONLY 冰島"
     },
     {
         "lat": 65.6064,
         "lng": -16.8940,
         "label": "冰島巨石陣",
-        "date": "2024",
-        "note": ""
+        "date": "2023",
+        "note": "SUNNY ONLY 冰島"
     },
     {
         "lat": 42.9849,
         "lng": 144.3817,
         "label": "釧路",
-        "date": "2024",
+        "date": "2018",
         "note": ""
     },
     {
         "lat": 41.7667,
         "lng": 140.7167,
         "label": "函館",
-        "date": "2024",
+        "date": "2018",
         "note": ""
     },
     {
         "lat": 35.3167,
         "lng": 139.5500,
         "label": "鐮倉",
-        "date": "2024",
+        "date": "2019",
         "note": ""
     },
     {
         "lat": 41.9039,
         "lng": 12.4534,
         "label": "梵帝崗",
-        "date": "2024",
+        "date": "2007",
         "note": ""
     },
     {
         "lat": 43.7696,
         "lng": 11.2558,
         "label": "佛羅倫斯",
-        "date": "2024",
+        "date": "2007",
         "note": ""
     },
     {
         "lat": 43.3186,
         "lng": 11.3308,
         "label": "西也納",
-        "date": "2024",
+        "date": "2007",
         "note": ""
     },
     {
@@ -282,127 +282,127 @@
     {
         "lat": 55.7558,
         "lng": 37.6173,
-        "label": "莫斯科北角",
-        "date": "2021",
+        "label": "莫斯科",
+        "date": "2015",
         "note": ""
     },
      {
         "lat": 59.9343,
         "lng": 30.3351,
-        "label": "聖彼得堡北角",
-        "date": "2021",
+        "label": "聖彼得堡",
+        "date": "2015",
         "note": ""
     },
      {
         "lat": 52.5200,
         "lng": 13.4050,
-        "label": "柏林北角",
-        "date": "2021",
+        "label": "柏林",
+        "date": "2016",
         "note": ""
     },
     {
         "lat": 48.2082,
         "lng": 16.3738,
-        "label": "維也納北角",
-        "date": "2021",
+        "label": "維也納",
+        "date": "2010",
         "note": ""
     },
     {
         "lat": 50.0755,
         "lng": 14.4378,
-        "label": "布拉格北角",
-        "date": "2021",
+        "label": "布拉格",
+        "date": "2010",
         "note": ""
     },
     {
         "lat": 21.0285,
         "lng": 105.8542,
-        "label": "河內北角",
+        "label": "河內",
         "date": "2021",
         "note": ""
     },
     {
         "lat": 10.7769,
         "lng": 106.7009,
-        "label": "胡志明市北角",
+        "label": "胡志明市",
         "date": "2021",
         "note": ""
     },
     {
         "lat": 36.6171,
         "lng": 101.7782,
-        "label": "青海西寧北角",
-        "date": "2021",
-        "note": ""
+        "label": "青海西寧",
+        "date": "2014",
+        "note": "絲路"
     },
     {
         "lat": 40.8518,
         "lng": 14.2681,
-        "label": "拿坡里北角",
-        "date": "2021",
+        "label": "拿坡里",
+        "date": "2007",
         "note": ""
     },
     {
         "lat": 45.4408,
         "lng": 12.3155,
-        "label": "威尼斯北角",
-        "date": "2021",
+        "label": "威尼斯",
+        "date": "2007",
         "note": ""
     },
     {
         "lat": 53.5511,
         "lng": 9.9937,
-        "label": "漢堡北角",
-        "date": "2021",
+        "label": "漢堡",
+        "date": "2016",
         "note": ""
     },
     {
         "lat": 55.9533,
         "lng": -3.1883,
-        "label": "愛丁堡北角",
-        "date": "2021",
+        "label": "愛丁堡",
+        "date": "2018",
         "note": ""
     },
     {
         "lat": -27.4698,
         "lng": 153.0251,
-        "label": "布里斯班北角",
+        "label": "布里斯班",
         "date": "2021",
-        "note": ""
+        "note": "SUNNY ONLY RUN"
     },
     {
         "lat": 25.7617,
         "lng": -80.1918,
-        "label": "邁阿密北角",
-        "date": "2021",
+        "label": "邁阿密",
+        "date": "2007",
         "note": ""
     },
       {
         "lat": 40.4168,
         "lng": -3.7038,
         "label": "馬德里",
-        "date": "20 19",
+        "date": "2019",
         "note": "西班牙"
     },
     {
         "lat": 36.1408,
         "lng": -5.3536,
         "label": "直布羅陀",
-        "date": "20 19",
+        "date": "2019",
         "note": "英屬地"
     },
     {
         "lat": 51.5074,
         "lng": -0.1278,
         "label": "倫敦",
-        "date": "20 17",
+        "date": "2018",
         "note": "英國"
     },
     {
         "lat": 53.3498,
         "lng": -6.2603,
         "label": "都柏林",
-        "date": "2017",
+        "date": "2018",
         "note": "愛爾蘭"
     },
     {
@@ -423,35 +423,35 @@
         "lat": 45.4642,
         "lng": 9.1900,
         "label": "米蘭",
-        "date": "20 03",
+        "date": "2003",
         "note": ""
     },
     {
         "lat": 40.1209,
         "lng": 9.0129,
         "label": "薩丁尼亞",
-        "date": "20 02",
+        "date": "2002",
         "note": ""
     },
     {
         "lat": 41.3851,
         "lng": 2.1734,
         "label": "巴塞隆納",
-        "date": "2024",
+        "date": "2019",
         "note": ""
     },
     {
         "lat": 34.3416,
         "lng": 108.9398,
         "label": "西安",
-        "date": "2024",
+        "date": "2014",
         "note": ""
     },
     {
         "lat": 25.2048,
         "lng": 55.2708,
         "label": "杜拜",
-        "date": "20 19",
+        "date": "2020",
         "note": ""
     },
      {
@@ -479,14 +479,14 @@
         "lat": 22.5431,
         "lng": 114.0579,
         "label": "深圳",
-        "date": " 2018",
+        "date": " 2001",
         "note": ""
     },
     {
         "lat": 37.5665,
         "lng": 126.9870,
         "label": "首爾",
-        "date": "2024",
+        "date": "2009",
         "note": ""
     },
     {
@@ -507,14 +507,14 @@
         "lat": 48.8566,
         "lng": 2.3522,
         "label": "巴黎",
-        "date": "2024",
+        "date": "2016",
         "note": ""
     },
     {
         "lat": 48.1351,
         "lng": 11.5820,
         "label": "慕尼黑",
-        "date": "20 04",
+        "date": "2004",
         "note": ""
     },
     {
@@ -535,7 +535,7 @@
         "lat": 34.0522,
         "lng": -118.2437,
         "label": "洛杉磯",
-        "date": "20 07",
+        "date": "2007",
         "note": ""
     },
     {
@@ -543,28 +543,28 @@
         "lng": 116.4074,
         "label": "北京",
         "date": "2014",
-        "note": ""
+        "note": "北京"
     },
     {
         "lat": 36.0611,
         "lng": 103.8343,
         "label": "蘭州",
-        "date": "20 15",
-        "note": ""
+        "date": "2014",
+        "note": "絲路"
     },
     {
         "lat": 43.8256,
         "lng": 87.6168,
         "label": "烏魯木齊",
-        "date": "20 15",
-        "note": ""
+        "date": "2014",
+        "note": "絲路"
     },
     {
         "lat": 39.7432,
         "lng": 98.5174,
         "label": "酒泉",
-        "date": "20 15",
-        "note": ""
+        "date": "2014",
+        "note": "絲路"
     },
     {
         "lat": 30.2741,
@@ -578,62 +578,62 @@
         "lng": 116.0206,
         "label": "居庸關",
         "date": "2015",
-        "note": ""
+        "note": "中國"
     },
      {
         "lat": 13.4125,
         "lng": 103.8670,
         "label": "吳哥窟",
-        "date": "20",
+        "date": "2011",
         "note": "柬埔寨"
     },
     {
         "lat": 38.7223,
         "lng": -9.1393,
         "label": "里斯本",
-        "date": "20",
+        "date": "2019",
         "note": "葡萄牙"
     },
     {
         "lat": 50.8503,
         "lng": 4.3517,
         "label": "布魯塞爾",
-        "date": "20",
+        "date": "2016",
         "note": "比利時"
     },
     {
         "lat": 52.3678,
         "lng": 4.9041,
         "label": "阿姆斯特丹",
-        "date": "20",
+        "date": "2016",
         "note": "荷蘭"
     },
     {
         "lat": 36.8722,
         "lng": 137.6689,
         "label": "黑部",
-        "date": "20",
+        "date": "2007",
         "note": "日本"
     },
     {
         "lat": 36.5736,
         "lng": 137.5947,
         "label": "立山",
-        "date": "20",
+        "date": "2007",
         "note": "日本"
     },
     {
         "lat": 36.5613,
         "lng": 136.6562,
         "label": "金澤",
-        "date": "20",
+        "date": "2007",
         "note": "日本"
     },
     {
         "lat": 35.3606,
         "lng": 138.7274,
         "label": "富士山",
-        "date": "20",
+        "date": "2023",
         "note": "日本"
     },
       {
@@ -648,14 +648,14 @@
         "lng": 121.46417,
         "label": "上海市",
         "date": "2024-03-28",
-        "note": "拜訪明哲會友"
+        "note": "CHINA"
     },
      {
         "lat": 31.31541,
         "lng": 120.57647,
         "label": "蘇州市",
         "date": "2024-03-29",
-        "note": "拜訪兒子"
+        "note": "CHINA"
     },
      {
         "lat": 70.625352,
@@ -787,7 +787,7 @@
         "lat": 6.92194,
         "lng": 79.86289,
         "label": "可倫波",
-        "date": "1999--",
+        "date": "1999",
         "note": "斯里蘭卡首都"
     },
      {
@@ -854,10 +854,10 @@
         "note": "日本古建築"
     }, 
     {
-        "lat": 22.627278,
-        "lng": 120.301435,
-        "label": "高雄85大樓",
-        "date": "2022-09-18",
-        "note": "高雄著名地點"
+        "lat": 26.0745,
+        "lng": 119.2965,
+        "label": "福州",
+        "date": "2025-01-09",
+        "note": "CHINA"
     }
 ]
