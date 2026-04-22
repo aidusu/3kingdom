@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SportPal 運動數據監測 Demo</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", Arial, sans-serif;
+            background-color: #f4f7f6;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 800px;
+        }
+        .search-section {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        input[type="text"] {
+            padding: 10px;
+            width: 200px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #219150;
+        }
+        .chart-container {
+            margin-top: 20px;
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        .user-info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f4fd;
+            border-left: 5px solid #3498db;
+            border-radius: 4px;
+            display: none;
+        }
+        h2 { color: #2c3e50; text-align: center; }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>運動數據查詢系統</h2>
+    
+    <div class="search-section">
+        <input type="text" id="userNameInput" placeholder="請輸入姓名 (如: Hermann)">
+        <button onclick="updateDashboard()">查詢</button>
+    </div>
+
+    <div id="displayArea" style="display: none;">
+        <div>
+            <h3>每月運動距離趨勢圖 (km)</h3>
+            <div class="chart-container">
+                <canvas id="distanceChart"></canvas>
+            </div>
+        </div>
+
+        <div style="margin-top: 50px;">
+            <h3>每月消耗熱量趨勢圖 (kcal)</h3>
+            <div class="chart-container">
+                <canvas id="caloriesChart"></canvas>
+            </div>
+        </div>
+
+        <div class="user-info" id="userInfoBox">
+            <h3>使用者基本資料</h3>
+            <div class="info-grid" id="infoContent">
+                </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 資料庫：未來可以直接在此 array 增加數十筆資料
+    const userDataStore = [
+        ["Hermann", "男", 48, 176, 86, 150, 151, 152, 153, 154, 155, 178000, 180000, 185000, 190000, 200000, 210000],
+        ["Mary", "女", 30, 160, 50, 120, 119, 118, 116, 118, 120, 100000, 90000, 80000, 70000, 80000, 100000]
+    ];
+
+    const labels = ["前五月", "前四月", "前三月", "前二月", "上個月", "本月"];
+    let distanceChart, caloriesChart;
+
+    function updateDashboard() {
+        const inputName = document.getElementById('userNameInput').value.trim();
+        const user = userDataStore.find(u => u[0].toLowerCase() === inputName.toLowerCase());
+
+        if (!user) {
+            alert("找不到該用戶資料，請重新輸入。");
+            return;
+        }
+
+        // 顯示顯示區域
+        document.getElementById('displayArea').style.display = 'block';
+
+        // 1. 處理基本資料 (姓名, 性別, 年齡, 身高, 體重)
+        const infoContent = document.getElementById('infoContent');
+        infoContent.innerHTML = `
+            <div><strong>姓名:</strong> ${user[0]}</div>
+            <div><strong>性別:</strong> ${user[1]}</div>
+            <div><strong>年齡:</strong> ${user[2]} 歲</div>
+            <div><strong>身高:</strong> ${user[3]} cm</div>
+            <div><strong>體重:</strong> ${user[4]} kg</div>
+        `;
+        document.getElementById('userInfoBox').style.display = 'block';
+
+        // 2. 準備圖表數據
+        const distanceData = user.slice(5, 11);
+        const caloriesData = user.slice(11, 17);
+
+        // 3. 繪製或更新距離圖表
+        renderChart('distanceChart', '運動距離 (km)', distanceData, '#3498db', distanceChart, (c) => distanceChart = c);
+        
+        // 4. 繪製或更新熱量圖表
+        renderChart('caloriesChart', '消耗熱量 (kcal)', caloriesData, '#e67e22', caloriesChart, (c) => caloriesChart = c);
+    }
+
+    function renderChart(canvasId, label, data, color, chartInstance, setInstance) {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        
+        // 如果圖表已存在則銷毀重畫，避免資料重疊
+        if (chartInstance) {
+            chartInstance.destroy();
+        }
+
+        // 建立立體感效果：使用漸層
+        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, color);
+        gradient.addColorStop(1, 'rgba(0,0,0,0.1)');
+
+        const newChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: label,
+                    data: data,
+                    backgroundColor: gradient,
+                    borderColor: color,
+                    borderWidth: 1,
+                    borderRadius: 5, // 圓角增加質感
+                    borderSkipped: false,
+                    // 模擬立體陰影效果
+                    boxShadow: '3px 3px 10px rgba(0,0,0,0.3)' 
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        grid: { color: '#eee' }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { display: true, position: 'top' }
+                }
+            }
+        });
+
+        setInstance(newChart);
+    }
+</script>
+
+</body>
+</html>
