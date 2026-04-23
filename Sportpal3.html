@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SportPal 運動趨勢監測 Demo</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- ✅ 新增：載入 datalabels 外掛 -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --bg-color: #f8f9fa;
+        }
+        body {
+            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 800px;
+        }
+        /* 頁面切換控制 */
+        #homePage, #chartPage { display: none; }
+        #homePage.active, #chartPage.active { display: block; }
+
+```
+    /* 首頁樣式 */
+    .search-box {
+        text-align: center;
+        padding: 2rem 0;
+    }
+    input[type="text"] {
+        padding: 12px 20px;
+        width: 250px;
+        border: 2px solid #ddd;
+        border-radius: 25px;
+        font-size: 1rem;
+        outline: none;
+        transition: border-color 0.3s;
+    }
+    input[type="text"]:focus { border-color: var(--accent-color); }
+    button {
+        padding: 12px 30px;
+        background: var(--accent-color);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 1rem;
+        margin-left: 10px;
+    }
+    button:hover { background: #2980b9; }
+
+    /* 圖表頁樣式 */
+    .header-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #eee;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+    }
+    .chart-section { margin-bottom: 3rem; }
+    .chart-container { 
+        position: relative; 
+        height: 300px; 
+        width: 100%; 
+        margin-bottom: 1rem;
+    }
+    h3 { color: var(--primary-color); border-left: 5px solid var(--accent-color); padding-left: 10px; }
+    .back-btn { background: #95a5a6; margin-bottom: 1rem; }
+</style>
+```
+
+</head>
+<body>
+
+<div id="homePage" class="card active">
+    <div class="search-box">
+        <h1>SportPal 運動趨勢圖查詢</h1>
+        <p>請輸入您的姓名以查看個人運動表現</p>
+        <input type="text" id="nameInput" placeholder="請輸入姓名 (例如: Hermann)">
+        <button onclick="searchUser()">查詢趨勢</button>
+    </div>
+</div>
+
+<div id="chartPage" class="card">
+    <button class="back-btn" onclick="goHome()">← 返回搜尋</button>
+    <div class="header-info">
+        <h2 id="displayUserName" style="margin:0;">姓名：--</h2>
+        <span id="currentDate" style="color: #666;">日期：--</span>
+    </div>
+
+```
+<div class="chart-section">
+    <h3>每月運動距離趨勢圖 (km)</h3>
+    <div class="chart-container">
+        <canvas id="distanceChart"></canvas>
+    </div>
+</div>
+
+<div class="chart-section">
+    <h3>每月運動卡路里趨勢圖 (kcal)</h3>
+    <div class="chart-container">
+        <canvas id="calorieChart"></canvas>
+    </div>
+</div>
+
+<div class="chart-section">
+    <h3>運動類型卡路里分布圖</h3>
+    <!-- ✅ 修正：增加高度讓 Pie 圖 datalabels 不被截斷 -->
+    <div class="chart-container" style="height: 450px;">
+        <canvas id="typePieChart"></canvas>
+    </div>
+</div>
+```
+
+</div>
+
+<script>
+    // ✅ 全域註冊 datalabels 外掛
+    Chart.register(ChartDataLabels);
+
+    // 資料庫：可自由增加數十筆資料
+    const userData = [
+        ["Hermann", 100000, 60000, 10000, 40000, 150, 151, 152, 153, 154, 155, 178000, 180000, 185000, 190000, 200000, 210000],
+        ["Mary", 20000, 10000, 30000, 40000, 120, 119, 118, 116, 118, 120, 100000, 90000, 80000, 70000, 80000, 100000]
+    ];
+
+    const months = ["前六月", "前五月", "前四月", "前三月", "上上個月", "上個月"];
+    const sportTypes = ["跑步", "健行", "單車", "計步"];
+    let charts = {};
+
+    function searchUser() {
+        const name = document.getElementById('nameInput').value.trim();
+        const user = userData.find(u => u[0].toLowerCase() === name.toLowerCase());
+
+        if (user) {
+            showCharts(user);
+        } else {
+            alert("找不到該用戶資料，請檢查姓名是否正確。");
+        }
+    }
+
+    function showCharts(user) {
+        document.getElementById('homePage').classList.remove('active');
+        document.getElementById('chartPage').classList.add('active');
+
+        document.getElementById('displayUserName').innerText = `姓名：${user[0]}`;
+        document.getElementById('currentDate').innerText = `日期：${new Date().toLocaleDateString()}`;
+
+        if (charts.dist) charts.dist.destroy();
+        if (charts.cal) charts.cal.destroy();
+        if (charts.pie) charts.pie.destroy();
+
+        // 1. 每月距離圖 (索引 5-10)
+        charts.dist = createBarChart('distanceChart', months, user.slice(5, 11), '#3498db', '距離 (km)');
+        
+        // 2. 每月卡路里圖 (索引 11-16)
+        charts.cal = createBarChart('calorieChart', months, user.slice(11, 17), '#e67e22', '卡路里 (kcal)');
+
+        // 3. 類型分布圖 (索引 1-4)
+        const pieData = user.slice(1, 5);
+        const pieTotal = pieData.reduce((a, b) => a + b, 0);
+        const pieColors = ['#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6'];
+
+        charts.pie = new Chart(document.getElementById('typePieChart'), {
+            type: 'pie',
+            data: {
+                labels: sportTypes,
+                datasets: [{
+                    data: pieData,
+                    backgroundColor: pieColors
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                // ✅ 增加 padding 防止標籤被裁切
+                layout: { padding: 40 },
+                plugins: {
+                    legend: { position: 'bottom' },
+                    // ✅ Pie 圖：顯示標籤名稱、數值與百分比
+                    datalabels: {
+                        color: (ctx) => {
+                            // 淺色（黃色）用深色文字，其他用白色
+                            const lightBg = ['#f1c40f', '#ffce56'];
+                            return lightBg.includes(pieColors[ctx.dataIndex]) ? '#333' : '#fff';
+                        },
+                        font: { weight: 'bold', size: 13 },
+                        textAlign: 'center',
+                        textShadowBlur: 4,
+                        textShadowColor: 'rgba(0,0,0,0.4)',
+                        formatter: (value, ctx) => {
+                            const pct = (value / pieTotal * 100).toFixed(1) + '%';
+                            const label = ctx.chart.data.labels[ctx.dataIndex];
+                            return `${label}\n${value.toLocaleString()}\n(${pct})`;
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function createBarChart(id, labels, data, color, labelName) {
+        const ctx = document.getElementById(id).getContext('2d');
+        
+        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, color);
+        gradient.addColorStop(1, color + '66');
+
+        return new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: labelName,
+                    data: data,
+                    backgroundColor: gradient,
+                    borderColor: color,
+                    borderWidth: 1,
+                    borderRadius: 5,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                // ✅ 增加頂部空間讓標籤不被截斷
+                layout: { padding: { top: 24 } },
+                plugins: {
+                    legend: { display: true },
+                    // ✅ Bar 圖：在每個柱頂顯示數值標籤
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        color: '#2c3e50',
+                        font: { weight: 'bold', size: 12 },
+                        formatter: (value) => value.toLocaleString()
+                    }
+                },
+                scales: {
+                    y: { beginAtZero: false, grid: { color: '#f0f0f0' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    function goHome() {
+        document.getElementById('chartPage').classList.remove('active');
+        document.getElementById('homePage').classList.add('active');
+    }
+</script>
+
+</body>
+</html>
