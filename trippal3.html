@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>友位 · 群組位置分享</title>
+<title>旅伴· 群組位置分享</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -24,9 +24,9 @@ html,body{ font-family:'Noto Sans TC',sans-serif; background:var(--bg); color:va
 .field input:focus { border-color:var(–accent); }
 
 .err { font-size:12px; color:#f87171; min-height:16px; margin-bottom:10px; text-align:left; }
-.btn-p { width:100%; background:#064e3b; color:white; border:none; border-radius:10px; padding:13px; font-size:15px; font-weight:700; font-family:‘Noto Sans TC’,sans-serif; cursor:pointer; margin-bottom:10px; }
+.btn-p { width:100%; background:#022c22; color:white; border:none; border-radius:10px; padding:13px; font-size:15px; font-weight:700; font-family:‘Noto Sans TC’,sans-serif; cursor:pointer; margin-bottom:10px; }
 .btn-p:active { opacity:.85; }
-.btn-g { width:100%; background:#450a0a ; color:#fde047 ; border:1px solid var(–border); border-radius:10px; padding:11px; font-size:15px; font-family:‘Noto Sans TC’,sans-serif; cursor:pointer; }
+.btn-g { width:100%; background:#2d0a0a ; color:#fde047 ; border:1px solid var(–border); border-radius:10px; padding:11px; font-size:15px; font-family:‘Noto Sans TC’,sans-serif; cursor:pointer; }
 .btn-g:active { background: #fde047; border-color:var(–accent); color:var(–accent); }
 .divider { margin:14px 0; border:none; border-top:1px solid var(–border); }
 .note { font-size:16px; color:var(–muted); line-height:1.7; margin-top:12px; }
@@ -119,7 +119,7 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
 <div class="screen" id="memberScreen" style="display:none">
   <div class="box">
     <div class="box-logo">TRIP.PAL 旅伴</div>
-    <div class="box-sub">加入群組</div>
+    <div class="box-sub">加入群組查看地圖</div>
     <div class="role-badge">👤 組員模式</div>
     <div class="field"><label>你的暱稱</label>
       <input id="inputNick" placeholder="輸入暱稱…"
@@ -130,8 +130,8 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
     <div class="err" id="memberError"></div>
     <button class="btn-p" onclick="doJoinGroup()">加入群組查看地圖 →</button>
     <hr class="divider">
+    <div class="note">加入後位置即時同步<br>只有同群組成員看到彼此</div> 
     <button class="btn-g" onclick="showScreen('loginScreen')">← 返回登入</button>
-    <div class="note">📡 加入後 GPS 即時同步<br>只有同群組成員看得到你</div>
   </div>
 </div>
 
