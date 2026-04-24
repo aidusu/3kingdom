@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>友位 · 即時位置分享</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<!-- Firebase SDK -->
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, remove, onDisconnect }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+// ============================================================
+//  ★★★  請填入你的 Firebase 設定  ★★★
+//  到 Firebase Console → 專案設定 → 你的應用程式 → 複製設定碼
+// ============================================================
+const firebaseConfig = {
+  apiKey:            "填入你的 apiKey",
+  authDomain:        "填入你的 authDomain",
+  databaseURL:       "填入你的 databaseURL",   // 一定要填！
+  projectId:         "填入你的 projectId",
+  storageBucket:     "填入你的 storageBucket",
+  messagingSenderId: "填入你的 messagingSenderId",
+  appId:             "填入你的 appId"
+};
+// ============================================================
+
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
+// 指派顏色（依照加入順序循環）
+const COLORS = [
+  { color: '#1d4ed8', bg: 'rgba(29,78,216,0.12)'  },
+  { color: '#dc2626', bg: 'rgba(220,38,38,0.12)'  },
+  { color: '#16a34a', bg: 'rgba(22,163,74,0.12)'  },
+  { color: '#d97706', bg: 'rgba(217,119,6,0.12)'  },
+  { color: '#7c3aed', bg: 'rgba(124,58,237,0.12)' },
+  { color: '#0891b2', bg: 'rgba(8,145,178,0.12)'  },
+];
+
+let map, myId = null, myName = null;
+let markers   = {};   // id → Leaflet marker
+let userColors = {};  // id → color object
+let colorIndex = 0;
+let myLat = null, myLng = null;
+let watchId = null;
+
+// ── 等待 DOM 再初始化 ──────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  showLoginScreen();
+});
+
+// ── 登入畫面 ──────────────────────────────────────────────
+function showLoginScreen() {
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('appScreen').style.display  = 'none';
+}
+
+window.joinGroup = function() {
+  const nameInput = document.getElementById('nameInput').value.trim();
+  if (!nameInput) {
+    document.getElementById('nameError').textContent = '請輸入你的名字';
+    return;
+  }
+  myName = nameInput;
+  myId   = 'user_' + Date.now();
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appScreen').style.display   = 'flex';
+  initApp();
+};
+
+// ── 初始化地圖與 Firebase ──────────────────────────────────
+function initApp() {
+  // 初始化地圖（預設台北）
+  map = L.map('map', { zoomControl: true }).setView([25.0330, 121.5654], 14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+  }).addTo(map);
+
+  // 開始追蹤自己的位置
+  startTracking();
+
+  // 監聽 Firebase 所有用戶位置
+  const usersRef = ref(db, 'users');
+  onValue(usersRef, snapshot => {
+    const data = snapshot.val() || {};
+    syncUsersToMap(data);
+  });
+}
+
+// ── GPS 追蹤 ──────────────────────────────────────────────
+function startTracking() {
+  if (!navigator.geolocation) {
+    alert('你的瀏覽器不支援 GPS，請改用 Chrome 或 Safari。');
+    return;
+  }
+
+  const options = { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 };
+
+  watchId = navigator.geolocation.watchPosition(
+    pos => {
+      myLat = pos.coords.latitude;
+      myLng = pos.coords.longitude;
+      uploadMyPosition();
+      updateStatusPill('connected');
+    },
+    err => {
+      console.warn('GPS 錯誤:', err.message);
+      updateStatusPill('error');
+    },
+    options
+  );
+
+  // 離開頁面時自動從 Firebase 刪除自己
+  const myRef = ref(db, `users/${myId}`);
+  onDisconnect(myRef).remove();
+  window.addEventListener('beforeunload', () => {
+    navigator.geolocation.clearWatch(watchId);
+    remove(myRef);
+  });
+}
+
+function uploadMyPosition() {
+  if (myLat === null) return;
+  set(ref(db, `users/${myId}`), {
+    name:      myName,
+    lat:       myLat,
+    lng:       myLng,
+    updatedAt: Date.now(),
+  });
+  document.getElementById('coordText').textContent =
+    `${myLat.toFixed(5)}, ${myLng.toFixed(5)}`;
+}
+
+// ── 同步地圖 ──────────────────────────────────────────────
+function syncUsersToMap(data) {
+  const currentIds = Object.keys(data);
+
+  // 移除已離線的用戶
+  Object.keys(markers).forEach(id => {
+    if (!data[id]) {
+      map.removeLayer(markers[id]);
+      delete markers[id];
+      delete userColors[id];
+    }
+  });
+
+  // 新增或更新用戶
+  currentIds.forEach(id => {
+    const u = data[id];
+    if (!userColors[id]) {
+      userColors[id] = COLORS[colorIndex % COLORS.length];
+      colorIndex++;
+    }
+    const c = userColors[id];
+    const isMe = id === myId;
+    const label = isMe ? `${u.name}（我）` : u.name;
+
+    if (!markers[id]) {
+      // 建立新 marker
+      markers[id] = L.marker([u.lat, u.lng], { icon: makeIcon(label, c, isMe) })
+        .addTo(map)
+        .bindPopup(makePopup(u, c, isMe));
+    } else {
+      // 更新現有 marker
+      markers[id].setLatLng([u.lat, u.lng]);
+      markers[id].setIcon(makeIcon(label, c, isMe));
+      markers[id].setPopupContent(makePopup(u, c, isMe));
+    }
+  });
+
+  renderSidebar(data);
+
+  // 第一次定位時移動地圖到自己的位置
+  if (myLat && data[myId]) {
+    if (!window._mapCentred) {
+      map.setView([myLat, myLng], 15, { animate: true });
+      window._mapCentred = true;
+    }
+  }
+}
+
+// ── 圖示與 Popup ──────────────────────────────────────────
+function makeIcon(label, c, isMe) {
+  return L.divIcon({
+    className: '',
+    html: `
+      <div style="
+        width:${isMe?48:40}px;height:${isMe?48:40}px;
+        background:${c.bg};
+        border:${isMe?'3px':'2px'} solid ${c.color};
+        border-radius:50%;
+        display:flex;align-items:center;justify-content:center;
+        font-size:${isMe?22:18}px;
+        box-shadow:0 0 0 ${isMe?5:3}px ${c.color}30, 0 4px 12px rgba(0,0,0,0.35);
+      ">${isMe ? '📍' : '👤'}</div>
+      <div style="
+        text-align:center;margin-top:3px;
+        font-family:'Noto Sans TC',sans-serif;
+        font-size:11px;font-weight:700;
+        color:${c.color};
+        text-shadow:0 1px 4px rgba(0,0,0,0.9);
+        white-space:nowrap;
+      ">${label}</div>`,
+    iconSize: [60, 65],
+    iconAnchor: [30, 24],
+    popupAnchor: [0, -28],
+  });
+}
+
+function makePopup(u, c, isMe) {
+  const ago = timeSince(u.updatedAt);
+  return `
+    <div style="font-family:'Noto Sans TC',sans-serif;min-width:140px">
+      <div style="font-weight:700;font-size:14px;color:${c.color};margin-bottom:4px">
+        ${isMe ? '📍' : '👤'} ${u.name}${isMe ? '（我）' : ''}
+      </div>
+      <div style="font-family:'Space Mono',monospace;font-size:11px;color:#9ca3af">
+        ${u.lat.toFixed(5)}, ${u.lng.toFixed(5)}
+      </div>
+      <div style="font-size:11px;color:#9ca3af;margin-top:3px">更新：${ago}</div>
+    </div>`;
+}
+
+function timeSince(ts) {
+  const sec = Math.floor((Date.now() - ts) / 1000);
+  if (sec < 10)  return '剛剛';
+  if (sec < 60)  return `${sec} 秒前`;
+  if (sec < 3600) return `${Math.floor(sec/60)} 分鐘前`;
+  return `${Math.floor(sec/3600)} 小時前`;
+}
+
+// ── 側邊欄 ────────────────────────────────────────────────
+function renderSidebar(data) {
+  const list = document.getElementById('peopleList');
+  list.innerHTML = '';
+
+  const me = data[myId];
+
+  Object.entries(data).forEach(([id, u]) => {
+    const isMe = id === myId;
+    const c = userColors[id] || COLORS[0];
+    const dist = (isMe || !me)
+      ? '—'
+      : calcDistance(me.lat, me.lng, u.lat, u.lng);
+
+    const card = document.createElement('div');
+    card.className = 'person-card' + (isMe ? ' active' : '');
+    card.style.setProperty('--color', c.color);
+    card.innerHTML = `
+      <div class="person-top">
+        <div class="avatar" style="background:${c.bg};border-color:${c.color}">
+          ${isMe ? '📍' : '👤'}
+        </div>
+        <div>
+          <div class="person-name">${u.name}${isMe ? ' (我)' : ''}</div>
+          <div class="person-status">🟢 線上</div>
+        </div>
+      </div>
+      <div class="distance-badge">
+        <span class="distance-label">${isMe ? '我的位置' : '距離我'}</span>
+        <span class="distance-value" style="color:${c.color}">${dist}</span>
+      </div>`;
+    card.onclick = () => {
+      map.setView([u.lat, u.lng], 16, { animate: true });
+      markers[id]?.openPopup();
+    };
+    list.appendChild(card);
+  });
+
+  document.getElementById('memberCount').textContent = Object.keys(data).length;
+}
+
+function calcDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 +
+            Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+  const d = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return d < 1000 ? `${Math.round(d)} 公尺` : `${(d/1000).toFixed(1)} 公里`;
+}
+
+function updateStatusPill(state) {
+  const pill = document.getElementById('statusPill');
+  const dot  = document.getElementById('statusDot');
+  const txt  = document.getElementById('statusText');
+  if (state === 'connected') {
+    dot.style.background = '#4fffb0';
+    txt.textContent = '即時同步中';
+    pill.style.borderColor = 'rgba(79,255,176,0.3)';
+  } else {
+    dot.style.background = '#f87171';
+    txt.textContent = 'GPS 錯誤';
+    pill.style.borderColor = 'rgba(248,113,113,0.3)';
+  }
+}
+
+// ── 全域按鈕 ──────────────────────────────────────────────
+window.locateMe = function() {
+  if (myLat) map.setView([myLat, myLng], 16, { animate: true });
+};
+</script>
+
+<style>
+  :root {
+    --bg: #0d0f14;
+    --panel: #13161e;
+    --card: #1a1e2a;
+    --border: #252a38;
+    --accent: #4fffb0;
+    --text: #e8eaf0;
+    --muted: #6b7280;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── 登入畫面 ── */
+  #loginScreen {
+    position: fixed; inset: 0; z-index: 9999;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .login-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 36px;
+    width: 340px;
+    text-align: center;
+  }
+  .login-logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+  .login-sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+  .login-label {
+    display: block;
+    text-align: left;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-family: 'Space Mono', monospace;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .login-input {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 6px;
+  }
+  .login-input:focus { border-color: var(--accent); }
+  .login-error { font-size: 12px; color: #f87171; min-height: 18px; margin-bottom: 16px; text-align: left; }
+  .login-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #0d0f14;
+    border: none;
+    border-radius: 10px;
+    padding: 13px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: 'Noto Sans TC', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .login-btn:hover { background: #6bffbe; transform: translateY(-1px); }
+  .login-note {
+    margin-top: 16px;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* ── App 畫面 ── */
+  #appScreen {
+    display: none;
+    flex-direction: column;
+    height: 100vh;
+  }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0; z-index: 1000;
+  }
+  .logo { font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700; color: var(--accent); }
+  .logo span { color: var(--text); }
+
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .member-count {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .status-pill {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(79,255,176,0.08);
+    border: 1px solid rgba(79,255,176,0.2);
+    border-radius: 20px; padding: 4px 12px;
+    font-size: 12px; color: var(--accent);
+    font-family: 'Space Mono', monospace;
+    transition: border-color 0.3s;
+  }
+  #statusDot {
+    width: 7px; height: 7px;
+    background: var(--accent); border-radius: 50%;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%,100%{ opacity:1; transform:scale(1); }
+    50%{ opacity:0.4; transform:scale(1.3); }
+  }
+
+  .main { display: flex; flex: 1; overflow: hidden; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 270px; background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;
+  }
+  .sidebar-title {
+    padding: 16px 16px 8px;
+    font-size: 11px; font-family: 'Space Mono', monospace;
+    color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px;
+  }
+  .people-list { flex: 1; overflow-y: auto; padding: 0 12px 12px; }
+  .people-list::-webkit-scrollbar { width: 4px; }
+  .people-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .person-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px; margin-bottom: 8px;
+    cursor: pointer; transition: all 0.2s;
+    position: relative; overflow: hidden;
+  }
+  .person-card::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px; border-radius: 3px 0 0 3px;
+    background: var(--color, var(--accent));
+  }
+  .person-card:hover { border-color: rgba(79,255,176,0.3); transform: translateX(2px); }
+  .person-card.active { border-color: var(--accent); }
+
+  .person-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0; border: 2px solid;
+  }
+  .person-name { font-size: 14px; font-weight: 600; }
+  .person-status { font-size: 11px; color: var(--muted); }
+
+  .distance-badge {
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+    border-radius: 6px; padding: 5px 10px; font-size: 12px;
+    font-family: 'Space Mono', monospace;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .distance-label { color: var(--muted); }
+
+  .info-panel {
+    padding: 12px 16px; border-top: 1px solid var(--border);
+    font-size: 11px; color: var(--muted);
+    font-family: 'Space Mono', monospace; line-height: 1.8;
+  }
+  .info-panel .coords { color: var(--accent); }
+
+  /* Map */
+  .map-wrapper { flex: 1; position: relative; }
+  #map { width: 100%; height: 100%; }
+
+  .controls {
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 10px; z-index: 500;
+  }
+  .btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 18px; border-radius: 50px; border: none;
+    font-family: 'Noto Sans TC', sans-serif; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; backdrop-filter: blur(8px); white-space: nowrap;
+  }
+  .btn-primary { background: var(--accent); color: #0d0f14; }
+  .btn-primary:hover { background: #6bffbe; transform: translateY(-2px); }
+
+  .map-hint {
+    position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+    background: rgba(13,15,20,0.85); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 16px; font-size: 12px; color: var(--muted);
+    backdrop-filter: blur(8px); z-index: 500; pointer-events: none; white-space: nowrap;
+  }
+
+  /* Leaflet */
+  .leaflet-container { background: #f0f0f0; }
+  .leaflet-tile { filter: grayscale(0.85) brightness(1.05); }
+  .leaflet-control-zoom a { background: var(--card) !important; color: var(--text) !important; border-color: var(--border) !important; }
+  .leaflet-control-attribution { display: none; }
+  .leaflet-popup-content-wrapper {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text);
+    font-family: 'Noto Sans TC', sans-serif;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .leaflet-popup-tip { background: var(--card); }
+  .leaflet-popup-content { margin: 10px 14px; font-size: 13px; }
+
+  /* 無成員提示 */
+  .empty-hint {
+    padding: 20px 12px; text-align: center;
+    font-size: 12px; color: var(--muted); line-height: 1.8;
+  }
+</style>
+
+</head>
+<body>
+
+<!-- ── 登入畫面 ── -->
+
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">友位</div>
+    <div class="login-sub">即時位置分享</div>
+    <label class="login-label">你的名字</label>
+    <input class="login-input" id="nameInput" placeholder="輸入暱稱…" maxlength="12"
+      onkeydown="if(event.key==='Enter') joinGroup()">
+    <div class="login-error" id="nameError"></div>
+    <button class="login-btn" onclick="joinGroup()">加入群組 →</button>
+    <div class="login-note">
+      📡 加入後你的 GPS 位置將即時上傳<br>並顯示在所有成員的地圖上
+    </div>
+  </div>
+</div>
+
+<!-- ── App 畫面 ── -->
+
+<div id="appScreen">
+  <header>
+    <div class="logo">友<span>位</span></div>
+    <div class="header-right">
+      <div class="member-count">成員：<span id="memberCount">0</span> 人</div>
+      <div class="status-pill" id="statusPill">
+        <div id="statusDot"></div>
+        <span id="statusText">定位中…</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="main">
+    <div class="sidebar">
+      <div class="sidebar-title">群組成員</div>
+      <div class="people-list" id="peopleList">
+        <div class="empty-hint">等待成員加入…</div>
+      </div>
+      <div class="info-panel">
+        我的座標：<br>
+        <span class="coords" id="coordText">等待定位...</span>
+      </div>
+    </div>
+
+```
+<div class="map-wrapper">
+  <div class="map-hint">📡 位置每 5 秒自動更新一次</div>
+  <div id="map"></div>
+  <div class="controls">
+    <button class="btn btn-primary" onclick="locateMe()">📍 回到我的位置</button>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+</body>
+</html>
