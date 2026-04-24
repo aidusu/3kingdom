@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>友位 · 群組位置分享</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#0d0f14; --panel:#13161e; --card:#1a1e2a; --border:#252a38; --accent:#4fffb0; --text:#e8eaf0; --muted:#6b7280; }
+*{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+html,body{ font-family:'Noto Sans TC',sans-serif; background:var(--bg); color:var(--text); height:100%; overflow:hidden; }
+
+.screen { position:fixed; inset:0; z-index:9999; background:var(–bg); align-items:center; justify-content:center; }
+.box { background:var(–panel); border:1px solid var(–border); border-radius:20px; padding:32px 26px; width:88vw; max-width:340px; text-align:center; }
+.box-logo { font-family:‘Space Mono’,monospace; font-size:24px; font-weight:700; color:var(–accent); margin-bottom:3px; }
+.box-sub { font-size:12px; color:var(–muted); margin-bottom:22px; }
+
+.field { margin-bottom:12px; text-align:left; }
+.field label { display:block; font-size:11px; color:var(–muted); font-family:‘Space Mono’,monospace; text-transform:uppercase; letter-spacing:1px; margin-bottom:5px; }
+.field input { width:100%; background:var(–card); border:1px solid var(–border); border-radius:10px; padding:11px 14px; color:var(–text); font-family:‘Noto Sans TC’,sans-serif; font-size:15px; outline:none; transition:border-color 0.2s; }
+.field input:focus { border-color:var(–accent); }
+
+.err { font-size:12px; color:#f87171; min-height:16px; margin-bottom:10px; text-align:left; }
+.btn-p { width:100%; background:var(–accent); color:#0d0f14; border:none; border-radius:10px; padding:13px; font-size:15px; font-weight:700; font-family:‘Noto Sans TC’,sans-serif; cursor:pointer; margin-bottom:10px; }
+.btn-p:active { opacity:.85; }
+.btn-g { width:100%; background:transparent; color:var(–muted); border:1px solid var(–border); border-radius:10px; padding:11px; font-size:13px; font-family:‘Noto Sans TC’,sans-serif; cursor:pointer; }
+.btn-g:active { border-color:var(–accent); color:var(–accent); }
+.divider { margin:14px 0; border:none; border-top:1px solid var(–border); }
+.note { font-size:11px; color:var(–muted); line-height:1.7; margin-top:12px; }
+.role-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(79,255,176,0.08); border:1px solid rgba(79,255,176,0.2); border-radius:20px; padding:4px 14px; font-size:12px; color:var(–accent); font-family:‘Space Mono’,monospace; margin-bottom:18px; }
+
+/* App */
+#appScreen { display:none; flex-direction:column; height:100dvh; }
+header { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; background:var(–panel); border-bottom:1px solid var(–border); flex-shrink:0; }
+.logo { font-family:‘Space Mono’,monospace; font-size:17px; font-weight:700; color:var(–accent); }
+.logo span { color:var(–text); }
+.header-right { display:flex; align-items:center; gap:8px; }
+.group-tag { font-size:11px; font-family:‘Space Mono’,monospace; background:rgba(79,255,176,0.08); border:1px solid rgba(79,255,176,0.2); border-radius:20px; padding:3px 10px; color:var(–accent); max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.status-pill { display:flex; align-items:center; gap:5px; background:rgba(79,255,176,0.06); border:1px solid rgba(79,255,176,0.2); border-radius:20px; padding:4px 10px; font-size:11px; color:var(–accent); font-family:‘Space Mono’,monospace; }
+#statusDot { width:6px; height:6px; background:var(–accent); border-radius:50%; animation:pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(1.4)} }
+
+.map-wrapper { flex:1; position:relative; min-height:0; }
+#map { width:100%; height:100%; }
+.map-hint { position:absolute; top:10px; left:50%; transform:translateX(-50%); background:rgba(13,15,20,0.82); border:1px solid var(–border); border-radius:20px; padding:5px 14px; font-size:11px; color:var(–muted); backdrop-filter:blur(8px); z-index:500; pointer-events:none; white-space:nowrap; }
+.locate-btn { position:absolute; bottom:14px; right:14px; width:44px; height:44px; border-radius:50%; background:var(–panel); border:1px solid var(–border); color:var(–accent); font-size:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:500; box-shadow:0 4px 16px rgba(0,0,0,.4); }
+.locate-btn:active { transform:scale(0.93); }
+
+.bottom-panel { flex-shrink:0; background:var(–panel); border-top:1px solid var(–border); max-height:38vh; overflow-y:auto; }
+.panel-handle { display:flex; align-items:center; justify-content:space-between; padding:10px 16px 6px; position:sticky; top:0; background:var(–panel); z-index:10; border-bottom:1px solid var(–border); }
+.panel-title { font-size:11px; font-family:‘Space Mono’,monospace; color:var(–muted); text-transform:uppercase; letter-spacing:1.2px; }
+.my-coord { font-family:‘Space Mono’,monospace; font-size:10px; color:var(–accent); }
+.friends-scroll { display:flex; gap:10px; padding:10px 14px 14px; overflow-x:auto; scrollbar-width:none; }
+.friends-scroll::-webkit-scrollbar { display:none; }
+.friend-card { flex-shrink:0; width:120px; background:var(–card); border:1px solid var(–border); border-radius:14px; padding:12px 10px; cursor:pointer; position:relative; overflow:hidden; }
+.friend-card::after { content:’’; position:absolute; bottom:0; left:0; right:0; height:3px; background:var(–fc,var(–accent)); border-radius:0 0 14px 14px; }
+.friend-card:active { transform:scale(0.96); }
+.friend-card.is-me { border-color:var(–accent); }
+.fc-role { text-align:center; font-size:10px; color:var(–muted); margin-bottom:5px; }
+.fc-avatar { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:17px; margin:0 auto 6px; border:2px solid; }
+.fc-name { text-align:center; font-size:12px; font-weight:700; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fc-distance { text-align:center; font-family:‘Space Mono’,monospace; font-size:13px; font-weight:700; color:var(–fc,var(–accent)); }
+.fc-dist-label { text-align:center; font-size:10px; color:var(–muted); margin-top:1px; }
+
+.leaflet-container { background:#f0f0f0; }
+.leaflet-tile { filter:grayscale(0.85) brightness(1.05); }
+.leaflet-control-zoom { margin:10px !important; }
+.leaflet-control-zoom a { width:32px !important; height:32px !important; line-height:32px !important; background:var(–panel) !important; color:var(–text) !important; border-color:var(–border) !important; }
+.leaflet-control-attribution { display:none; }
+.leaflet-popup-content-wrapper { background:var(–card); border:1px solid var(–border); border-radius:12px; color:var(–text); font-family:‘Noto Sans TC’,sans-serif; box-shadow:0 8px 32px rgba(0,0,0,.5); }
+.leaflet-popup-tip { background:var(–card); }
+.leaflet-popup-content { margin:10px 14px; font-size:13px; }
+</style>
+
+</head>
+<body>
+
+<!-- ① 登入（組長） -->
+
+<div class="screen" id="loginScreen" style="display:flex">
+  <div class="box">
+    <div class="box-logo">友位</div>
+    <div class="box-sub">群組位置分享</div>
+    <div class="field"><label>帳號</label>
+      <input id="inputUser" placeholder="輸入帳號…" autocapitalize="none"
+        onkeydown="if(event.key==='Enter')gel('inputPass').focus()"></div>
+    <div class="field"><label>密碼</label>
+      <input id="inputPass" type="password" placeholder="輸入密碼…"
+        onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="err" id="loginError"></div>
+    <button class="btn-p" onclick="doLogin()">登入（組長）→</button>
+    <hr class="divider">
+    <button class="btn-g" onclick="showScreen('memberScreen')">👤 我是組員，加入群組</button>
+    <div class="note">組長用 admin 帳號登入後建立群組<br>組員點下方按鈕加入</div>
+  </div>
+</div>
+
+<!-- ② 建立群組 -->
+
+<div class="screen" id="leaderScreen" style="display:none">
+  <div class="box">
+    <div class="box-logo">友位</div>
+    <div class="box-sub">建立新群組</div>
+    <div class="role-badge">👑 組長模式</div>
+    <div class="field"><label>群組名稱</label>
+      <input id="inputGroupName" placeholder="輸入群組名稱…"
+        onkeydown="if(event.key==='Enter')doCreateGroup()"></div>
+    <div class="err" id="leaderError"></div>
+    <button class="btn-p" onclick="doCreateGroup()">建立群組 →</button>
+    <div class="note">建立後把群組名稱分享給組員<br>組員輸入相同名稱即可加入</div>
+  </div>
+</div>
+
+<!-- ③ 加入群組 -->
+
+<div class="screen" id="memberScreen" style="display:none">
+  <div class="box">
+    <div class="box-logo">友位</div>
+    <div class="box-sub">加入群組</div>
+    <div class="role-badge">👤 組員模式</div>
+    <div class="field"><label>你的暱稱</label>
+      <input id="inputNick" placeholder="輸入暱稱…"
+        onkeydown="if(event.key==='Enter')gel('inputJoinGroup').focus()"></div>
+    <div class="field"><label>群組名稱</label>
+      <input id="inputJoinGroup" placeholder="輸入群組名稱…"
+        onkeydown="if(event.key==='Enter')doJoinGroup()"></div>
+    <div class="err" id="memberError"></div>
+    <button class="btn-p" onclick="doJoinGroup()">加入群組 →</button>
+    <hr class="divider">
+    <button class="btn-g" onclick="showScreen('loginScreen')">← 返回登入</button>
+    <div class="note">📡 加入後 GPS 即時同步<br>只有同群組成員看得到你</div>
+  </div>
+</div>
+
+<!-- ④ 地圖主畫面 -->
+
+<div id="appScreen">
+  <header>
+    <div class="logo">友<span>位</span></div>
+    <div class="header-right">
+      <div class="group-tag">📍 <span id="groupNameDisplay">—</span></div>
+      <div class="status-pill"><div id="statusDot"></div><span id="statusText">定位中…</span></div>
+    </div>
+  </header>
+  <div class="map-wrapper">
+    <div class="map-hint">同群組 <span id="memberCount">0</span> 位成員在線</div>
+    <div id="map"></div>
+    <button class="locate-btn" onclick="locateMe()">📍</button>
+  </div>
+  <div class="bottom-panel">
+    <div class="panel-handle">
+      <div class="panel-title">群組成員</div>
+      <div class="my-coord" id="coordText">等待定位…</div>
+    </div>
+    <div class="friends-scroll" id="friendsScroll"></div>
+  </div>
+</div>
+
+<!-- Firebase compat SDK（全域可用，不用 import）-->
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+// ============================================================
+//  ★★★  填入你的 Firebase 設定  ★★★
+// ============================================================
+const firebaseConfig = {
+  apiKey:            "填入你的 apiKey",
+  authDomain:        "填入你的 authDomain",
+  databaseURL:       "填入你的 databaseURL",
+  projectId:         "填入你的 projectId",
+  storageBucket:     "填入你的 storageBucket",
+  messagingSenderId: "填入你的 messagingSenderId",
+  appId:             "填入你的 appId"
+};
+// ============================================================
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+const ADMIN  = { username:'admin', password:'258000' };
+const COLORS = ['#1d4ed8','#e11d48','#16a34a','#d97706','#7c3aed','#0891b2','#be185d','#b45309'];
+
+let myId=null, myName=null, myGroup=null, isLeader=false;
+let map=null, markers={}, memberColors={}, colorIdx=0;
+let myLat=null, myLng=null;
+
+/* ── 畫面切換 ── */
+function showScreen(id) {
+  ['loginScreen','leaderScreen','memberScreen','appScreen'].forEach(s => {
+    const el = gel(s);
+    el.style.display = 'none';
+  });
+  const target = gel(id);
+  target.style.display = (id === 'appScreen') ? 'flex' : 'flex';
+  // appScreen 需要 flex-direction:column
+  if (id === 'appScreen') target.style.flexDirection = 'column';
+}
+
+/* ── 登入 ── */
+function doLogin() {
+  const user = gel('inputUser').value.trim();
+  const pass = gel('inputPass').value;
+  if (!user || !pass) { setErr('loginError','請輸入帳號與密碼'); return; }
+  if (user === ADMIN.username && pass === ADMIN.password) {
+    isLeader = true; myName = 'admin';
+    setErr('loginError','');
+    showScreen('leaderScreen');
+  } else {
+    setErr('loginError','帳號或密碼錯誤');
+    gel('inputPass').value = '';
+  }
+}
+
+/* ── 建立群組 ── */
+function doCreateGroup() {
+  const gname = gel('inputGroupName').value.trim();
+  if (!gname) { setErr('leaderError','請輸入群組名稱'); return; }
+  db.ref(`groups/${gname}/info`).once('value', snap => {
+    if (snap.exists()) { setErr('leaderError','此群組名稱已存在，請換一個'); return; }
+    db.ref(`groups/${gname}/info`).set({ leader: myName, createdAt: Date.now() });
+    myGroup = gname; myId = 'leader_' + Date.now();
+    gel('groupNameDisplay').textContent = gname;
+    setErr('leaderError','');
+    launchApp();
+  });
+}
+
+/* ── 加入群組 ── */
+function doJoinGroup() {
+  const nick  = gel('inputNick').value.trim();
+  const gname = gel('inputJoinGroup').value.trim();
+  if (!nick)  { setErr('memberError','請輸入你的暱稱'); return; }
+  if (!gname) { setErr('memberError','請輸入群組名稱'); return; }
+  db.ref(`groups/${gname}/info`).once('value', snap => {
+    if (!snap.exists()) { setErr('memberError','找不到此群組，請確認名稱'); return; }
+    myName = nick; myGroup = gname; myId = 'user_' + Date.now();
+    gel('groupNameDisplay').textContent = gname;
+    setErr('memberError','');
+    launchApp();
+  });
+}
+
+/* ── 啟動地圖 ── */
+function launchApp() {
+  showScreen('appScreen');
+
+  map = L.map('map', { zoomControl:true, attributionControl:false }).setView([25.0330,121.5654],14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+
+  if (navigator.geolocation) {
+    navigator.geolocation.watchPosition(pos => {
+      myLat = pos.coords.latitude; myLng = pos.coords.longitude;
+      uploadPos(); setStatus(true);
+      if (!window._centred) { map.setView([myLat,myLng],16,{animate:true}); window._centred=true; }
+    }, () => setStatus(false), { enableHighAccuracy:true, maximumAge:5000 });
+  }
+
+  const myRef = db.ref(`groups/${myGroup}/members/${myId}`);
+  myRef.onDisconnect().remove();
+  window.addEventListener('beforeunload', () => myRef.remove());
+
+  db.ref(`groups/${myGroup}/members`).on('value', snap => {
+    const data = snap.val() || {};
+    syncMap(data); renderCards(data);
+  });
+}
+
+function uploadPos() {
+  if (!myLat) return;
+  db.ref(`groups/${myGroup}/members/${myId}`).set({
+    name:myName, role:isLeader?'leader':'member',
+    lat:myLat, lng:myLng, updatedAt:Date.now()
+  });
+  gel('coordText').textContent = `${myLat.toFixed(4)}, ${myLng.toFixed(4)}`;
+}
+
+/* ── 地圖 ── */
+function syncMap(data) {
+  Object.keys(markers).forEach(id => {
+    if (!data[id]) { map.removeLayer(markers[id]); delete markers[id]; delete memberColors[id]; }
+  });
+  Object.entries(data).forEach(([id,u]) => {
+    if (!memberColors[id]) memberColors[id] = COLORS[colorIdx++ % COLORS.length];
+    const c=memberColors[id], isMe=id===myId;
+    if (!markers[id]) {
+      markers[id] = L.marker([u.lat,u.lng],{icon:makeIcon(u,c,isMe)}).addTo(map).bindPopup(makePopup(u,c,isMe));
+    } else {
+      markers[id].setLatLng([u.lat,u.lng]);
+      markers[id].setIcon(makeIcon(u,c,isMe));
+      markers[id].setPopupContent(makePopup(u,c,isMe));
+    }
+  });
+}
+
+function makeIcon(u,c,isMe) {
+  const sz=isMe?46:38, em=u.role==='leader'?'👑':'👤';
+  return L.divIcon({
+    className:'',
+    html:`<div style="width:${sz}px;height:${sz}px;background:${c}22;border:${isMe?3:2}px solid ${c};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:${isMe?22:17}px;box-shadow:0 0 0 ${isMe?5:3}px ${c}30,0 3px 10px rgba(0,0,0,.4)">${em}</div><div style="text-align:center;margin-top:2px;font-family:'Noto Sans TC',sans-serif;font-size:11px;font-weight:700;color:${c};text-shadow:0 1px 4px rgba(0,0,0,.9);white-space:nowrap">${u.name}${isMe?' (我)':''}</div>`,
+    iconSize:[sz+10,sz+18], iconAnchor:[(sz+10)/2,sz/2], popupAnchor:[0,-(sz/2+4)]
+  });
+}
+
+function makePopup(u,c,isMe) {
+  return `<div style="font-family:'Noto Sans TC',sans-serif;min-width:130px">
+    <div style="font-weight:700;font-size:14px;color:${c};margin-bottom:2px">${u.name}${isMe?' (我)':''}</div>
+    <div style="font-size:11px;color:#9ca3af;margin-bottom:2px">${u.role==='leader'?'👑 組長':'👤 組員'}</div>
+    <div style="font-family:'Space Mono',monospace;font-size:10px;color:#6b7280">${u.lat.toFixed(5)}, ${u.lng.toFixed(5)}</div>
+    <div style="font-size:10px;color:#6b7280;margin-top:2px">更新 ${timeSince(u.updatedAt)}</div>
+  </div>`;
+}
+
+/* ── 成員卡片 ── */
+function renderCards(data) {
+  const scroll = gel('friendsScroll');
+  scroll.innerHTML = '';
+  const me = data[myId];
+  gel('memberCount').textContent = Object.keys(data).length;
+  const sorted = Object.entries(data).sort(([,a],[,b])=>(a.role==='leader'?0:1)-(b.role==='leader'?0:1));
+  sorted.forEach(([id,u]) => {
+    const isMe=id===myId, c=memberColors[id]||COLORS[0];
+    const dist=(isMe||!me)?null:calcDist(me.lat,me.lng,u.lat,u.lng);
+    const card=document.createElement('div');
+    card.className='friend-card'+(isMe?' is-me':'');
+    card.style.setProperty('--fc',c);
+    card.innerHTML=`
+      <div class="fc-role">${u.role==='leader'?'👑 組長':'👤 組員'}</div>
+      <div class="fc-avatar" style="background:${c}22;border-color:${c}">${u.role==='leader'?'👑':'👤'}</div>
+      <div class="fc-name">${u.name}${isMe?' (我)':''}</div>
+      ${isMe?`<div class="fc-distance" style="color:var(--muted);font-size:10px">我的位置</div>`
+             :`<div class="fc-distance">${dist}</div><div class="fc-dist-label">距離我</div>`}`;
+    card.onclick=()=>{ map.setView([u.lat,u.lng],16,{animate:true}); markers[id]?.openPopup(); };
+    scroll.appendChild(card);
+  });
+}
+
+/* ── 工具 ── */
+function calcDist(a,b,c,d) {
+  const R=6371000,dLat=(c-a)*Math.PI/180,dLng=(d-b)*Math.PI/180;
+  const x=Math.sin(dLat/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLng/2)**2;
+  const dist=R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+  return dist<1000?`${Math.round(dist)} 公尺`:`${(dist/1000).toFixed(1)} 公里`;
+}
+function timeSince(ts) {
+  const s=Math.floor((Date.now()-ts)/1000);
+  if(s<10)return '剛剛'; if(s<60)return `${s}秒前`;
+  if(s<3600)return `${Math.floor(s/60)}分鐘前`; return `${Math.floor(s/3600)}小時前`;
+}
+function setStatus(ok) {
+  gel('statusDot').style.background=ok?'#4fffb0':'#f87171';
+  gel('statusText').textContent=ok?'即時同步中':'GPS 錯誤';
+}
+function gel(id){ return document.getElementById(id); }
+function setErr(id,msg){ gel(id).textContent=msg; }
+function locateMe(){ if(myLat) map.setView([myLat,myLng],16,{animate:true}); markers[myId]?.openPopup(); }
+</script>
+
+</body>
+</html>
