@@ -80,7 +80,7 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
 
 <!-- ① 登入（組長） -->
 
-<div class="screen" id="loginScreen" style="display:flex">
+<div class="screen" id="loginScreen" style="display:none">
   <div class="box">
     <div class="box-logo">TRIP.PAL 旅伴</div>
     <div class="box-sub">管理者建立群組</div>
@@ -94,7 +94,7 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
     <button class="btn-p" onclick="doLogin()">管理者登入→</button>
     <hr class="divider">
     <div class="note">組員點底下的按鈕加入與查看</div>  
-    <button class="btn-g" onclick="showScreen('memberScreen')">👤 組員，加入/查看群組</button>    
+    <button class="btn-g" onclick="showScreen('memberScreen')">前往👤組員頁面</button>    
   </div>
 </div>
 
@@ -116,7 +116,7 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
 
 <!-- ③ 加入群組 -->
 
-<div class="screen" id="memberScreen" style="display:none">
+<div class="screen" id="memberScreen" style="display:flex">
   <div class="box">
     <div class="box-logo">TRIP.PAL 旅伴</div>
     <div class="box-sub">加入群組查看地圖</div>
@@ -130,8 +130,8 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
     <div class="err" id="memberError"></div>
     <button class="btn-p" onclick="doJoinGroup()">加入群組查看地圖 →</button>
     <hr class="divider">
-    <div class="note">加入後位置即時同步<br>只有同群組成員看到彼此</div> 
-    <button class="btn-g" onclick="showScreen('loginScreen')">← 返回登入</button>
+    <div class="note">組員加入後位置即時同步<br>管理者前往設定群組</div> 
+    <button class="btn-g" onclick="showScreen('loginScreen')">← 前往管理者頁面</button>
   </div>
 </div>
 
