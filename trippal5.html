@@ -163,7 +163,7 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
       <input id="inputPass" type="password" placeholder="輸入密碼…"
         onkeydown="if(event.key==='Enter')doLogin()"></div>
     <div class="err" id="loginError"></div>
-    <button class="btn-p" id="loginBtn" onclick="doLogin()">確認登入</button>
+    <button class="btn-p" id="loginBtn" onclick="doLogin()">組長確認登入?</button>
     <hr class="divider">
     <div class="note">若非組長，請點按鈕切換到組員模式</div>
     <button class="btn-g" onclick="showScreen('memberScreen')">切換到組員模式</button>
@@ -189,7 +189,7 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
       <input id="inputGroupName" placeholder="輸入群組名稱…"
         onkeydown="if(event.key==='Enter')doCreateGroup()"></div>
     <div class="err" id="leaderError"></div>
-    <button class="btn-p" onclick="doCreateGroup()">建立新群組 →</button>
+    <button class="btn-p" onclick="doCreateGroup()">組長確認建立新群組?</button>
     <div class="note">請將群組名稱告知組員<br>組員輸入群組名稱即可入群</div>
     <hr class="divider">
     <button class="btn-p" onclick="doLogout()">組長登出</button>
@@ -215,7 +215,7 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
       <input id="inputJoinGroup" placeholder="輸入群組名稱…"
         onkeydown="if(event.key==='Enter')doJoinGroup()"></div>
     <div class="err" id="memberError"></div>
-    <button class="btn-g" onclick="doJoinGroup()">加入群組查看地圖 →</button>
+    <button class="btn-g" onclick="doJoinGroup()">組員確認加入群組?</button>
     <hr class="divider">
     <div class="note">組長建立新群組請切換模式</div>
     <button class="btn-p" onclick="showScreen('loginScreen')">切換到組長模式</button>
