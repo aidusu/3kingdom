@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
@@ -12,97 +11,95 @@
 :root { --bg:#0d0f14; --panel:#13161e; --card:#1a1e2a; --border:#252a38; --accent:#4fffb0; --text:#e8eaf0; --muted:#6b7280; }
 *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
 html,body{ font-family:'Noto Sans TC',sans-serif; background:var(--bg); color:var(--text); height:100%; overflow:hidden; }
-
-.screen { position:fixed; inset:0; z-index:9999; background:var(–bg); align-items:center; justify-content:center; }
-.box { background:var(–panel); border:1px solid var(–border); border-radius:20px; padding:32px 26px; width:88vw; max-width:340px; text-align:center; }
-.box-logo { font-family:‘Space Mono’,monospace; font-size:24px; font-weight:700; color:var(–accent); margin-bottom:3px; }
-.box-sub { font-size:12px; color:var(–muted); margin-bottom:22px; }
-
+ 
+.screen { position:fixed; inset:0; z-index:9999; background:var(--bg); display:none; align-items:center; justify-content:center; }
+.box { background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:32px 26px; width:88vw; max-width:340px; text-align:center; }
+.box-logo { font-family:'Space Mono',monospace; font-size:24px; font-weight:700; color:var(--accent); margin-bottom:3px; }
+.box-sub { font-size:12px; color:var(--muted); margin-bottom:22px; }
+ 
 .field { margin-bottom:12px; text-align:left; }
-.field label { display:block; font-size:11px; color:var(–muted); font-family:‘Space Mono’,monospace; text-transform:uppercase; letter-spacing:1px; margin-bottom:5px; }
-.field input { width:100%; background:var(–card); border:1px solid var(–border); border-radius:10px; padding:11px 14px; color:var(–text); font-family:‘Noto Sans TC’,sans-serif; font-size:15px; outline:none; transition:border-color 0.2s; }
-.field input:focus { border-color:var(–accent); }
-
+.field label { display:block; font-size:11px; color:var(--muted); font-family:'Space Mono',monospace; text-transform:uppercase; letter-spacing:1px; margin-bottom:5px; }
+.field input { width:100%; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:11px 14px; color:var(--text); font-family:'Noto Sans TC',sans-serif; font-size:15px; outline:none; transition:border-color 0.2s; }
+.field input:focus { border-color:var(--accent); }
+ 
 .err { font-size:12px; color:#f87171; min-height:16px; margin-bottom:10px; text-align:left; }
-.btn-p { width:100%; background:#022c22; color:white; border:none; border-radius:10px; padding:13px; font-size:15px; font-weight:700; font-family:‘Noto Sans TC’,sans-serif; cursor:pointer; margin-bottom:10px; }
+.btn-p { width:100%; background:#022c22; color:white; border:none; border-radius:10px; padding:13px; font-size:15px; font-weight:700; font-family:'Noto Sans TC',sans-serif; cursor:pointer; margin-bottom:10px; transition:opacity 0.2s; }
 .btn-p:active { opacity:.85; }
-.btn-g { width:100%; background:#2d0a0a ; color:#fde047; border:1px solid var(–border); border-radius:10px; padding:11px; font-size:15px; font-family:‘Noto Sans TC’,sans-serif; cursor:pointer; }
-.btn-g:active { border-color:var(–accent); color:var(–accent); }
-.divider { margin:14px 0; border:none; border-top:1px solid var(–border); }
-.note { font-size:11px; color:var(–muted); line-height:1.7; margin-top:12px; }
-.role-badge { display:inline-flex; align-items:center; gap:6px; background:#2d0a0a; border:1px solid rgba(79,255,176,0.2); border-radius:20px; padding:4px 14px; font-size:15px; color:var(–accent); font-family:‘Space Mono’,monospace; margin-bottom:18px; }
-
+.btn-p:disabled { opacity:.5; cursor:not-allowed; }
+.btn-g { width:100%; background:#2d0a0a; color:#fde047; border:1px solid var(--border); border-radius:10px; padding:11px; font-size:15px; font-family:'Noto Sans TC',sans-serif; cursor:pointer; }
+.btn-g:active { border-color:var(--accent); color:var(--accent); }
+.divider { margin:14px 0; border:none; border-top:1px solid var(--border); }
+.note { font-size:11px; color:var(--muted); line-height:1.7; margin-top:12px; }
+.role-badge { display:inline-flex; align-items:center; gap:6px; background:#2d0a0a; border:1px solid rgba(79,255,176,0.2); border-radius:20px; padding:4px 14px; font-size:15px; color:var(--accent); font-family:'Space Mono',monospace; margin-bottom:18px; }
+ 
 /* App */
 #appScreen { display:none; flex-direction:column; height:100dvh; }
-header { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; background:var(–panel); border-bottom:1px solid var(–border); flex-shrink:0; }
-.logo { font-family:‘Space Mono’,monospace; font-size:17px; font-weight:700; color:var(–accent); }
-.logo span { color:var(–text); }
+header { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; background:var(--panel); border-bottom:1px solid var(--border); flex-shrink:0; }
+.logo { font-family:'Space Mono',monospace; font-size:17px; font-weight:700; color:var(--accent); }
+.logo span { color:var(--text); }
 .header-right { display:flex; align-items:center; gap:8px; }
-.group-tag { font-size:11px; font-family:‘Space Mono’,monospace; background:rgba(79,255,176,0.08); border:1px solid rgba(79,255,176,0.2); border-radius:20px; padding:3px 10px; color:var(–accent); max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.status-pill { display:flex; align-items:center; gap:5px; background:rgba(79,255,176,0.06); border:1px solid rgba(79,255,176,0.2); border-radius:20px; padding:4px 10px; font-size:11px; color:var(–accent); font-family:‘Space Mono’,monospace; }
-#statusDot { width:6px; height:6px; background:var(–accent); border-radius:50%; animation:pulse 1.5s infinite; }
+.group-tag { font-size:11px; font-family:'Space Mono',monospace; background:rgba(79,255,176,0.08); border:1px solid rgba(79,255,176,0.2); border-radius:20px; padding:3px 10px; color:var(--accent); max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.status-pill { display:flex; align-items:center; gap:5px; background:rgba(79,255,176,0.06); border:1px solid rgba(79,255,176,0.2); border-radius:20px; padding:4px 10px; font-size:11px; color:var(--accent); font-family:'Space Mono',monospace; }
+#statusDot { width:6px; height:6px; background:var(--accent); border-radius:50%; animation:pulse 1.5s infinite; }
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(1.4)} }
-
+ 
 .map-wrapper { flex:1; position:relative; min-height:0; }
 #map { width:100%; height:100%; }
-.map-hint { position:absolute; top:10px; left:50%; transform:translateX(-50%); background:rgba(13,15,20,0.82); border:1px solid var(–border); border-radius:20px; padding:5px 14px; font-size:11px; color:var(–muted); backdrop-filter:blur(8px); z-index:500; pointer-events:none; white-space:nowrap; }
-.locate-btn { position:absolute; bottom:14px; right:14px; width:44px; height:44px; border-radius:50%; background:var(–panel); border:1px solid var(–border); color:var(–accent); font-size:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:500; box-shadow:0 4px 16px rgba(0,0,0,.4); }
+.map-hint { position:absolute; top:10px; left:50%; transform:translateX(-50%); background:rgba(13,15,20,0.82); border:1px solid var(--border); border-radius:20px; padding:5px 14px; font-size:11px; color:var(--muted); backdrop-filter:blur(8px); z-index:500; pointer-events:none; white-space:nowrap; }
+.locate-btn { position:absolute; bottom:14px; right:14px; width:44px; height:44px; border-radius:50%; background:var(--panel); border:1px solid var(--border); color:var(--accent); font-size:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:500; box-shadow:0 4px 16px rgba(0,0,0,.4); }
 .locate-btn:active { transform:scale(0.93); }
-
-.bottom-panel { flex-shrink:0; background:var(–panel); border-top:1px solid var(–border); max-height:38vh; overflow-y:auto; }
-.panel-handle { display:flex; align-items:center; justify-content:space-between; padding:10px 16px 6px; position:sticky; top:0; background:var(–panel); z-index:10; border-bottom:1px solid var(–border); }
-.panel-title { font-size:11px; font-family:‘Space Mono’,monospace; color:var(–muted); text-transform:uppercase; letter-spacing:1.2px; }
-.my-coord { font-family:‘Space Mono’,monospace; font-size:10px; color:var(–accent); }
+ 
+.bottom-panel { flex-shrink:0; background:var(--panel); border-top:1px solid var(--border); max-height:38vh; overflow-y:auto; }
+.panel-handle { display:flex; align-items:center; justify-content:space-between; padding:10px 16px 6px; position:sticky; top:0; background:var(--panel); z-index:10; border-bottom:1px solid var(--border); }
+.panel-title { font-size:11px; font-family:'Space Mono',monospace; color:var(--muted); text-transform:uppercase; letter-spacing:1.2px; }
+.my-coord { font-family:'Space Mono',monospace; font-size:10px; color:var(--accent); }
 .friends-scroll { display:flex; gap:10px; padding:10px 14px 14px; overflow-x:auto; scrollbar-width:none; }
 .friends-scroll::-webkit-scrollbar { display:none; }
-.friend-card { flex-shrink:0; width:120px; background:var(–card); border:1px solid var(–border); border-radius:14px; padding:12px 10px; cursor:pointer; position:relative; overflow:hidden; }
-.friend-card::after { content:’’; position:absolute; bottom:0; left:0; right:0; height:3px; background:var(–fc,var(–accent)); border-radius:0 0 14px 14px; }
+.friend-card { flex-shrink:0; width:120px; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px 10px; cursor:pointer; position:relative; overflow:hidden; }
+.friend-card::after { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; background:var(--fc,var(--accent)); border-radius:0 0 14px 14px; }
 .friend-card:active { transform:scale(0.96); }
-.friend-card.is-me { border-color:var(–accent); }
-.fc-role { text-align:center; font-size:10px; color:var(–muted); margin-bottom:5px; }
+.friend-card.is-me { border-color:var(--accent); }
+.fc-role { text-align:center; font-size:10px; color:var(--muted); margin-bottom:5px; }
 .fc-avatar { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:17px; margin:0 auto 6px; border:2px solid; }
 .fc-name { text-align:center; font-size:12px; font-weight:700; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.fc-distance { text-align:center; font-family:‘Space Mono’,monospace; font-size:13px; font-weight:700; color:var(–fc,var(–accent)); }
-.fc-dist-label { text-align:center; font-size:10px; color:var(–muted); margin-top:1px; }
-
+.fc-distance { text-align:center; font-family:'Space Mono',monospace; font-size:13px; font-weight:700; color:var(--fc,var(--accent)); }
+.fc-dist-label { text-align:center; font-size:10px; color:var(--muted); margin-top:1px; }
+ 
 .leaflet-container { background:#f0f0f0; }
 .leaflet-tile { filter:grayscale(0.85) brightness(1.05); }
 .leaflet-control-zoom { margin:10px !important; }
-.leaflet-control-zoom a { width:32px !important; height:32px !important; line-height:32px !important; background:var(–panel) !important; color:var(–text) !important; border-color:var(–border) !important; }
+.leaflet-control-zoom a { width:32px !important; height:32px !important; line-height:32px !important; background:var(--panel) !important; color:var(--text) !important; border-color:var(--border) !important; }
 .leaflet-control-attribution { display:none; }
-.leaflet-popup-content-wrapper { background:var(–card); border:1px solid var(–border); border-radius:12px; color:var(–text); font-family:‘Noto Sans TC’,sans-serif; box-shadow:0 8px 32px rgba(0,0,0,.5); }
-.leaflet-popup-tip { background:var(–card); }
+.leaflet-popup-content-wrapper { background:var(--card); border:1px solid var(--border); border-radius:12px; color:var(--text); font-family:'Noto Sans TC',sans-serif; box-shadow:0 8px 32px rgba(0,0,0,.5); }
+.leaflet-popup-tip { background:var(--card); }
 .leaflet-popup-content { margin:10px 14px; font-size:13px; }
 </style>
-
 </head>
 <body>
-
-<!-- ① 登入（組長） -->
-
-<div class="screen" id="loginScreen" style="display:none">
+ 
+<!-- ① 登入（組長）-->
+<div class="screen" id="loginScreen">
   <div class="box">
-    <div class="box-logo">MyTripPal 隨身旅伴</div>
+    <div class="box-logo">MYTRIP.PAL 隨身旅伴</div>
     <div class="box-sub">管理者建立群組</div>
-    <div class="field"><label>管理者帳號</label>
-      <input id="inputUser" placeholder="輸入帳號…" autocapitalize="none"
+    <div class="field"><label>管理者 Email</label>
+      <input id="inputUser" type="email" placeholder="輸入 Email…" autocapitalize="none"
         onkeydown="if(event.key==='Enter')gel('inputPass').focus()"></div>
     <div class="field"><label>管理者密碼</label>
       <input id="inputPass" type="password" placeholder="輸入密碼…"
         onkeydown="if(event.key==='Enter')doLogin()"></div>
     <div class="err" id="loginError"></div>
-    <button class="btn-p" onclick="doLogin()">管理者登入 →</button>
+    <button class="btn-p" id="loginBtn" onclick="doLogin()">管理者登入 →</button>
     <hr class="divider">
     <div class="note">組員點下方按鈕加入與查看</div>
     <button class="btn-g" onclick="showScreen('memberScreen')">前往 👤 組員頁面</button>
   </div>
 </div>
-
+ 
 <!-- ② 建立群組 -->
-
-<div class="screen" id="leaderScreen" style="display:none">
+<div class="screen" id="leaderScreen">
   <div class="box">
-    <div class="box-logo">MyTripPal 隨身旅伴</div>
+    <div class="box-logo">MYTRIP.PAL 隨身旅伴</div>
     <div class="box-sub">建立新群組</div>
     <div class="role-badge">👑 組長模式</div>
     <div class="field"><label>組長暱稱</label>
@@ -114,14 +111,15 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
     <div class="err" id="leaderError"></div>
     <button class="btn-p" onclick="doCreateGroup()">建立群組 →</button>
     <div class="note">建立後把群組名稱分享給組員<br>組員輸入相同名稱即可加入</div>
+    <hr class="divider">
+    <button class="btn-g" onclick="doLogout()">登出管理者</button>
   </div>
 </div>
-
-<!-- ③ 加入群組（預設顯示） -->
-
+ 
+<!-- ③ 加入群組（預設顯示）-->
 <div class="screen" id="memberScreen" style="display:flex">
   <div class="box">
-    <div class="box-logo">MyTripPal 隨身旅伴</div>
+    <div class="box-logo">MYTRIP.PAL 隨身旅伴</div>
     <div class="box-sub">加入群組查看地圖</div>
     <div class="role-badge">👤 組員模式</div>
     <div class="field"><label>組員暱稱</label>
@@ -137,12 +135,11 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
     <button class="btn-g" onclick="showScreen('loginScreen')">← 前往管理者頁面</button>
   </div>
 </div>
-
+ 
 <!-- ④ 地圖主畫面 -->
-
 <div id="appScreen">
   <header>
-    <div class="logo">MyTripPal <span>隨身旅伴</span></div>
+    <div class="logo">MYTRIP.PAL <span>隨身旅伴</span></div>
     <div class="header-right">
       <div class="group-tag">📍 <span id="groupNameDisplay">—</span></div>
       <div class="status-pill"><div id="statusDot"></div><span id="statusText">定位中…</span></div>
@@ -161,19 +158,18 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
     <div class="friends-scroll" id="friendsScroll"></div>
   </div>
 </div>
-
-<!-- Firebase compat SDK（全域可用，不用 import）-->
-
+ 
+<!-- Firebase compat SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
+<!-- ✅ Added: Firebase Auth SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+ 
 <script>
 // ============================================================
-//  ★★★  填入你的 Firebase 設定  ★★★
+//  Firebase 設定（API key 在此可見，但已透過 Auth + Rules 保護）
 // ============================================================
 const firebaseConfig = {
- 
   apiKey:            "AIzaSyA7eqBTcaxuPXaPV6wbA-zP5GwN2c2ExfM",
   authDomain:        "trippal-70d7d.firebaseapp.com",
   databaseURL:       "https://trippal-70d7d-default-rtdb.asia-southeast1.firebasedatabase.app/",
@@ -183,21 +179,20 @@ const firebaseConfig = {
   appId:             "1:444650377829:web:8a84915421cbf1bad5ec8c"
 };
 // ============================================================
-
+ 
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-const ADMIN  = { username:'admin', password:'258000' };
+const db   = firebase.database();
+const auth = firebase.auth(); // ✅ 使用 Firebase Auth，不再有帳密在程式碼裡
+ 
 const COLORS = ['#1d4ed8','#e11d48','#16a34a','#d97706','#7c3aed','#0891b2','#be185d','#b45309'];
-
+ 
 let myId=null, myName=null, myGroup=null, isLeader=false;
 let map=null, markers={}, memberColors={}, colorIdx=0;
 let myLat=null, myLng=null;
-
-// ── (三) 智慧上傳用的變數 ──
-const MOVE_THRESHOLD_M = 10;    // 移動超過 10 公尺才上傳
-let lastUploadedLat = null, lastUploadedLng = null;
-
+ 
+const MOVE_THRESHOLD_M = 10;
+let lastUploadedLat=null, lastUploadedLng=null;
+ 
 /* ── 畫面切換 ── */
 function showScreen(id) {
   ['loginScreen','leaderScreen','memberScreen','appScreen'].forEach(s => {
@@ -208,22 +203,52 @@ function showScreen(id) {
   target.style.display = 'flex';
   if (id === 'appScreen') target.style.flexDirection = 'column';
 }
-
-/* ── 登入 ── */
-function doLogin() {
-  const user = gel('inputUser').value.trim();
-  const pass = gel('inputPass').value;
-  if (!user || !pass) { setErr('loginError','請輸入帳號與密碼'); return; }
-  if (user === ADMIN.username && pass === ADMIN.password) {
-    isLeader = true; myName = 'admin';
-    setErr('loginError','');
-    showScreen('leaderScreen');
-  } else {
-    setErr('loginError','帳號或密碼錯誤');
-    gel('inputPass').value = '';
+ 
+/* ── ✅ 登入：改用 Firebase Auth，不再有硬編碼帳密 ── */
+async function doLogin() {
+  const email = gel('inputUser').value.trim();
+  const pass  = gel('inputPass').value;
+  if (!email || !pass) { setErr('loginError','請輸入 Email 與密碼'); return; }
+ 
+  const btn = gel('loginBtn');
+  btn.disabled = true;
+  btn.textContent = '登入中…';
+  setErr('loginError','');
+ 
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+    // 登入成功後 onAuthStateChanged 會自動處理畫面跳轉
+  } catch (e) {
+    let msg = '登入失敗，請確認帳號與密碼';
+    if (e.code === 'auth/invalid-email')     msg = 'Email 格式不正確';
+    if (e.code === 'auth/user-not-found')    msg = '找不到此帳號';
+    if (e.code === 'auth/wrong-password')    msg = '密碼錯誤';
+    if (e.code === 'auth/too-many-requests') msg = '嘗試次數過多，請稍後再試';
+    setErr('loginError', msg);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '管理者登入 →';
   }
 }
-
+ 
+/* ── ✅ 登出 ── */
+async function doLogout() {
+  await auth.signOut();
+  isLeader = false;
+  showScreen('loginScreen');
+}
+ 
+/* ── ✅ 監聽登入狀態，自動跳轉到組長頁面 ── */
+auth.onAuthStateChanged(user => {
+  if (user) {
+    // 已登入 → 進入組長頁面
+    isLeader = true;
+    myName   = user.email.split('@')[0]; // 預設暱稱取 email @ 前段
+    showScreen('leaderScreen');
+  }
+  // 未登入不做任何事，讓使用者停在目前畫面
+});
+ 
 /* ── 建立群組 ── */
 function doCreateGroup() {
   const nick  = gel('inputLeaderNick').value.trim();
@@ -241,7 +266,7 @@ function doCreateGroup() {
     launchApp();
   });
 }
-
+ 
 /* ── 加入群組 ── */
 function doJoinGroup() {
   const nick  = gel('inputNick').value.trim();
@@ -252,69 +277,62 @@ function doJoinGroup() {
     if (!snap.exists()) { setErr('memberError','找不到此群組，請確認名稱'); return; }
     myName  = nick;
     myGroup = gname;
-    // (二) myId 固定為 群組名稱_暱稱，重新整理不會產生新身份
     myId    = `${gname}_${nick}`;
     gel('groupNameDisplay').textContent = gname;
     setErr('memberError','');
     launchApp();
   });
 }
-
+ 
 /* ── 啟動地圖 ── */
 function launchApp() {
   showScreen('appScreen');
-
+ 
   map = L.map('map', { zoomControl:true, attributionControl:false }).setView([25.0330,121.5654],14);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
-
-  // (一) 連線中斷時自動刪除 + 關閉頁面前手動刪除
+ 
   const myRef = db.ref(`groups/${myGroup}/members/${myId}`);
   myRef.onDisconnect().remove();
   window.addEventListener('beforeunload', () => myRef.remove());
-
-  // (三) 智慧 GPS 追蹤
-  // maximumAge:0 → 強制每次都取新座標，不用快取
+ 
   if (navigator.geolocation) {
     navigator.geolocation.watchPosition(pos => {
       const newLat = pos.coords.latitude;
       const newLng = pos.coords.longitude;
       setStatus(true);
-
+ 
       if (!window._centred) {
         map.setView([newLat, newLng], 16, { animate: true });
         window._centred = true;
       }
-
-      // 計算與上次上傳位置的距離（公尺）
+ 
       const moved = (lastUploadedLat === null)
         ? Infinity
         : calcDist(lastUploadedLat, lastUploadedLng, newLat, newLng, true);
-
+ 
       myLat = newLat;
       myLng = newLng;
-
-      // 移動超過門檻 → 立即上傳
+ 
       if (moved >= MOVE_THRESHOLD_M) {
         uploadPos();
       }
-
+ 
     }, err => {
       console.warn('GPS error:', err.message);
       setStatus(false);
     }, {
       enableHighAccuracy: true,
-      maximumAge: 0,      // ← 修正：不使用快取，強制取得新座標
+      maximumAge: 0,
       timeout: 15000
     });
   }
-
-  // 監聽群組成員
+ 
   db.ref(`groups/${myGroup}/members`).on('value', snap => {
     const data = snap.val() || {};
     syncMap(data); renderCards(data);
   });
 }
-
+ 
 function uploadPos() {
   if (!myLat) return;
   db.ref(`groups/${myGroup}/members/${myId}`).set({
@@ -325,7 +343,7 @@ function uploadPos() {
   lastUploadedLng = myLng;
   gel('coordText').textContent = `${myLat.toFixed(4)}, ${myLng.toFixed(4)}`;
 }
-
+ 
 /* ── 地圖 ── */
 function syncMap(data) {
   Object.keys(markers).forEach(id => {
@@ -343,7 +361,7 @@ function syncMap(data) {
     }
   });
 }
-
+ 
 function makeIcon(u,c,isMe) {
   const sz=isMe?46:38, em=u.role==='leader'?'👑':'👤';
   return L.divIcon({
@@ -352,7 +370,7 @@ function makeIcon(u,c,isMe) {
     iconSize:[sz+10,sz+18], iconAnchor:[(sz+10)/2,sz/2], popupAnchor:[0,-(sz/2+4)]
   });
 }
-
+ 
 function makePopup(u,c,isMe) {
   return `<div style="font-family:'Noto Sans TC',sans-serif;min-width:130px">
     <div style="font-weight:700;font-size:14px;color:${c};margin-bottom:2px">${u.name}${isMe?' (我)':''}</div>
@@ -361,7 +379,7 @@ function makePopup(u,c,isMe) {
     <div style="font-size:10px;color:#6b7280;margin-top:2px">更新 ${timeSince(u.updatedAt)}</div>
   </div>`;
 }
-
+ 
 /* ── 成員卡片 ── */
 function renderCards(data) {
   const scroll = gel('friendsScroll');
@@ -385,9 +403,8 @@ function renderCards(data) {
     scroll.appendChild(card);
   });
 }
-
+ 
 /* ── 工具 ── */
-// rawMeters=true 時直接回傳公尺數值（用於移動門檻判斷）
 function calcDist(a,b,c,d, rawMeters=false) {
   const R=6371000,dLat=(c-a)*Math.PI/180,dLng=(d-b)*Math.PI/180;
   const x=Math.sin(dLat/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLng/2)**2;
@@ -408,6 +425,5 @@ function gel(id){ return document.getElementById(id); }
 function setErr(id,msg){ gel(id).textContent=msg; }
 function locateMe(){ if(myLat) map.setView([myLat,myLng],16,{animate:true}); markers[myId]?.openPopup(); }
 </script>
-
 </body>
 </html>
