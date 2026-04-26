@@ -232,12 +232,12 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
 <!-- ④ 地圖主畫面 -->
 <div id="appScreen">
   <header>
-    <div class="logo">MyTripPal<span>旅伴</span></div>
+    <div class="logo">MyTripPal</div>
     <div class="header-right">
       <div class="group-tag">📍 <span id="groupNameDisplay">—</span></div>
       <div class="status-pill"><div id="statusDot"></div><span id="statusText">定位中…</span></div>
       <!-- ✅ 退出群組按鈕 -->
-      <button class="exit-btn" onclick="doExitGroup()">✕ 退出群組</button>
+      <button class="exit-btn" onclick="doExitGroup()">退出群組</button>
     </div>
   </header>
   <div class="map-wrapper">
@@ -543,7 +543,7 @@ function timeSince(ts) {
 }
 function setStatus(ok) {
   gel('statusDot').style.background=ok?'#4fffb0':'#f87171';
-  gel('statusText').textContent=ok?'即時同步中':'GPS 錯誤';
+  gel('statusText').textContent=ok?'同步中':'GPS 錯誤';
 }
 function gel(id){ return document.getElementById(id); }
 function setErr(id,msg){ gel(id).textContent=msg; }
