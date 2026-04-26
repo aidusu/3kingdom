@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>旅伴 · 群組位置分享</title>
+<title>隨身旅伴 · 群組位置分享</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -24,13 +24,13 @@ html,body{ font-family:'Noto Sans TC',sans-serif; background:var(--bg); color:va
 .field input:focus { border-color:var(–accent); }
 
 .err { font-size:12px; color:#f87171; min-height:16px; margin-bottom:10px; text-align:left; }
-.btn-p { width:100%; background:var(–accent); color:#0d0f14; border:none; border-radius:10px; padding:13px; font-size:15px; font-weight:700; font-family:‘Noto Sans TC’,sans-serif; cursor:pointer; margin-bottom:10px; }
+.btn-p { width:100%; background:#022c22; color:white; border:none; border-radius:10px; padding:13px; font-size:15px; font-weight:700; font-family:‘Noto Sans TC’,sans-serif; cursor:pointer; margin-bottom:10px; }
 .btn-p:active { opacity:.85; }
-.btn-g { width:100%; background:transparent; color:var(–muted); border:1px solid var(–border); border-radius:10px; padding:11px; font-size:13px; font-family:‘Noto Sans TC’,sans-serif; cursor:pointer; }
+.btn-g { width:100%; background:#2d0a0a ; color:#fde047; border:1px solid var(–border); border-radius:10px; padding:11px; font-size:15px; font-family:‘Noto Sans TC’,sans-serif; cursor:pointer; }
 .btn-g:active { border-color:var(–accent); color:var(–accent); }
 .divider { margin:14px 0; border:none; border-top:1px solid var(–border); }
 .note { font-size:11px; color:var(–muted); line-height:1.7; margin-top:12px; }
-.role-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(79,255,176,0.08); border:1px solid rgba(79,255,176,0.2); border-radius:20px; padding:4px 14px; font-size:12px; color:var(–accent); font-family:‘Space Mono’,monospace; margin-bottom:18px; }
+.role-badge { display:inline-flex; align-items:center; gap:6px; background:#2d0a0a; border:1px solid rgba(79,255,176,0.2); border-radius:20px; padding:4px 14px; font-size:15px; color:var(–accent); font-family:‘Space Mono’,monospace; margin-bottom:18px; }
 
 /* App */
 #appScreen { display:none; flex-direction:column; height:100dvh; }
@@ -82,7 +82,7 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
 
 <div class="screen" id="loginScreen" style="display:none">
   <div class="box">
-    <div class="box-logo">TRIP.PAL 旅伴</div>
+    <div class="box-logo">MyTripPal 隨身旅伴</div>
     <div class="box-sub">管理者建立群組</div>
     <div class="field"><label>管理者帳號</label>
       <input id="inputUser" placeholder="輸入帳號…" autocapitalize="none"
@@ -102,10 +102,10 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
 
 <div class="screen" id="leaderScreen" style="display:none">
   <div class="box">
-    <div class="box-logo">TRIP.PAL 旅伴</div>
+    <div class="box-logo">MyTripPal 隨身旅伴</div>
     <div class="box-sub">建立新群組</div>
     <div class="role-badge">👑 組長模式</div>
-    <div class="field"><label>你的暱稱</label>
+    <div class="field"><label>組長暱稱</label>
       <input id="inputLeaderNick" placeholder="輸入暱稱…"
         onkeydown="if(event.key==='Enter')gel('inputGroupName').focus()"></div>
     <div class="field"><label>群組名稱</label>
@@ -121,10 +121,10 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
 
 <div class="screen" id="memberScreen" style="display:flex">
   <div class="box">
-    <div class="box-logo">TRIP.PAL 旅伴</div>
+    <div class="box-logo">MyTripPal 隨身旅伴</div>
     <div class="box-sub">加入群組查看地圖</div>
     <div class="role-badge">👤 組員模式</div>
-    <div class="field"><label>你的暱稱</label>
+    <div class="field"><label>組員暱稱</label>
       <input id="inputNick" placeholder="輸入暱稱…"
         onkeydown="if(event.key==='Enter')gel('inputJoinGroup').focus()"></div>
     <div class="field"><label>群組名稱</label>
@@ -142,7 +142,7 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
 
 <div id="appScreen">
   <header>
-    <div class="logo">TRIP.PAL <span>旅伴</span></div>
+    <div class="logo">MyTripPal <span>隨身旅伴</span></div>
     <div class="header-right">
       <div class="group-tag">📍 <span id="groupNameDisplay">—</span></div>
       <div class="status-pill"><div id="statusDot"></div><span id="statusText">定位中…</span></div>
