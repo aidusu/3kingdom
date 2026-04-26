@@ -1,0 +1,1264 @@
+
+Claude finished the response
+You said: my html code is published on github.
+
+<!DOCTYPE html> <html lang="zh-TW"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> <title>隨身旅伴 · 群組位置分享</title> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet
+
+pasted
+
+my html code is published on [github.io](http://github.io) now. So everyone can  see my secret, such as my firebase apikey and my admin name and password, how can I hide them?
+
+4月26日
+Claude responded: This is a really important security concern.
+This is a really important security concern. Let me be direct: you cannot truly hide secrets in client-side HTML/JavaScript — anyone can view your source code. Here's what you should do:
+
+What's actually at risk
+Firebase API key — less critical than it seems (more below)
+Admin username & password (admin / 258000) — this is the real problem
+Firebase database URL — exposed, but manageable
+Fix 1: Firebase API Key (not as scary as it looks)
+Firebase API keys are not secret by design — they just identify your project. The real protection comes from Firebase Security Rules. Go to your Firebase Console → Realtime Database → Rules and set:
+
+json
+{
+  "rules": {
+    "groups": {
+      "$groupName": {
+        ".read": true,
+        ".write": true
+      }
+    }
+  }
+}
+Then add rate limiting and validation rules to prevent abuse. The key alone can't drain your database if rules are tight.
+
+Fix 2: Remove the hardcoded admin password — use Firebase Auth instead
+This is the critical fix. Your current code has:
+
+js
+const ADMIN = { username:'admin', password:'258000' }; // ← visible to everyone!
+Replace it with Firebase Authentication:
+
+Go to Firebase Console → Authentication → Sign-in method → Enable Email/Password
+Create your admin account there (e.g. admin@yourapp.com)
+Replace your login logic:
+js
+// Add Firebase Auth SDK
+// <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+async function doLogin() {
+  const email = gel('inputUser').value.trim();
+  const pass  = gel('inputPass').value;
+  try {
+    await firebase.auth().signInWithEmailAndPassword(email, pass);
+    isLeader = true;
+    showScreen('leaderScreen');
+  } catch (e) {
+    setErr('loginError', '帳號或密碼錯誤');
+  }
+}
+Now your credentials live only in Firebase — nothing secret is in your HTML.
+
+Fix 3: Lock your database with Auth-based rules
+Once you use Firebase Auth, you can restrict leader actions:
+
+json
+{
+  "rules": {
+    "groups": {
+      "$groupName": {
+        "info": {
+          ".write": "auth != null",
+          ".read": true
+        },
+        "members": {
+          ".read": true,
+          ".write": true
+        }
+      }
+    }
+  }
+}
+This means only authenticated (logged-in) users can create groups.
+
+Summary checklist
+Issue	Solution
+Admin password in code	✅ Use Firebase Auth
+Firebase API key exposed	✅ It's okay — secure with Rules
+Anyone can spam your DB	✅ Add Firebase Security Rules
+The bottom line: static sites can never have server-side secrets. Firebase is designed for this — its security model assumes the config is public, and relies on Auth + Rules instead.
+
+You said: could you help me update the html code for me to publish?
+could you help me update the html code for me to publish? and what you mean that "Go to Firebase Console → Authentication → Sign-in method → Enable Email/Password
+
+Create your admin account there (e.g. admin@yourapp.com)" how could I set the admin accoount and password? give me an real example.
+4月26日
+Claude responded: Step 1: Set up Firebase Authentication
+Step 1: Set up Firebase Authentication
+Here's exactly what to do in Firebase Console:
+
+Go to console.firebase.google.com → your project trippal-70d7d
+Left sidebar → Authentication → Get started
+Click Email/Password → toggle Enable → Save
+Go to Users tab → Add user
+Fill in:
+Email: trippal.admin@gmail.com (use any real-looking email, it doesn't need to actually exist)
+Password: something strong like TripPal@2026!
+Click Add user
+That's your admin credential. Now nobody can see it in your code.
+
+Step 2: Here's your updated HTML
+
+Viewed a file, created a file, read a file
+Viewed a file, created a file, read a file
+Here's a summary of everything that changed and what to do next.
+
+What changed in the code
+Removed: const ADMIN = { username:'admin', password:'258000' } — completely gone.
+
+Added: Firebase Auth SDK (firebase-auth-compat.js) and three new functions:
+
+doLogin() — calls auth.signInWithEmailAndPassword() instead of checking a hardcoded string
+doLogout() — signs out via Firebase
+auth.onAuthStateChanged() — automatically detects if you're already logged in when you reload the page
+The login field also changed from "帳號" to "Email" since Firebase Auth uses email addresses.
+
+How to create your admin account (step by step)
+Go to https://console.firebase.google.com → select your project
+Left menu → Authentication → click Get started
+Click Email/Password → toggle the first switch to Enable → Save
+Click the Users tab at the top → Add user
+Enter exactly:
+Email: trippal.admin@gmail.com (you can use any email format, it doesn't need to be a real inbox)
+Password: TripPal@2026! (or any strong password you choose)
+Click Add user — done ✅
+Now when you open your site and go to the admin page, you log in with that email and password. Nothing secret lives in your HTML anymore.
+
+
+Index
+Code · HTML 
+You said: will the item be activated?
+will the item be activated? 匿名
+在應用程式中啟用匿名訪客帳戶之後，你就能對使用者強制執行安全防護機制與 Firebase 規則，而且無須要求使用者提供憑證。 __[瞭解詳情](https://firebase.google.com/docs/auth?hl=zh-TW&authuser=0&_gl=1*oc3wi0*_ga*MjAxOTgxNzA2Mi4xNzU4ODg1Nzg4*_ga_CW55HF8NVT*czE3NzcyMDQzNDEkbzkkZzEkdDE3NzcyMDYzMjgkajM2JGwwJGgw)__
+
+4月26日
+Claude responded: No, anonymous login will NOT be activated just by enabling Email/Password auth.
+No, anonymous login will NOT be activated just by enabling Email/Password auth. They are completely separate toggles.
+
+What you did:
+
+✅ Enabled Email/Password → this is what your admin login uses
+⬜ Anonymous → still off, you never touched it
+You don't need anonymous auth for your app at all. Your members (組員) don't log in through Firebase Auth — they just type a nickname and group name, which is handled directly by the Realtime Database. That's fine as it is.
+
+So your current setup is:
+
+Feature	Status	Used for
+Email/Password	✅ On	Admin login only
+Anonymous	⬜ Off	Not needed
+Leave anonymous off and you're good to publish. 👍
+
+You said: where can I add user?
+1777206558046_image.png
+where can I add user?
+
+4月26日
+Claude responded: You're on the right page!
+You're on the right page! Just follow these steps:
+
+Click "儲存" (Save) first to save the Email/Password setting you see now
+Then click the "使用者" tab (it's the first tab, to the left of "登入方式")
+You'll see an "新增使用者" (Add user) button there
+Enter:
+Email: trippal.admin@gmail.com
+Password: TripPal@2026!
+Click confirm — done ✅
+Like this navigation:
+
+Authentication → 使用者 tab → 新增使用者
+
+You said: Will the email be a real email?
+Will the email be a real email? Could I use "admin@hermann.tw" that is not exist? And the password is "hh258000"?
+
+4月26日
+Claude responded: Yes!
+Yes! The email does not need to be a real/existing inbox. Firebase Auth just uses it as a username identifier — it will never send any emails to it. So admin@hermann.tw works perfectly fine even if that mailbox doesn't exist.
+
+Your credentials will be:
+
+Email: admin@hermann.tw
+Password: hh258000
+Just enter those in the 新增使用者 form and click save. That's it — you're done! 🎉
+
+Now go publish your updated index.html to GitHub Pages.
+
+You said: In the future, could I give others to register as a new users with new email and password to play as a leader?
+In the future, could I give others to register as a new users with new email and password to play as a leader?
+
+4月26日
+Claude responded: Yes!
+Yes! You have two options:
+
+Option A: You add them manually (simple, recommended)
+Just go back to Firebase Console → Authentication → 使用者 → 新增使用者 and add their email/password yourself. They then log in with those credentials. Good for small trusted groups.
+
+Option B: Add a self-registration form in the app
+Add a "申請成為組長" (Register as Leader) form to your HTML that calls:
+
+javascript
+async function doRegister() {
+  const email = gel('inputRegEmail').value.trim();
+  const pass  = gel('inputRegPass').value;
+  try {
+    await auth.createUserWithEmailAndPassword(email, pass);
+    // automatically logged in after registering
+  } catch(e) {
+    setErr('registerError', '註冊失敗：' + e.message);
+  }
+}
+However, Option B means anyone on the internet can create a leader account — which may not be what you want.
+
+My recommendation
+Stick with Option A for now. It's the safest — only you control who becomes a leader. When a friend wants leader access, they tell you their email and you add them in Firebase Console in 30 seconds.
+
+If your app grows and you want self-registration later, you can add it then with proper restrictions.
+
+You said: 請幫我修改畫面, 讓輸入的空格(field)底色是白色, 顯示的文字是12px黑灰色; field 的標題是白色15px; button:"管理者登入" &"前往管理者頁面" 則是底色淺橘色, 文字暗綠色粗體; button: "加入群組查看地圖"& "前往組員頁面" 則是底色淺綠色 , 文字暗紅色粗體;
+請幫我修改畫面, 讓輸入的空格(field)底色是白色, 顯示的文字是12px黑灰色; field 的標題是白色15px;   button:"管理者登入" &"前往管理者頁面" 則是底色淺橘色, 文字暗綠色粗體;  button: "加入群組查看地圖"& "前往組員頁面" 則是底色淺綠色 , 文字暗紅色粗體;
+
+4月26日
+Claude responded: 樣式更新完成！以下是所有改動的摘要：
+
+Viewed a file, edited a file, read a file
+Viewed a file, edited a file, read a file
+樣式更新完成！以下是所有改動的摘要：
+
+元素	之前	之後
+Field 標題 label	灰色 11px 等寬字	白色 15px 粗體
+Field 輸入框底色	深色 
+#1a1e2a	白色
+輸入框文字	淺色	黑灰色 
+#374151，12px
+btn-p（管理者登入、建立群組）	深綠底白字	淺橘底 
+#fff0e0 + 暗綠粗體 
+#1a5c2a
+btn-g（前往組員頁面、登出）	深紅底黃字	淺綠底 
+#e8f5e9 + 暗紅粗體 
+#7f1d1d
+
+Index
+Code · HTML 
+You said: 請幫我做事覺得建議, 例如將btn-p（管理者登入、建立群組）淺橘底 #fff0e0 改為亮橘色底色; btn-g（前往組員頁面、登出）淺綠底 #e8f5e9 改為與標題一樣的亮綠色底色; "組員模式"&"組長模式"的底色改為 深藍色; 副標題"加入群組.
+請幫我做事覺得建議, 例如將btn-p（管理者登入、建立群組）淺橘底 #fff0e0  改為亮橘色底色;   btn-g（前往組員頁面、登出）淺綠底 #e8f5e9    改為與標題一樣的亮綠色底色;  "組員模式"&"組長模式"的底色改為 深藍色; 副標題"加入群組..." 字體加大, 變成白色;  divider 說明如" 組員加入後..."&"組員點下方..." 請用淺紅色字體顯示; 請建議美感
+
+4月26日
+Claude responded: 以下是我的視覺建議，基於你目前的深色主題風格：
+以下是我的視覺建議，基於你目前的深色主題風格：
+
+🎨 建議方案
+btn-p（管理者登入/建立群組）
+
+底色改為 
+#f97316（亮橙）— 比淡橘更有力度，對比深色背景很突出
+文字改為 
+#ffffff 白色粗體 — 橙底配白字比暗綠更易讀
+btn-g（前往組員頁面/登出）
+
+底色改為 
+#4fffb0（就是你的 accent 綠，整體一致）
+文字改為 
+#0a3d2b 深墨綠粗體 — 亮綠底配深字，清晰有力
+角色 badge（組員模式/組長模式）
+
+底色改為 
+#1e3a8a（深寶藍）
+文字維持亮綠 
+#4fffb0 — 藍底綠字，科技感強，與整體 dark UI 呼應
+副標題（加入群組…/管理者建立群組）
+
+字體從 12px 放大到 15px
+顏色從灰色改為 白色 
+#ffffff
+加上輕微 font-weight:500 — 不搶 logo 風頭但清晰可讀
+divider 說明文字（組員加入後…/組員點下方…）
+
+改為 
+#fca5a5（柔淡珊瑚紅）— 比純紅柔和，不會刺眼但有區別感
+維持 11px，加 font-style:italic 斜體更像提示說明
+這樣整體配色會是：深背景 → 橙色主按鈕 → 亮綠副按鈕 → 藍色角色識別，三色各司其職，層次分明。要我直接套用嗎？
+
+You said: 直接套用
+直接套用
+
+4月26日
+Claude responded: 套用完成！所有更改摘要：
+
+Edited 3 files, read a file
+Edited 3 files, read a file
+套用完成！所有更改摘要：
+
+元素	新樣式
+副標題	白色 15px font-weight:500
+角色 badge	深寶藍 
+#1e3a8a 底 + 亮綠字
+btn-p（管理者登入/建立群組）	亮橙 
+#f97316 底 + 白字
+btn-g（前往組員/登出）	accent 亮綠 
+#4fffb0 底 + 深墨綠字
+說明文字（note）	珊瑚紅 
+#fca5a5 + 斜體
+
+Index
+Code · HTML 
+You said: 請將 note 的字體顏色也變成白色; 請幫我生成一個淺色地圖的背景圖案當作畫面的底圖, 讓畫面不會太單調
+請將 note 的字體顏色也變成白色; 請幫我生成一個淺色地圖的背景圖案當作畫面的底圖, 讓畫面不會太單調
+
+4月26日
+Claude responded: I can see there are duplicate .
+
+Check current note style and background
+Check current note style and background
+I can see there are duplicate .divider and .note rules (lines 37-40). I'll clean those up and apply all changes now.
+
+
+Fix duplicate note/divider rules, set note to white, add map background pattern to screen
+Fix duplicate note/divider rules, set note to white, add map background pattern to screen
+Now add the SVG map background pattern to the screen:
+
+
+Add map pattern background to screen elements
+Add map pattern background to screen elements
+Now add some decorative SVG map elements (location pins, roads) as a background overlay:
+
+
+Add pseudo-element map decorations and floating pin animations
+Add pseudo-element map decorations and floating pin animations
+Now add the floating pin emoji elements into each screen div:
+
+
+Edited 3 files, read a file
+Edited 3 files, read a file
+完成！以下是這次所有更改：
+
+元素	更新內容
+.note 說明文字	白色 
+#ffffff，斜體，移除舊的重複規則
+背景格線	細密地圖格線（小街道 30px + 主幹道 150px），極淡綠色
+背景光暈節點	散布各角落的橙綠光點，模擬地圖 POI
+.box 卡片	加了毛玻璃效果 backdrop-filter:blur，讓卡片浮在背景上更有層次
+浮動裝飾	📍🗺️🧭 六個 emoji 以不同速度與延遲緩慢浮動，增加生動感
+
+Index
+Code · HTML 
+You said: 背景格線細密地圖格線（小街道 30px + 主幹道 150px），極淡綠色背景光暈節點散布各角落的橙綠光點，模擬地圖 POI 讓顏色再亮一點
+背景格線細密地圖格線（小街道 30px + 主幹道 150px），極淡綠色背景光暈節點散布各角落的橙綠光點，模擬地圖 POI  讓顏色再亮一點
+
+4月26日
+Claude responded: 也順便把浮動 pin 的透明度調亮： 調亮完成！三個地方都加強了：
+
+Viewed 2 files, edited 2 files
+Viewed 2 files, edited 2 files
+也順便把浮動 pin 的透明度調亮：
+
+
+Edited a file, read a file
+Edited a file, read a file
+調亮完成！三個地方都加強了：
+
+元素	之前	之後
+小街道格線	0.04 透明度（幾乎看不見）	0.13（清晰可見）
+主幹道格線	0.08	0.28（明顯粗線）
+POI 亮點核心	2-4px，0.3-0.4 透明度	4-6px，0.8-0.95（接近實色亮點）
+POI 光暈擴散	0.04-0.05（幾乎無）	0.14-0.20（明顯暖光）
+浮動 📍🗺️🧭	0.10-0.18	0.30-0.45（清楚可見但不搶主角）
+
+Index
+Code · HTML 
+You said: 請幫我檢查這個html, 組員可以怎麼退出群組?
+
+<!DOCTYPE html> <html lang="zh-TW"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"> <title>MyTripPal 旅伴</title> <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.mi
+
+pasted
+
+請幫我檢查這個html, 組員可以怎麼退出群組?
+
+4月26日
+Claude responded: 看了你的程式碼，目前組員沒有退出群組的按鈕。不過退出機制其實已經有了，只是沒有 UI 讓使用者主動觸發。
+看了你的程式碼，目前組員沒有退出群組的按鈕。不過退出機制其實已經有了，只是沒有 UI 讓使用者主動觸發。
+
+目前的退出機制（自動）
+你的程式碼已經有兩種自動退出：
+
+javascript
+myRef.onDisconnect().remove();           // 網路斷線時自動刪除
+window.addEventListener('beforeunload', () => myRef.remove()); // 關閉頁面時刪除
+所以組員關閉瀏覽器或離開頁面就會自動從群組消失。
+
+缺少的：主動「退出群組」按鈕
+要加一個按鈕讓組員可以主動退出並回到首頁，需要在地圖畫面的 header 加一個退出鈕，要我直接幫你加進去嗎？
+
+加入後效果會是：
+
+地圖 header 右側多一個 「退出群組」 小按鈕
+點按後從 Firebase 刪除自己的位置資料
+畫面返回組員登入頁
+地圖與 GPS 監聽一併清除
+要我直接套用嗎？
+
+You said: 幫我增加這個按鈕, 並且在組員模式的最底下, 加上退出的說明 (note): (1) 組員關閉瀏覽器或離開頁面就會自動從群組消失; (2)在地圖 header 右側多一個 「退出群組」 小按鈕, 點按後從 Firebase 刪除自己的位置資料
+幫我增加這個按鈕, 並且在組員模式的最底下, 加上退出的說明 (note): (1) 組員關閉瀏覽器或離開頁面就會自動從群組消失; (2)在地圖 header 右側多一個 「退出群組」 小按鈕, 點按後從 Firebase 刪除自己的位置資料
+
+4月26日
+Claude responded: 我來讀取最新的檔案內容： 你上傳的是最新版本，我用那個版本來修改： 完成！以下是這次所有新增的內容：
+我來讀取最新的檔案內容：
+
+
+Check which file to use
+Check which file to use
+你上傳的是最新版本，我用那個版本來修改：
+
+
+Ran a command, read a file
+Ran a command, read a file
+完成！以下是這次所有新增的內容：
+
+① 組員頁面底部 — 退出說明 note 在「切換到組長模式」按鈕下方加了一個說明區塊：
+
+💡 關閉瀏覽器或離開頁面，系統自動移除
+💡 進入地圖後點右上角「退出群組」可主動退出
+② 地圖 header — 退出群組按鈕 右上角新增紅色半透明小按鈕 ✕ 退出群組，點按後會：
+
+跳出確認對話框（防止誤觸）
+從 Firebase 刪除自己的位置資料
+停止 GPS 追蹤（clearWatch）
+停止 Firebase 監聽
+清除地圖
+重置所有狀態變數
+返回組員加入頁面
+③ 程式改進 gpsWatcher 變數新增以記錄 watchPosition 的 ID，確保退出時能正確清除 GPS，不會在背景繼續耗電。
+
+
+Index
+Code · HTML 
+You said: 請幫我修改, <div class="role-badge"> 👑組長模式</div> 的底色是亮橙 #f97316 底 + 白字; 而 <div class="role-badge">👤 組員模式</div>亮綠 #4fffb0 底 + 深墨綠字
+請幫我修改,  <div class="role-badge"> 👑組長模式</div> 的底色是亮橙 #f97316 底 + 白字; 而 <div class="role-badge">👤 組員模式</div>亮綠 #4fffb0 底 + 深墨綠字
+
+4月26日
+Claude responded: 完成！修改內容：
+
+Viewed 2 files, ran 2 commands, edited a file
+Viewed 2 files, ran 2 commands, edited a file
+完成！修改內容：
+
+Badge	底色	文字
+👑 組長模式（登入頁 + 建群頁）	亮橙 
+#f97316	白色 
+#ffffff
+👤 組員模式（組員頁）	亮綠 
+#4fffb0	深墨綠 
+#0a3d2b
+CSS 改為用 .role-badge.leader 和 .role-badge.member 兩個子類別分別控制，HTML 也同步加上對應 class。
+
+
+Index
+Code · HTML 
+You said: 請問怎麼做可以,按下群組成員的名字後發送訊息給他?
+請問怎麼做可以,按下群組成員的名字後發送訊息給他?
+
+4月26日
+Claude responded: 這個功能叫做群組內訊息/聊天，有幾種做法，我來分析：
+這個功能叫做群組內訊息/聊天，有幾種做法，我來分析：
+
+方案一：群組公開聊天室（最簡單，推薦）
+所有人都能看到所有訊息，不是私訊。在地圖下方加一個聊天區，Firebase 儲存訊息。
+
+優點： 簡單、適合旅遊團、大家知道彼此動態 缺點： 沒有私訊功能
+
+方案二：對特定成員私訊（複雜）
+點成員名字後，開啟一個對話框，只有兩人能看到。Firebase 需要建立獨立的私訊 channel。
+
+優點： 真正的私訊 缺點： 需要較多程式碼，且對方需要在線才能即時看到
+
+方案三：開啟手機簡訊/WhatsApp（最快但有限制）
+點成員名字後，呼叫 tel: 或 https://wa.me/ 連結，跳出手機原生 app。
+
+缺點： 需要知道對方電話號碼，加入群組時要多填一個欄位
+
+我的建議
+對旅遊團 app 來說，方案一（群組聊天室）最實用，因為：
+
+旅遊時大家都想知道彼此的狀況
+組長可以廣播通知
+技術上最穩定
+要我直接幫你實作群組聊天室加進現有的地圖畫面嗎？會加在成員卡片的下方，像一個小型聊天泡泡區。
+
+You said: 幫你實作群組聊天室加進現有的地圖畫面嗎？會加在成員卡片的下方，像一個小型聊天泡泡區。
+幫你實作群組聊天室加進現有的地圖畫面嗎？會加在成員卡片的下方，像一個小型聊天泡泡區。
+
+4月26日
+Claude responded: 好的，開始實作！ 好，看起來聊天室的 CSS 和 HTML 已經在檔案裡了，但缺少對應的 JavaScript。讓我檢查 JS 部分： CSS 和 HTML 已就位，只缺聊天 JS。還有發現 </div> 少一個閉合。一次補齊： 現在在 launchApp() 裡加上啟動聊天監聽，並在 doExitGroup() 裡…
+好的，開始實作！
+
+
+Viewed 2 files
+Viewed 2 files
+好，看起來聊天室的 CSS 和 HTML 已經在檔案裡了，但缺少對應的 JavaScript。讓我檢查 JS 部分：
+
+
+Read JS section
+Read JS section
+CSS 和 HTML 已就位，只缺聊天 JS。還有發現 </div> 少一個閉合。一次補齊：
+
+
+Add chat JS functions and fix missing closing div for appScreen
+Add chat JS functions and fix missing closing div for appScreen
+現在在 launchApp() 裡加上啟動聊天監聽，並在 doExitGroup() 裡加上停止監聽：
+
+
+Edited 2 files
+Edited 2 files
+最後修正 appScreen 少的 </div> 閉合標籤：
+
+
+Edited a file, read a file
+Edited a file, read a file
+完成！以下是聊天室的完整功能說明：
+
+外觀與互動
+
+聊天室位於成員卡片下方，預設收起，點標題列展開／收起
+自己的訊息靠右，亮綠色泡泡；別人的訊息靠左，深色泡泡
+每則訊息顯示暱稱、角色圖示（👑/👤）和發送時間
+未讀提示
+
+聊天室收起時如果有新訊息，標題旁會出現橙色數字徽章
+展開後徽章自動清除
+傳送方式
+
+輸入訊息後按 Enter 或右側橙色 ➤ 按鈕送出
+訊息即時同步到 Firebase，所有群組成員同步看到
+退出時
+
+聊天監聽自動停止，聊天室 UI 重置乾淨
+
+Index
+Code · HTML 
+
+
+
+
+Claude is AI and can make mistakes. Please double-check responses.
+Index · HTML
+Copy
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MyTripPal 旅伴</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#0d0f14; --panel:#13161e; --card:#1a1e2a; --border:#252a38; --accent:#4fffb0; --text:#e8eaf0; --muted:#6b7280; }
+*{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+html,body{ font-family:'Noto Sans TC',sans-serif; background:var(--bg); color:var(--text); height:100%; overflow:hidden; }
+ 
+.screen { position:fixed; inset:0; z-index:9999; display:none; align-items:center; justify-content:center;
+  background-color:#0d0f14;
+  background-image:
+    linear-gradient(rgba(79,255,176,0.13) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79,255,176,0.13) 1px, transparent 1px),
+    linear-gradient(rgba(79,255,176,0.28) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79,255,176,0.28) 1px, transparent 1px);
+  background-size: 30px 30px, 30px 30px, 150px 150px, 150px 150px;
+}
+.box { background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:32px 26px; width:88vw; max-width:340px; text-align:center; }
+.box-logo { font-family:'Space Mono',monospace; font-size:24px; font-weight:700; color:var(--accent); margin-bottom:3px; }
+.box-sub { font-size:15px; color:#ffffff; font-weight:500; margin-bottom:22px; }
+ 
+.field { margin-bottom:12px; text-align:left; }
+.field label { display:block; font-size:15px; color:#ffffff; font-family:'Noto Sans TC',sans-serif; font-weight:600; letter-spacing:0.5px; margin-bottom:5px; }
+.field input { width:100%; background:#ffffff; border:1px solid #d1d5db; border-radius:10px; padding:11px 14px; color:#374151; font-family:'Noto Sans TC',sans-serif; font-size:12px; outline:none; transition:border-color 0.2s; }
+.field input::placeholder { color:#9ca3af; font-size:12px; }
+.field input:focus { border-color:var(--accent); }
+ 
+.err { font-size:12px; color:#f87171; min-height:16px; margin-bottom:10px; text-align:left; }
+ 
+.btn-p { width:100%; background:#f97316; color:#ffffff; border:none; border-radius:10px; padding:13px; font-size:15px; font-weight:700; font-family:'Noto Sans TC',sans-serif; cursor:pointer; margin-bottom:10px; transition:opacity 0.2s; }
+.btn-p:active { opacity:.85; }
+.btn-p:disabled { opacity:.5; cursor:not-allowed; }
+ 
+.btn-g { width:100%; background:#4fffb0; color:#0a3d2b; border:none; border-radius:10px; padding:11px; font-size:15px; font-weight:700; font-family:'Noto Sans TC',sans-serif; cursor:pointer; }
+.btn-g:active { opacity:.85; }
+ 
+.divider { margin:14px 0; border:none; border-top:1px solid var(--border); }
+.note { font-size:11px; color:#ffffff; font-style:italic; line-height:1.7; margin-top:12px; }
+.role-badge { display:inline-flex; align-items:center; gap:6px; border-radius:20px; padding:4px 14px; font-size:15px; font-family:'Space Mono',monospace; margin-bottom:18px; font-weight:700; }
+.role-badge.leader { background:#f97316; border:1px solid #ea6c10; color:#ffffff; }
+.role-badge.member { background:#4fffb0; border:1px solid #2de89a; color:#0a3d2b; }
+ 
+/* 地圖裝飾：圓形光暈節點 */
+.screen::before {
+  content:'';
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background-image:
+    radial-gradient(circle 4px at 15% 20%, rgba(79,255,176,0.9) 0%, transparent 100%),
+    radial-gradient(circle 5px at 72% 15%, rgba(249,115,22,0.95) 0%, transparent 100%),
+    radial-gradient(circle 4px at 88% 45%, rgba(79,255,176,0.85) 0%, transparent 100%),
+    radial-gradient(circle 6px at 30% 70%, rgba(249,115,22,0.9) 0%, transparent 100%),
+    radial-gradient(circle 4px at 60% 80%, rgba(79,255,176,0.85) 0%, transparent 100%),
+    radial-gradient(circle 4px at 10% 85%, rgba(79,255,176,0.8) 0%, transparent 100%),
+    radial-gradient(circle 4px at 50% 40%, rgba(249,115,22,0.85) 0%, transparent 100%),
+    radial-gradient(circle 3px at 80% 65%, rgba(79,255,176,0.8) 0%, transparent 100%),
+    radial-gradient(circle 70px at 15% 20%, rgba(79,255,176,0.18) 0%, transparent 100%),
+    radial-gradient(circle 90px at 72% 15%, rgba(249,115,22,0.2) 0%, transparent 100%),
+    radial-gradient(circle 60px at 30% 70%, rgba(249,115,22,0.18) 0%, transparent 100%),
+    radial-gradient(circle 50px at 88% 45%, rgba(79,255,176,0.16) 0%, transparent 100%),
+    radial-gradient(circle 55px at 60% 80%, rgba(79,255,176,0.14) 0%, transparent 100%),
+    radial-gradient(circle 45px at 50% 40%, rgba(249,115,22,0.16) 0%, transparent 100%);
+  z-index:0;
+}
+.box { position:relative; z-index:1; background:rgba(19,22,30,0.92); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid rgba(79,255,176,0.18); box-shadow: 0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(79,255,176,0.06); }
+ 
+.map-pin-deco { position:absolute; font-size:22px; opacity:0.45; animation:floatPin 6s ease-in-out infinite; pointer-events:none; z-index:0; }
+.map-pin-deco:nth-child(1){ top:8%; left:8%;  animation-delay:0s;   font-size:18px; }
+.map-pin-deco:nth-child(2){ top:12%; right:10%; animation-delay:1.5s; font-size:26px; opacity:0.35; }
+.map-pin-deco:nth-child(3){ bottom:18%; left:12%; animation-delay:3s;  font-size:20px; }
+.map-pin-deco:nth-child(4){ bottom:12%; right:8%; animation-delay:4.5s; font-size:16px; opacity:0.4; }
+.map-pin-deco:nth-child(5){ top:45%; left:5%;  animation-delay:2s;   font-size:14px; }
+.map-pin-deco:nth-child(6){ top:35%; right:5%; animation-delay:0.8s; font-size:24px; opacity:0.3; }
+@keyframes floatPin {
+  0%,100% { transform: translateY(0px) rotate(-5deg); }
+  50%      { transform: translateY(-12px) rotate(5deg); }
+}
+ 
+/* ── App 地圖畫面 ── */
+#appScreen { display:none; flex-direction:column; height:100dvh; }
+header { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; background:var(--panel); border-bottom:1px solid var(--border); flex-shrink:0; }
+.logo { font-family:'Space Mono',monospace; font-size:17px; font-weight:700; color:var(--accent); }
+.logo span { color:var(--text); }
+.header-right { display:flex; align-items:center; gap:8px; }
+.group-tag { font-size:11px; font-family:'Space Mono',monospace; background:rgba(79,255,176,0.08); border:1px solid rgba(79,255,176,0.2); border-radius:20px; padding:3px 10px; color:var(--accent); max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.status-pill { display:flex; align-items:center; gap:5px; background:rgba(79,255,176,0.06); border:1px solid rgba(79,255,176,0.2); border-radius:20px; padding:4px 10px; font-size:11px; color:var(--accent); font-family:'Space Mono',monospace; }
+#statusDot { width:6px; height:6px; background:var(--accent); border-radius:50%; animation:pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(1.4)} }
+ 
+/* ── 退出群組按鈕（header 右側）── */
+.exit-btn {
+  display:flex; align-items:center; gap:4px;
+  background:rgba(239,68,68,0.12);
+  border:1px solid rgba(239,68,68,0.35);
+  border-radius:20px;
+  padding:4px 10px;
+  font-size:11px;
+  color:#f87171;
+  font-family:'Space Mono',monospace;
+  cursor:pointer;
+  transition:background 0.2s, border-color 0.2s;
+  white-space:nowrap;
+}
+.exit-btn:active { background:rgba(239,68,68,0.28); border-color:#f87171; }
+ 
+.map-wrapper { flex:1; position:relative; min-height:0; }
+#map { width:100%; height:100%; }
+.map-hint { position:absolute; top:10px; left:50%; transform:translateX(-50%); background:rgba(13,15,20,0.82); border:1px solid var(--border); border-radius:20px; padding:5px 14px; font-size:11px; color:var(--muted); backdrop-filter:blur(8px); z-index:500; pointer-events:none; white-space:nowrap; }
+.locate-btn { position:absolute; bottom:14px; right:14px; width:44px; height:44px; border-radius:50%; background:var(--panel); border:1px solid var(--border); color:var(--accent); font-size:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:500; box-shadow:0 4px 16px rgba(0,0,0,.4); }
+.locate-btn:active { transform:scale(0.93); }
+ 
+.bottom-panel { flex-shrink:0; background:var(--panel); border-top:1px solid var(--border); max-height:38vh; overflow-y:auto; }
+.panel-handle { display:flex; align-items:center; justify-content:space-between; padding:10px 16px 6px; position:sticky; top:0; background:var(--panel); z-index:10; border-bottom:1px solid var(--border); }
+.panel-title { font-size:11px; font-family:'Space Mono',monospace; color:var(--muted); text-transform:uppercase; letter-spacing:1.2px; }
+.my-coord { font-family:'Space Mono',monospace; font-size:10px; color:var(--accent); }
+.friends-scroll { display:flex; gap:10px; padding:10px 14px 14px; overflow-x:auto; scrollbar-width:none; }
+.friends-scroll::-webkit-scrollbar { display:none; }
+.friend-card { flex-shrink:0; width:120px; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px 10px; cursor:pointer; position:relative; overflow:hidden; }
+.friend-card::after { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; background:var(--fc,var(--accent)); border-radius:0 0 14px 14px; }
+.friend-card:active { transform:scale(0.96); }
+.friend-card.is-me { border-color:var(--accent); }
+.fc-role { text-align:center; font-size:10px; color:var(--muted); margin-bottom:5px; }
+.fc-avatar { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:17px; margin:0 auto 6px; border:2px solid; }
+.fc-name { text-align:center; font-size:12px; font-weight:700; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fc-distance { text-align:center; font-family:'Space Mono',monospace; font-size:13px; font-weight:700; color:var(--fc,var(--accent)); }
+.fc-dist-label { text-align:center; font-size:10px; color:var(--muted); margin-top:1px; }
+ 
+.leaflet-container { background:#f0f0f0; }
+.leaflet-tile { filter:grayscale(0.85) brightness(1.05); }
+.leaflet-control-zoom { margin:10px !important; }
+.leaflet-control-zoom a { width:32px !important; height:32px !important; line-height:32px !important; background:var(--panel) !important; color:var(--text) !important; border-color:var(--border) !important; }
+.leaflet-control-attribution { display:none; }
+.leaflet-popup-content-wrapper { background:var(--card); border:1px solid var(--border); border-radius:12px; color:var(--text); font-family:'Noto Sans TC',sans-serif; box-shadow:0 8px 32px rgba(0,0,0,.5); }
+.leaflet-popup-tip { background:var(--card); }
+.leaflet-popup-content { margin:10px 14px; font-size:13px; }
+ 
+/* ── 聊天室 ── */
+.chat-panel { flex-shrink:0; background:var(--panel); border-top:1px solid var(--border); display:flex; flex-direction:column; }
+.chat-handle { display:flex; align-items:center; justify-content:space-between; padding:8px 16px 6px; border-bottom:1px solid var(--border); cursor:pointer; user-select:none; }
+.chat-handle-left { display:flex; align-items:center; gap:8px; }
+.chat-title { font-size:11px; font-family:'Space Mono',monospace; color:var(--muted); text-transform:uppercase; letter-spacing:1.2px; }
+.chat-unread { background:#f97316; color:#fff; font-size:10px; font-weight:700; border-radius:20px; padding:1px 7px; font-family:'Space Mono',monospace; display:none; }
+.chat-toggle { font-size:11px; color:var(--muted); font-family:'Space Mono',monospace; transition:transform 0.2s; }
+.chat-body { overflow:hidden; max-height:0; transition:max-height 0.3s ease; }
+.chat-body.open { max-height:220px; }
+.chat-messages { height:160px; overflow-y:auto; padding:10px 14px 6px; display:flex; flex-direction:column; gap:6px; scrollbar-width:none; }
+.chat-messages::-webkit-scrollbar { display:none; }
+.chat-bubble { max-width:75%; padding:7px 11px; border-radius:14px; font-size:13px; line-height:1.45; word-break:break-word; }
+.chat-bubble.me { align-self:flex-end; background:#4fffb0; color:#0a3d2b; border-bottom-right-radius:4px; }
+.chat-bubble.them { align-self:flex-start; background:var(--card); color:var(--text); border:1px solid var(--border); border-bottom-left-radius:4px; }
+.chat-bubble .bubble-meta { font-size:10px; margin-bottom:3px; font-weight:700; }
+.chat-bubble.me .bubble-meta { color:#0a5c35; }
+.chat-bubble.them .bubble-meta { color:var(--accent); }
+.chat-bubble .bubble-time { font-size:9px; opacity:0.6; margin-top:2px; text-align:right; font-family:'Space Mono',monospace; }
+.chat-input-row { display:flex; align-items:center; gap:8px; padding:8px 12px 10px; border-top:1px solid var(--border); }
+.chat-input { flex:1; background:var(--card); border:1px solid var(--border); border-radius:20px; padding:8px 14px; color:var(--text); font-family:'Noto Sans TC',sans-serif; font-size:13px; outline:none; transition:border-color 0.2s; }
+.chat-input:focus { border-color:var(--accent); }
+.chat-input::placeholder { color:var(--muted); font-size:12px; }
+.chat-send { width:36px; height:36px; border-radius:50%; background:#f97316; border:none; color:#fff; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:opacity 0.2s; }
+.chat-send:active { opacity:0.8; }
+.chat-empty { text-align:center; color:var(--muted); font-size:12px; margin-top:40px; font-style:italic; }
+</style>
+</head>
+<body>
+ 
+<!-- ① 登入（組長）-->
+<div class="screen" id="loginScreen">
+  <div class="map-pin-deco">📍</div>
+  <div class="map-pin-deco">🗺️</div>
+  <div class="map-pin-deco">📍</div>
+  <div class="map-pin-deco">🧭</div>
+  <div class="map-pin-deco">📍</div>
+  <div class="map-pin-deco">🗺️</div>
+  <div class="box">
+    <div class="box-logo">MyTripPal組長登入</div>
+    <div class="box-sub">組長登入管理頁面</div>
+    <div class="role-badge leader">👑 組長模式</div>
+    <div class="field"><label>組長 Email</label>
+      <input id="inputUser" type="email" placeholder="輸入 Email…" autocapitalize="none"
+        onkeydown="if(event.key==='Enter')gel('inputPass').focus()"></div>
+    <div class="field"><label>組長密碼</label>
+      <input id="inputPass" type="password" placeholder="輸入密碼…"
+        onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="err" id="loginError"></div>
+    <button class="btn-p" id="loginBtn" onclick="doLogin()">確認登入</button>
+    <hr class="divider">
+    <div class="note">若非組長，請點按鈕切換到組員模式</div>
+    <button class="btn-g" onclick="showScreen('memberScreen')">切換到組員模式</button>
+  </div>
+</div>
+ 
+<!-- ② 建立群組 -->
+<div class="screen" id="leaderScreen">
+  <div class="map-pin-deco">👑</div>
+  <div class="map-pin-deco">📍</div>
+  <div class="map-pin-deco">🗺️</div>
+  <div class="map-pin-deco">📍</div>
+  <div class="map-pin-deco">🧭</div>
+  <div class="map-pin-deco">📍</div>
+  <div class="box">
+    <div class="box-logo">MyTripPal組長建群</div>
+    <div class="box-sub">組長建立新群組頁面</div>
+    <div class="role-badge leader">👑 組長模式</div>
+    <div class="field"><label>組長暱稱</label>
+      <input id="inputLeaderNick" placeholder="輸入組長暱稱…"
+        onkeydown="if(event.key==='Enter')gel('inputGroupName').focus()"></div>
+    <div class="field"><label>群組名稱</label>
+      <input id="inputGroupName" placeholder="輸入群組名稱…"
+        onkeydown="if(event.key==='Enter')doCreateGroup()"></div>
+    <div class="err" id="leaderError"></div>
+    <button class="btn-p" onclick="doCreateGroup()">建立新群組 →</button>
+    <div class="note">請將群組名稱告知組員<br>組員輸入群組名稱即可入群</div>
+    <hr class="divider">
+    <button class="btn-p" onclick="doLogout()">組長登出</button>
+  </div>
+</div>
+ 
+<!-- ③ 加入群組（預設顯示）-->
+<div class="screen" id="memberScreen" style="display:flex">
+  <div class="map-pin-deco">📍</div>
+  <div class="map-pin-deco">🗺️</div>
+  <div class="map-pin-deco">📍</div>
+  <div class="map-pin-deco">🧭</div>
+  <div class="map-pin-deco">📍</div>
+  <div class="map-pin-deco">🗺️</div>
+  <div class="box">
+    <div class="box-logo">MyTripPal組員入群</div>
+    <div class="box-sub">組員加入群組查看地圖</div>
+    <div class="role-badge member">👤 組員模式</div>
+    <div class="field"><label>組員暱稱</label>
+      <input id="inputNick" placeholder="輸入暱稱…"
+        onkeydown="if(event.key==='Enter')gel('inputJoinGroup').focus()"></div>
+    <div class="field"><label>群組名稱</label>
+      <input id="inputJoinGroup" placeholder="輸入群組名稱…"
+        onkeydown="if(event.key==='Enter')doJoinGroup()"></div>
+    <div class="err" id="memberError"></div>
+    <button class="btn-g" onclick="doJoinGroup()">加入群組查看地圖 →</button>
+    <hr class="divider">
+    <div class="note">組長建立新群組請切換模式</div>
+    <button class="btn-p" onclick="showScreen('loginScreen')">切換到組長模式</button>
+    <hr class="divider">
+    <!-- ✅ 退出說明 note -->
+    <div class="note">
+      💡 退出說明<br>
+      ① 關閉瀏覽器或離開頁面，系統會自動將你從群組移除<br>
+      ② 進入地圖後，點右上角「退出群組」按鈕可主動退出並回到此頁面
+    </div>
+  </div>
+</div>
+ 
+<!-- ④ 地圖主畫面 -->
+<div id="appScreen">
+  <header>
+    <div class="logo">MyTripPal<span>旅伴</span></div>
+    <div class="header-right">
+      <div class="group-tag">📍 <span id="groupNameDisplay">—</span></div>
+      <div class="status-pill"><div id="statusDot"></div><span id="statusText">定位中…</span></div>
+      <!-- ✅ 退出群組按鈕 -->
+      <button class="exit-btn" onclick="doExitGroup()">✕ 退出群組</button>
+    </div>
+  </header>
+  <div class="map-wrapper">
+    <div class="map-hint">同群組 <span id="memberCount">0</span> 位成員在線</div>
+    <div id="map"></div>
+    <button class="locate-btn" onclick="locateMe()">📍</button>
+  </div>
+  <div class="bottom-panel">
+    <div class="panel-handle">
+      <div class="panel-title">群組成員</div>
+      <div class="my-coord" id="coordText">等待定位…</div>
+    </div>
+    <div class="friends-scroll" id="friendsScroll"></div>
+  </div>
+ 
+  <!-- ✅ 群組聊天室 -->
+  <div class="chat-panel">
+    <div class="chat-handle" onclick="toggleChat()">
+      <div class="chat-handle-left">
+        <span class="chat-title">💬 群組聊天</span>
+        <span class="chat-unread" id="chatUnread">0</span>
+      </div>
+      <span class="chat-toggle" id="chatToggleIcon">▲ 展開</span>
+    </div>
+    <div class="chat-body" id="chatBody">
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-empty" id="chatEmpty">尚無訊息，說聲 👋 吧！</div>
+      </div>
+      <div class="chat-input-row">
+        <input class="chat-input" id="chatInput" placeholder="輸入訊息…" maxlength="200"
+          onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="chat-send" onclick="sendChat()">➤</button>
+      </div>
+    </div>
+  </div><!-- end chat-panel -->
+</div><!-- end appScreen -->
+ 
+<!-- Firebase compat SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+ 
+<script>
+const firebaseConfig = {
+  apiKey:            "AIzaSyA7eqBTcaxuPXaPV6wbA-zP5GwN2c2ExfM",
+  authDomain:        "trippal-70d7d.firebaseapp.com",
+  databaseURL:       "https://trippal-70d7d-default-rtdb.asia-southeast1.firebasedatabase.app/",
+  projectId:         "trippal-70d7d",
+  storageBucket:     "trippal-70d7d.firebasestorage.app",
+  messagingSenderId: "444650377829",
+  appId:             "1:444650377829:web:8a84915421cbf1bad5ec8c"
+};
+ 
+firebase.initializeApp(firebaseConfig);
+const db   = firebase.database();
+const auth = firebase.auth();
+ 
+const COLORS = ['#1d4ed8','#e11d48','#16a34a','#d97706','#7c3aed','#0891b2','#be185d','#b45309'];
+ 
+let myId=null, myName=null, myGroup=null, isLeader=false;
+let map=null, markers={}, memberColors={}, colorIdx=0;
+let myLat=null, myLng=null;
+let gpsWatcher=null; // ✅ 記錄 watchPosition ID，退出時可清除
+ 
+const MOVE_THRESHOLD_M = 10;
+let lastUploadedLat=null, lastUploadedLng=null;
+ 
+/* ── 畫面切換 ── */
+function showScreen(id) {
+  ['loginScreen','leaderScreen','memberScreen','appScreen'].forEach(s => {
+    const el = gel(s);
+    el.style.display = 'none';
+  });
+  const target = gel(id);
+  target.style.display = 'flex';
+  if (id === 'appScreen') target.style.flexDirection = 'column';
+}
+ 
+/* ── 登入 ── */
+async function doLogin() {
+  const email = gel('inputUser').value.trim();
+  const pass  = gel('inputPass').value;
+  if (!email || !pass) { setErr('loginError','請輸入 Email 與密碼'); return; }
+  const btn = gel('loginBtn');
+  btn.disabled = true;
+  btn.textContent = '登入中…';
+  setErr('loginError','');
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+  } catch (e) {
+    let msg = '登入失敗，請確認帳號與密碼';
+    if (e.code === 'auth/invalid-email')     msg = 'Email 格式不正確';
+    if (e.code === 'auth/user-not-found')    msg = '找不到此帳號';
+    if (e.code === 'auth/wrong-password')    msg = '密碼錯誤';
+    if (e.code === 'auth/too-many-requests') msg = '嘗試次數過多，請稍後再試';
+    setErr('loginError', msg);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '確認登入';
+  }
+}
+ 
+/* ── 登出 ── */
+async function doLogout() {
+  await auth.signOut();
+  isLeader = false;
+  showScreen('loginScreen');
+}
+ 
+/* ── 監聽登入狀態 ── */
+auth.onAuthStateChanged(user => {
+  if (user) {
+    isLeader = true;
+    myName   = user.email.split('@')[0];
+    showScreen('leaderScreen');
+  }
+});
+ 
+/* ── 建立群組 ── */
+function doCreateGroup() {
+  const nick  = gel('inputLeaderNick').value.trim();
+  const gname = gel('inputGroupName').value.trim();
+  if (!nick)  { setErr('leaderError','請輸入你的暱稱'); return; }
+  if (!gname) { setErr('leaderError','請輸入群組名稱'); return; }
+  db.ref(`groups/${gname}/info`).once('value', snap => {
+    if (snap.exists()) { setErr('leaderError','此群組名稱已存在，請換一個'); return; }
+    db.ref(`groups/${gname}/info`).set({ leader: nick, createdAt: Date.now() });
+    myName  = nick;
+    myGroup = gname;
+    myId    = `leader_${gname}`;
+    gel('groupNameDisplay').textContent = gname;
+    setErr('leaderError','');
+    launchApp();
+  });
+}
+ 
+/* ── 加入群組 ── */
+function doJoinGroup() {
+  const nick  = gel('inputNick').value.trim();
+  const gname = gel('inputJoinGroup').value.trim();
+  if (!nick)  { setErr('memberError','請輸入你的暱稱'); return; }
+  if (!gname) { setErr('memberError','請輸入群組名稱'); return; }
+  db.ref(`groups/${gname}/info`).once('value', snap => {
+    if (!snap.exists()) { setErr('memberError','找不到此群組，請確認名稱'); return; }
+    myName  = nick;
+    myGroup = gname;
+    myId    = `${gname}_${nick}`;
+    gel('groupNameDisplay').textContent = gname;
+    setErr('memberError','');
+    launchApp();
+  });
+}
+ 
+/* ── ✅ 退出群組 ── */
+async function doExitGroup() {
+  if (!confirm('確定要退出群組嗎？')) return;
+ 
+  // 1. 從 Firebase 刪除自己的位置資料
+  if (myId && myGroup) {
+    await db.ref(`groups/${myGroup}/members/${myId}`).remove();
+  }
+ 
+  // 2. 停止 GPS 追蹤
+  if (gpsWatcher !== null) {
+    navigator.geolocation.clearWatch(gpsWatcher);
+    gpsWatcher = null;
+  }
+ 
+  // 3. 停止監聽 Firebase members 和聊天
+  if (myGroup) {
+    db.ref(`groups/${myGroup}/members`).off();
+    stopListenChat();
+  }
+ 
+  // 4. 清除地圖
+  if (map) {
+    map.remove();
+    map = null;
+  }
+ 
+  // 5. 重置狀態
+  markers = {}; memberColors = {}; colorIdx = 0;
+  myId = null; myName = null; myGroup = null;
+  myLat = null; myLng = null;
+  lastUploadedLat = null; lastUploadedLng = null;
+  window._centred = false;
+ 
+  // 重置聊天室 UI
+  chatOpen = false;
+  unreadCount = 0;
+  gel('chatBody').classList.remove('open');
+  gel('chatToggleIcon').textContent = '▲ 展開';
+  gel('chatUnread').style.display = 'none';
+  gel('chatMessages').innerHTML = '<div class="chat-empty" id="chatEmpty">尚無訊息，說聲 👋 吧！</div>';
+  gel('chatInput').value = '';
+ 
+  // 6. 回到組員頁面
+  showScreen('memberScreen');
+}
+ 
+/* ── 啟動地圖 ── */
+function launchApp() {
+  showScreen('appScreen');
+ 
+  map = L.map('map', { zoomControl:true, attributionControl:false }).setView([25.0330,121.5654],14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+ 
+  const myRef = db.ref(`groups/${myGroup}/members/${myId}`);
+  myRef.onDisconnect().remove();
+  window.addEventListener('beforeunload', () => myRef.remove());
+ 
+  if (navigator.geolocation) {
+    // ✅ 儲存 watcher ID 以便退出時清除
+    gpsWatcher = navigator.geolocation.watchPosition(pos => {
+      const newLat = pos.coords.latitude;
+      const newLng = pos.coords.longitude;
+      setStatus(true);
+ 
+      if (!window._centred) {
+        map.setView([newLat, newLng], 16, { animate: true });
+        window._centred = true;
+      }
+ 
+      const moved = (lastUploadedLat === null)
+        ? Infinity
+        : calcDist(lastUploadedLat, lastUploadedLng, newLat, newLng, true);
+ 
+      myLat = newLat;
+      myLng = newLng;
+ 
+      if (moved >= MOVE_THRESHOLD_M) {
+        uploadPos();
+      }
+ 
+    }, err => {
+      console.warn('GPS error:', err.message);
+      setStatus(false);
+    }, {
+      enableHighAccuracy: true,
+      maximumAge: 0,
+      timeout: 15000
+    });
+  }
+ 
+  db.ref(`groups/${myGroup}/members`).on('value', snap => {
+    const data = snap.val() || {};
+    syncMap(data); renderCards(data);
+  });
+ 
+  // ✅ 啟動聊天監聽
+  listenChat();
+}
+ 
+function uploadPos() {
+  if (!myLat) return;
+  db.ref(`groups/${myGroup}/members/${myId}`).set({
+    name: myName, role: isLeader ? 'leader' : 'member',
+    lat: myLat, lng: myLng, updatedAt: Date.now()
+  });
+  lastUploadedLat = myLat;
+  lastUploadedLng = myLng;
+  gel('coordText').textContent = `${myLat.toFixed(4)}, ${myLng.toFixed(4)}`;
+}
+ 
+/* ── 地圖 ── */
+function syncMap(data) {
+  Object.keys(markers).forEach(id => {
+    if (!data[id]) { map.removeLayer(markers[id]); delete markers[id]; delete memberColors[id]; }
+  });
+  Object.entries(data).forEach(([id,u]) => {
+    if (!memberColors[id]) memberColors[id] = COLORS[colorIdx++ % COLORS.length];
+    const c=memberColors[id], isMe=id===myId;
+    if (!markers[id]) {
+      markers[id] = L.marker([u.lat,u.lng],{icon:makeIcon(u,c,isMe)}).addTo(map).bindPopup(makePopup(u,c,isMe));
+    } else {
+      markers[id].setLatLng([u.lat,u.lng]);
+      markers[id].setIcon(makeIcon(u,c,isMe));
+      markers[id].setPopupContent(makePopup(u,c,isMe));
+    }
+  });
+}
+ 
+function makeIcon(u,c,isMe) {
+  const sz=isMe?46:38, em=u.role==='leader'?'👑':'👤';
+  return L.divIcon({
+    className:'',
+    html:`<div style="width:${sz}px;height:${sz}px;background:${c}22;border:${isMe?3:2}px solid ${c};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:${isMe?22:17}px;box-shadow:0 0 0 ${isMe?5:3}px ${c}30,0 3px 10px rgba(0,0,0,.4)">${em}</div><div style="text-align:center;margin-top:2px;font-family:'Noto Sans TC',sans-serif;font-size:11px;font-weight:700;color:${c};text-shadow:0 1px 4px rgba(0,0,0,.9);white-space:nowrap">${u.name}${isMe?' (我)':''}</div>`,
+    iconSize:[sz+10,sz+18], iconAnchor:[(sz+10)/2,sz/2], popupAnchor:[0,-(sz/2+4)]
+  });
+}
+ 
+function makePopup(u,c,isMe) {
+  return `<div style="font-family:'Noto Sans TC',sans-serif;min-width:130px">
+    <div style="font-weight:700;font-size:14px;color:${c};margin-bottom:2px">${u.name}${isMe?' (我)':''}</div>
+    <div style="font-size:11px;color:#9ca3af;margin-bottom:2px">${u.role==='leader'?'👑 組長':'👤 組員'}</div>
+    <div style="font-family:'Space Mono',monospace;font-size:10px;color:#6b7280">${u.lat.toFixed(5)}, ${u.lng.toFixed(5)}</div>
+    <div style="font-size:10px;color:#6b7280;margin-top:2px">更新 ${timeSince(u.updatedAt)}</div>
+  </div>`;
+}
+ 
+/* ── 成員卡片 ── */
+function renderCards(data) {
+  const scroll = gel('friendsScroll');
+  scroll.innerHTML = '';
+  const me = data[myId];
+  gel('memberCount').textContent = Object.keys(data).length;
+  const sorted = Object.entries(data).sort(([,a],[,b])=>(a.role==='leader'?0:1)-(b.role==='leader'?0:1));
+  sorted.forEach(([id,u]) => {
+    const isMe=id===myId, c=memberColors[id]||COLORS[0];
+    const dist=(isMe||!me)?null:calcDist(me.lat,me.lng,u.lat,u.lng);
+    const card=document.createElement('div');
+    card.className='friend-card'+(isMe?' is-me':'');
+    card.style.setProperty('--fc',c);
+    card.innerHTML=`
+      <div class="fc-role">${u.role==='leader'?'👑 組長':'👤 組員'}</div>
+      <div class="fc-avatar" style="background:${c}22;border-color:${c}">${u.role==='leader'?'👑':'👤'}</div>
+      <div class="fc-name">${u.name}${isMe?' (我)':''}</div>
+      ${isMe?`<div class="fc-distance" style="color:var(--muted);font-size:10px">我的位置</div>`
+             :`<div class="fc-distance">${dist}</div><div class="fc-dist-label">距離我</div>`}`;
+    card.onclick=()=>{ map.setView([u.lat,u.lng],16,{animate:true}); markers[id]?.openPopup(); };
+    scroll.appendChild(card);
+  });
+}
+ 
+/* ── 工具 ── */
+function calcDist(a,b,c,d, rawMeters=false) {
+  const R=6371000,dLat=(c-a)*Math.PI/180,dLng=(d-b)*Math.PI/180;
+  const x=Math.sin(dLat/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLng/2)**2;
+  const dist=R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+  if (rawMeters) return dist;
+  return dist<1000?`${Math.round(dist)} 公尺`:`${(dist/1000).toFixed(1)} 公里`;
+}
+function timeSince(ts) {
+  const s=Math.floor((Date.now()-ts)/1000);
+  if(s<10)return '剛剛'; if(s<60)return `${s}秒前`;
+  if(s<3600)return `${Math.floor(s/60)}分鐘前`; return `${Math.floor(s/3600)}小時前`;
+}
+function setStatus(ok) {
+  gel('statusDot').style.background=ok?'#4fffb0':'#f87171';
+  gel('statusText').textContent=ok?'即時同步中':'GPS 錯誤';
+}
+function gel(id){ return document.getElementById(id); }
+function setErr(id,msg){ gel(id).textContent=msg; }
+function locateMe(){ if(myLat) map.setView([myLat,myLng],16,{animate:true}); markers[myId]?.openPopup(); }
+ 
+/* ── 聊天室 ── */
+let chatOpen = false;
+let chatListener = null;
+let unreadCount = 0;
+let lastSeenMsgId = null;
+ 
+function toggleChat() {
+  chatOpen = !chatOpen;
+  const body = gel('chatBody');
+  const icon = gel('chatToggleIcon');
+  if (chatOpen) {
+    body.classList.add('open');
+    icon.textContent = '▼ 收起';
+    // 展開時清除未讀
+    unreadCount = 0;
+    const badge = gel('chatUnread');
+    badge.style.display = 'none';
+    badge.textContent = '0';
+    // 捲到最底
+    setTimeout(() => {
+      const msgs = gel('chatMessages');
+      msgs.scrollTop = msgs.scrollHeight;
+    }, 320);
+  } else {
+    body.classList.remove('open');
+    icon.textContent = '▲ 展開';
+  }
+}
+ 
+function sendChat() {
+  const input = gel('chatInput');
+  const text  = input.value.trim();
+  if (!text || !myGroup || !myName) return;
+  input.value = '';
+  db.ref(`groups/${myGroup}/chat`).push({
+    name:      myName,
+    role:      isLeader ? 'leader' : 'member',
+    text:      text,
+    senderId:  myId,
+    timestamp: Date.now()
+  });
+}
+ 
+function listenChat() {
+  if (chatListener) return; // 避免重複監聽
+  const chatRef = db.ref(`groups/${myGroup}/chat`).limitToLast(80);
+  chatListener = chatRef.on('child_added', snap => {
+    const msg = snap.val();
+    const msgKey = snap.key;
+    appendChatBubble(msg, msgKey);
+ 
+    // 如果聊天室是收起狀態 → 累計未讀
+    if (!chatOpen && msg.senderId !== myId) {
+      unreadCount++;
+      const badge = gel('chatUnread');
+      badge.style.display = 'inline';
+      badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+    }
+ 
+    // 如果是展開狀態 → 自動捲到底
+    if (chatOpen) {
+      const msgs = gel('chatMessages');
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+  });
+}
+ 
+function appendChatBubble(msg, key) {
+  const msgs   = gel('chatMessages');
+  const empty  = gel('chatEmpty');
+  if (empty) empty.remove();
+ 
+  const isMe   = msg.senderId === myId;
+  const bubble = document.createElement('div');
+  bubble.className = `chat-bubble ${isMe ? 'me' : 'them'}`;
+  bubble.dataset.key = key;
+ 
+  const roleIcon = msg.role === 'leader' ? '👑' : '👤';
+  const timeStr  = timeSince(msg.timestamp);
+ 
+  bubble.innerHTML = `
+    <div class="bubble-meta">${isMe ? '我' : roleIcon + ' ' + escHtml(msg.name)}</div>
+    <div>${escHtml(msg.text)}</div>
+    <div class="bubble-time">${timeStr}</div>`;
+  msgs.appendChild(bubble);
+}
+ 
+function stopListenChat() {
+  if (chatListener && myGroup) {
+    db.ref(`groups/${myGroup}/chat`).off('child_added', chatListener);
+    chatListener = null;
+  }
+}
+ 
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
