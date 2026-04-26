@@ -15,10 +15,8 @@ html,body{ font-family:'Noto Sans TC',sans-serif; background:var(--bg); color:va
 .screen { position:fixed; inset:0; z-index:9999; display:none; align-items:center; justify-content:center;
   background-color:#0d0f14;
   background-image:
-    /* 小街道格線 */
     linear-gradient(rgba(79,255,176,0.13) 1px, transparent 1px),
     linear-gradient(90deg, rgba(79,255,176,0.13) 1px, transparent 1px),
-    /* 主幹道 */
     linear-gradient(rgba(79,255,176,0.28) 1px, transparent 1px),
     linear-gradient(90deg, rgba(79,255,176,0.28) 1px, transparent 1px);
   background-size: 30px 30px, 30px 30px, 150px 150px, 150px 150px;
@@ -35,18 +33,18 @@ html,body{ font-family:'Noto Sans TC',sans-serif; background:var(--bg); color:va
  
 .err { font-size:12px; color:#f87171; min-height:16px; margin-bottom:10px; text-align:left; }
  
-/* 管理者登入 & 前往管理者頁面 → 亮橙底 + 白色粗體文字 */
-.btn-p { width:100%; background:#f97316; color:#ffffff; border:none; border-radius:10px; padding:13px; font-size:15px; font-weight:700; font-family:'Noto Sans TC',sans-serif; cursor:pointer; margin-bottom:10px; transition:opacity 0.2s; }
+.btn-p { width:100%; background:#1e3a8a; color:#ffffff; border:none; border-radius:10px; padding:13px; font-size:15px; font-weight:700; font-family:'Noto Sans TC',sans-serif; cursor:pointer; margin-bottom:10px; transition:opacity 0.2s; }
 .btn-p:active { opacity:.85; }
 .btn-p:disabled { opacity:.5; cursor:not-allowed; }
  
-/* 加入群組查看地圖 & 前往組員頁面 → accent 亮綠底 + 深墨綠粗體文字 */
 .btn-g { width:100%; background:#4fffb0; color:#0a3d2b; border:none; border-radius:10px; padding:11px; font-size:15px; font-weight:700; font-family:'Noto Sans TC',sans-serif; cursor:pointer; }
 .btn-g:active { opacity:.85; }
  
 .divider { margin:14px 0; border:none; border-top:1px solid var(--border); }
 .note { font-size:11px; color:#ffffff; font-style:italic; line-height:1.7; margin-top:12px; }
-.role-badge { display:inline-flex; align-items:center; gap:6px; background:#1e3a8a; border:1px solid rgba(79,255,176,0.3); border-radius:20px; padding:4px 14px; font-size:15px; color:var(--accent); font-family:'Space Mono',monospace; margin-bottom:18px; }
+.role-badge { display:inline-flex; align-items:center; gap:6px; border-radius:20px; padding:4px 14px; font-size:15px; font-family:'Space Mono',monospace; margin-bottom:18px; font-weight:700; }
+.role-badge.leader { background:#1e3a8a; border:1px solid #ea6c10; color:#ffffff; }
+.role-badge.member { background:#4fffb0; border:1px solid #2de89a; color:#0a3d2b; }
  
 /* 地圖裝飾：圓形光暈節點 */
 .screen::before {
@@ -55,7 +53,6 @@ html,body{ font-family:'Noto Sans TC',sans-serif; background:var(--bg); color:va
   inset:0;
   pointer-events:none;
   background-image:
-    /* 亮點核心 */
     radial-gradient(circle 4px at 15% 20%, rgba(79,255,176,0.9) 0%, transparent 100%),
     radial-gradient(circle 5px at 72% 15%, rgba(249,115,22,0.95) 0%, transparent 100%),
     radial-gradient(circle 4px at 88% 45%, rgba(79,255,176,0.85) 0%, transparent 100%),
@@ -64,7 +61,6 @@ html,body{ font-family:'Noto Sans TC',sans-serif; background:var(--bg); color:va
     radial-gradient(circle 4px at 10% 85%, rgba(79,255,176,0.8) 0%, transparent 100%),
     radial-gradient(circle 4px at 50% 40%, rgba(249,115,22,0.85) 0%, transparent 100%),
     radial-gradient(circle 3px at 80% 65%, rgba(79,255,176,0.8) 0%, transparent 100%),
-    /* 光暈擴散 */
     radial-gradient(circle 70px at 15% 20%, rgba(79,255,176,0.18) 0%, transparent 100%),
     radial-gradient(circle 90px at 72% 15%, rgba(249,115,22,0.2) 0%, transparent 100%),
     radial-gradient(circle 60px at 30% 70%, rgba(249,115,22,0.18) 0%, transparent 100%),
@@ -73,10 +69,8 @@ html,body{ font-family:'Noto Sans TC',sans-serif; background:var(--bg); color:va
     radial-gradient(circle 45px at 50% 40%, rgba(249,115,22,0.16) 0%, transparent 100%);
   z-index:0;
 }
-/* 讓 box 浮在背景上 */
 .box { position:relative; z-index:1; background:rgba(19,22,30,0.92); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid rgba(79,255,176,0.18); box-shadow: 0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(79,255,176,0.06); }
  
-/* 浮動 pin 動畫裝飾 */
 .map-pin-deco { position:absolute; font-size:22px; opacity:0.45; animation:floatPin 6s ease-in-out infinite; pointer-events:none; z-index:0; }
 .map-pin-deco:nth-child(1){ top:8%; left:8%;  animation-delay:0s;   font-size:18px; }
 .map-pin-deco:nth-child(2){ top:12%; right:10%; animation-delay:1.5s; font-size:26px; opacity:0.35; }
@@ -88,15 +82,33 @@ html,body{ font-family:'Noto Sans TC',sans-serif; background:var(--bg); color:va
   0%,100% { transform: translateY(0px) rotate(-5deg); }
   50%      { transform: translateY(-12px) rotate(5deg); }
 }
+ 
+/* ── App 地圖畫面 ── */
 #appScreen { display:none; flex-direction:column; height:100dvh; }
 header { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; background:var(--panel); border-bottom:1px solid var(--border); flex-shrink:0; }
 .logo { font-family:'Space Mono',monospace; font-size:17px; font-weight:700; color:var(--accent); }
 .logo span { color:var(--text); }
 .header-right { display:flex; align-items:center; gap:8px; }
-.group-tag { font-size:11px; font-family:'Space Mono',monospace; background:rgba(79,255,176,0.08); border:1px solid rgba(79,255,176,0.2); border-radius:20px; padding:3px 10px; color:var(--accent); max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.group-tag { font-size:11px; font-family:'Space Mono',monospace; background:rgba(79,255,176,0.08); border:1px solid rgba(79,255,176,0.2); border-radius:20px; padding:3px 10px; color:var(--accent); max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .status-pill { display:flex; align-items:center; gap:5px; background:rgba(79,255,176,0.06); border:1px solid rgba(79,255,176,0.2); border-radius:20px; padding:4px 10px; font-size:11px; color:var(--accent); font-family:'Space Mono',monospace; }
 #statusDot { width:6px; height:6px; background:var(--accent); border-radius:50%; animation:pulse 1.5s infinite; }
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(1.4)} }
+ 
+/* ── 退出群組按鈕（header 右側）── */
+.exit-btn {
+  display:flex; align-items:center; gap:4px;
+  background:rgba(239,68,68,0.12);
+  border:1px solid rgba(239,68,68,0.35);
+  border-radius:20px;
+  padding:4px 10px;
+  font-size:11px;
+  color:#f87171;
+  font-family:'Space Mono',monospace;
+  cursor:pointer;
+  transition:background 0.2s, border-color 0.2s;
+  white-space:nowrap;
+}
+.exit-btn:active { background:rgba(239,68,68,0.28); border-color:#f87171; }
  
 .map-wrapper { flex:1; position:relative; min-height:0; }
 #map { width:100%; height:100%; }
@@ -143,7 +155,7 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
   <div class="box">
     <div class="box-logo">MyTripPal組長登入</div>
     <div class="box-sub">組長登入管理頁面</div>
-    <div class="role-badge"> 👑組長模式</div>
+    <div class="role-badge leader">👑 組長模式</div>
     <div class="field"><label>組長 Email</label>
       <input id="inputUser" type="email" placeholder="輸入 Email…" autocapitalize="none"
         onkeydown="if(event.key==='Enter')gel('inputPass').focus()"></div>
@@ -153,7 +165,7 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
     <div class="err" id="loginError"></div>
     <button class="btn-p" id="loginBtn" onclick="doLogin()">確認登入</button>
     <hr class="divider">
-    <div class="note">若非組長，請點按鈕<br>切換到組員模式</div>
+    <div class="note">若非組長，請點按鈕切換到組員模式</div>
     <button class="btn-g" onclick="showScreen('memberScreen')">切換到組員模式</button>
   </div>
 </div>
@@ -169,7 +181,7 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
   <div class="box">
     <div class="box-logo">MyTripPal組長建群</div>
     <div class="box-sub">組長建立新群組頁面</div>
-    <div class="role-badge">👑組長模式</div>
+    <div class="role-badge leader">👑 組長模式</div>
     <div class="field"><label>組長暱稱</label>
       <input id="inputLeaderNick" placeholder="輸入組長暱稱…"
         onkeydown="if(event.key==='Enter')gel('inputGroupName').focus()"></div>
@@ -195,7 +207,7 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
   <div class="box">
     <div class="box-logo">MyTripPal組員入群</div>
     <div class="box-sub">組員加入群組查看地圖</div>
-    <div class="role-badge">👤 組員模式</div>
+    <div class="role-badge member">👤 組員模式</div>
     <div class="field"><label>組員暱稱</label>
       <input id="inputNick" placeholder="輸入暱稱…"
         onkeydown="if(event.key==='Enter')gel('inputJoinGroup').focus()"></div>
@@ -207,6 +219,13 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
     <hr class="divider">
     <div class="note">組長建立新群組請切換模式</div>
     <button class="btn-p" onclick="showScreen('loginScreen')">切換到組長模式</button>
+    <hr class="divider">
+    <!-- ✅ 退出說明 note -->
+    <div class="note">
+      💡 退出說明<br>
+      ① 關閉瀏覽器或離開頁面，系統會自動將你從群組移除<br>
+      ② 進入地圖後，點右上角「退出群組」按鈕可主動退出並回到此頁面
+    </div>
   </div>
 </div>
  
@@ -217,6 +236,8 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
     <div class="header-right">
       <div class="group-tag">📍 <span id="groupNameDisplay">—</span></div>
       <div class="status-pill"><div id="statusDot"></div><span id="statusText">定位中…</span></div>
+      <!-- ✅ 退出群組按鈕 -->
+      <button class="exit-btn" onclick="doExitGroup()">✕ 退出群組</button>
     </div>
   </header>
   <div class="map-wrapper">
@@ -236,13 +257,9 @@ header { display:flex; align-items:center; justify-content:space-between; paddin
 <!-- Firebase compat SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<!-- ✅ Added: Firebase Auth SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
  
 <script>
-// ============================================================
-//  Firebase 設定（API key 在此可見，但已透過 Auth + Rules 保護）
-// ============================================================
 const firebaseConfig = {
   apiKey:            "AIzaSyA7eqBTcaxuPXaPV6wbA-zP5GwN2c2ExfM",
   authDomain:        "trippal-70d7d.firebaseapp.com",
@@ -252,17 +269,17 @@ const firebaseConfig = {
   messagingSenderId: "444650377829",
   appId:             "1:444650377829:web:8a84915421cbf1bad5ec8c"
 };
-// ============================================================
  
 firebase.initializeApp(firebaseConfig);
 const db   = firebase.database();
-const auth = firebase.auth(); // ✅ 使用 Firebase Auth，不再有帳密在程式碼裡
+const auth = firebase.auth();
  
 const COLORS = ['#1d4ed8','#e11d48','#16a34a','#d97706','#7c3aed','#0891b2','#be185d','#b45309'];
  
 let myId=null, myName=null, myGroup=null, isLeader=false;
 let map=null, markers={}, memberColors={}, colorIdx=0;
 let myLat=null, myLng=null;
+let gpsWatcher=null; // ✅ 記錄 watchPosition ID，退出時可清除
  
 const MOVE_THRESHOLD_M = 10;
 let lastUploadedLat=null, lastUploadedLng=null;
@@ -278,20 +295,17 @@ function showScreen(id) {
   if (id === 'appScreen') target.style.flexDirection = 'column';
 }
  
-/* ── ✅ 登入：改用 Firebase Auth，不再有硬編碼帳密 ── */
+/* ── 登入 ── */
 async function doLogin() {
   const email = gel('inputUser').value.trim();
   const pass  = gel('inputPass').value;
   if (!email || !pass) { setErr('loginError','請輸入 Email 與密碼'); return; }
- 
   const btn = gel('loginBtn');
   btn.disabled = true;
   btn.textContent = '登入中…';
   setErr('loginError','');
- 
   try {
     await auth.signInWithEmailAndPassword(email, pass);
-    // 登入成功後 onAuthStateChanged 會自動處理畫面跳轉
   } catch (e) {
     let msg = '登入失敗，請確認帳號與密碼';
     if (e.code === 'auth/invalid-email')     msg = 'Email 格式不正確';
@@ -301,26 +315,24 @@ async function doLogin() {
     setErr('loginError', msg);
   } finally {
     btn.disabled = false;
-    btn.textContent = '管理者登入 →';
+    btn.textContent = '確認登入';
   }
 }
  
-/* ── ✅ 登出 ── */
+/* ── 登出 ── */
 async function doLogout() {
   await auth.signOut();
   isLeader = false;
   showScreen('loginScreen');
 }
  
-/* ── ✅ 監聽登入狀態，自動跳轉到組長頁面 ── */
+/* ── 監聽登入狀態 ── */
 auth.onAuthStateChanged(user => {
   if (user) {
-    // 已登入 → 進入組長頁面
     isLeader = true;
-    myName   = user.email.split('@')[0]; // 預設暱稱取 email @ 前段
+    myName   = user.email.split('@')[0];
     showScreen('leaderScreen');
   }
-  // 未登入不做任何事，讓使用者停在目前畫面
 });
  
 /* ── 建立群組 ── */
@@ -358,6 +370,43 @@ function doJoinGroup() {
   });
 }
  
+/* ── ✅ 退出群組 ── */
+async function doExitGroup() {
+  if (!confirm('確定要退出群組嗎？')) return;
+ 
+  // 1. 從 Firebase 刪除自己的位置資料
+  if (myId && myGroup) {
+    await db.ref(`groups/${myGroup}/members/${myId}`).remove();
+  }
+ 
+  // 2. 停止 GPS 追蹤
+  if (gpsWatcher !== null) {
+    navigator.geolocation.clearWatch(gpsWatcher);
+    gpsWatcher = null;
+  }
+ 
+  // 3. 停止監聽 Firebase members
+  if (myGroup) {
+    db.ref(`groups/${myGroup}/members`).off();
+  }
+ 
+  // 4. 清除地圖
+  if (map) {
+    map.remove();
+    map = null;
+  }
+ 
+  // 5. 重置狀態
+  markers = {}; memberColors = {}; colorIdx = 0;
+  myId = null; myName = null; myGroup = null;
+  myLat = null; myLng = null;
+  lastUploadedLat = null; lastUploadedLng = null;
+  window._centred = false;
+ 
+  // 6. 回到組員頁面
+  showScreen('memberScreen');
+}
+ 
 /* ── 啟動地圖 ── */
 function launchApp() {
   showScreen('appScreen');
@@ -370,7 +419,8 @@ function launchApp() {
   window.addEventListener('beforeunload', () => myRef.remove());
  
   if (navigator.geolocation) {
-    navigator.geolocation.watchPosition(pos => {
+    // ✅ 儲存 watcher ID 以便退出時清除
+    gpsWatcher = navigator.geolocation.watchPosition(pos => {
       const newLat = pos.coords.latitude;
       const newLng = pos.coords.longitude;
       setStatus(true);
