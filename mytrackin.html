@@ -274,15 +274,15 @@ textarea::placeholder { color:#b5afa5; }
  
 /* Leaflet popup dark theme */
 .custom-popup .leaflet-popup-content-wrapper {
-  background:rgba(12,15,20,0.95); color:#fff;
-  border:1px solid rgba(106,170,117,0.25); border-radius:4px;
-  font-family:'DM Sans',sans-serif; box-shadow:0 8px 24px rgba(0,0,0,0.5);
+  background:rgba(245,240,232,0.97); color:var(--ink);
+  border:1px solid rgba(58,90,64,0.25); border-radius:4px;
+  font-family:'DM Sans',sans-serif; box-shadow:0 8px 24px rgba(0,0,0,0.15);
 }
-.custom-popup .leaflet-popup-tip { background:rgba(12,15,20,0.95); }
-.popup-name { font-family:'Syne',sans-serif; font-weight:700; font-size:0.875rem; color:#6aaa75; margin-bottom:3px; }
-.popup-time { font-size:0.72rem; color:rgba(255,255,255,0.38); margin-bottom:5px; }
-.popup-note { font-size:0.85rem; color:rgba(255,255,255,0.78); }
-.popup-coord { font-size:0.68rem; color:rgba(106,170,117,0.5); margin-top:5px; }
+.custom-popup .leaflet-popup-tip { background:rgba(245,240,232,0.97); }
+.popup-name { font-family:'Syne',sans-serif; font-weight:700; font-size:0.875rem; color:var(--moss); margin-bottom:3px; }
+.popup-time { font-size:0.72rem; color:var(--stone); margin-bottom:5px; }
+.popup-note { font-size:0.85rem; color:var(--ink); }
+.popup-coord { font-size:0.68rem; color:var(--moss-light); margin-top:5px; }
  
 .info-pill {
   position:absolute; bottom:80px; left:50%; transform:translateX(-50%);
@@ -316,7 +316,7 @@ textarea::placeholder { color:#b5afa5; }
 <!-- ══════════════════════════════════════
      PAGE 1 · 登入 / 設定
 ══════════════════════════════════════ -->
-<div class="page active" id="page-login">
+<div class="page" id="page-login">
   <div class="login-card">
     <div class="logo-row">
       <div class="logo-icon">
@@ -405,7 +405,7 @@ textarea::placeholder { color:#b5afa5; }
 <!-- ══════════════════════════════════════
      PAGE 3 · 地圖查詢
 ══════════════════════════════════════ -->
-<div class="page" id="page-map">
+<div class="page active" id="page-map">
   <div class="map-topbar">
     <div class="map-logo-row">
       <div class="logo-icon" style="width:26px;height:26px;">
@@ -431,7 +431,7 @@ textarea::placeholder { color:#b5afa5; }
  
 <!-- ══ Bottom Nav ══ -->
 <nav class="bottom-nav">
-  <button class="nav-tab active" id="tab-login" data-page="login">
+  <button class="nav-tab" id="tab-login" data-page="login">
     <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     身份 / 設定
   </button>
@@ -439,7 +439,7 @@ textarea::placeholder { color:#b5afa5; }
     <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
     打卡
   </button>
-  <button class="nav-tab" id="tab-map" data-page="map">
+  <button class="nav-tab active" id="tab-map" data-page="map">
     <svg viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
     地圖查詢
   </button>
@@ -736,8 +736,9 @@ if (isOnline) tryFlushQueue();
 // PAGE 3 · MAP
 // ─────────────────────────────────────
 var mapObj = L.map('map', { center:[23.8,121.0], zoom:7, zoomControl:true });
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  attribution:'&copy; CARTO', maxZoom:19
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  attribution:'&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+  maxZoom:19
 }).addTo(mapObj);
  
 var markersLayer = L.layerGroup().addTo(mapObj);
@@ -829,13 +830,13 @@ document.getElementById('btnAll').addEventListener('click', function() {
     if (!items.length) { setMapStatus('找不到「'+nickname+'」在「'+tripcode+'」的紀錄','err'); return; }
  
     var coords = items.map(function(d) { return [d.lat,d.lng]; });
-    polyLayer = L.polyline(coords, { color:'#6aaa75', weight:3, opacity:0.65, dashArray:'7 4' }).addTo(mapObj);
+    polyLayer = L.polyline(coords, { color:'#3a5a40', weight:4, opacity:0.75, dashArray:'8 5' }).addTo(mapObj);
  
     var startSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="34" viewBox="0 0 26 34"><path d="M13 0C8.03 0 4 4.03 4 9c0 8.75 9 25 9 25S22 17.75 22 9C22 4.03 17.97 0 13 0z" fill="#d4770a" stroke="rgba(0,0,0,0.25)" stroke-width="1"/><circle cx="13" cy="9" r="4" fill="rgba(255,255,255,0.85)"/></svg>';
     markersLayer.addLayer(L.marker(coords[0], { icon:L.divIcon({ html:startSvg, className:'', iconSize:[26,34], iconAnchor:[13,34] }) }).bindTooltip('起點'));
     markersLayer.addLayer(L.marker(coords[coords.length-1], { icon:makeMarkerIcon('#3a5a40') }).bindTooltip('最新'));
     items.slice(1,-1).forEach(function(d) {
-      markersLayer.addLayer(L.circleMarker([d.lat,d.lng], { radius:4, color:'#6aaa75', fillColor:'#6aaa75', fillOpacity:0.55, weight:1.5 }));
+      markersLayer.addLayer(L.circleMarker([d.lat,d.lng], { radius:5, color:'#3a5a40', fillColor:'#588157', fillOpacity:0.7, weight:2 }));
     });
  
     mapObj.fitBounds(L.latLngBounds(coords), { padding:[36,36] });
