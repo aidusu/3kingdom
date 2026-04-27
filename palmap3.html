@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PAL MAP 2.1</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+body{font-family:sans-serif;margin:0;background:#f5f5f5}
+header{background:#1a6b3c;color:#fff;padding:12px}
+.page{display:none;padding:15px}
+.page.active{display:block}
+input,button{padding:10px;margin:5px 0;width:100%}
+#map{height:400px}
+.member{padding:6px;border-bottom:1px solid #ddd}
+.admin{background:#fff3cd;padding:10px;margin-top:10px}
+</style>
+</head>
+<body>
+<header>PAL MAP 2.1</header>
+
+<div class="page active" id="register">
+<h3>註冊</h3>
+<input id="nickname" placeholder="暱稱">
+<input id="tripcode" placeholder="團隊碼">
+<input id="adminkey" placeholder="管理碼(建立團隊才填)">
+<button onclick="register()">註冊</button>
+<div id="msg"></div>
+</div>
+
+<div class="page" id="mapPage">
+<h3>地圖</h3>
+<input id="viewKey" placeholder="查看碼">
+<button onclick="unlockMap()">進入地圖</button>
+<div id="map"></div>
+<div id="members"></div>
+
+<div class="admin">
+<h4>團長控制台</h4>
+<input id="adminInput" placeholder="管理碼">
+<button onclick="resetKeys()">重設 Key</button>
+<button onclick="kickAll()">清空所有人</button>
+</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, set, get, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+const firebaseConfig={
+apiKey:"YOUR_API_KEY",
+authDomain:"YOUR_PROJECT.firebaseapp.com",
+databaseURL:"https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+projectId:"YOUR_PROJECT"
+};
+
+const app=initializeApp(firebaseConfig);
+const db=getDatabase(app);
+const auth=getAuth(app);
+
+let uid="";
+let trip="";
+let nick="";
+let map;
+let unlocked=false;
+
+signInAnonymously(auth).then(r=>{uid=r.user.uid});
+
+async function register(){
+nick=document.getElementById('nickname').value;
+trip=document.getElementById('tripcode').value;
+const admin=document.getElementById('adminkey').value;
+
+const nickRef=ref(db,`nicknames/${trip}/${nick}`);
+const snap=await get(nickRef);
+
+if(snap.exists() && snap.val()!==uid){
+const k=prompt("暱稱已存在，輸入管理碼轉移");
+const adminSnap=await get(ref(db,`tripMeta/${trip}/adminKey`));
+if(!adminSnap.exists()||adminSnap.val()!==k){alert("錯誤");return}
+}
+
+await set(nickRef,uid);
+await set(ref(db,`users/${trip}/${uid}`),{nick});
+
+if(admin){
+await set(ref(db,`tripMeta/${trip}/adminKey`),admin);
+await set(ref(db,`tripMeta/${trip}/viewKey`),"1234");
+}
+
+document.getElementById('register').classList.remove('active');
+document.getElementById('mapPage').classList.add('active');
+}
+
+window.unlockMap=async()=>{
+const key=document.getElementById('viewKey').value;
+const snap=await get(ref(db,`tripMeta/${trip}/viewKey`));
+if(!snap.exists()||snap.val()!==key){alert("錯誤");return}
+unlocked=true;
+initMap();
+load();
+setInterval(load,60000);
+}
+
+function initMap(){
+map=L.map('map').setView([23.5,121],7);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+}
+
+async function load(){
+if(!unlocked)return;
+const snap=await get(ref(db,`locations/${trip}`));
+const data=snap.val();
+const box=document.getElementById('members');
+box.innerHTML="";
+
+for(const id in data){
+const d=data[id];
+L.marker([d.lat,d.lng]).addTo(map);
+
+const div=document.createElement('div');
+div.className='member';
+div.innerHTML=`${d.nickname} <button onclick="kick('${id}')">踢</button>`;
+box.appendChild(div);
+}
+}
+
+window.kick=async(id)=>{
+const admin=document.getElementById('adminInput').value;
+const snap=await get(ref(db,`tripMeta/${trip}/adminKey`));
+if(snap.val()!==admin){alert("錯誤");return}
+await remove(ref(db,`locations/${trip}/${id}`));
+}
+
+window.kickAll=async()=>{
+const admin=document.getElementById('adminInput').value;
+const snap=await get(ref(db,`tripMeta/${trip}/adminKey`));
+if(snap.val()!==admin){alert("錯誤");return}
+await remove(ref(db,`locations/${trip}`));
+}
+
+window.resetKeys=async()=>{
+const admin=document.getElementById('adminInput').value;
+const snap=await get(ref(db,`tripMeta/${trip}/adminKey`));
+if(snap.val()!==admin){alert("錯誤");return}
+const newView=prompt("新viewKey");
+const newAdmin=prompt("新adminKey");
+await set(ref(db,`tripMeta/${trip}/viewKey`),newView);
+await set(ref(db,`tripMeta/${trip}/adminKey`),newAdmin);
+alert("完成");
+}
+
+</script>
+</body>
+</html>
