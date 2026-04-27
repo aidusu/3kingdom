@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MyTrackIn · 打卡</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0f1117;
+    --paper: #f5f0e8;
+    --moss: #3a5a40;
+    --moss-light: #588157;
+    --amber: #d4770a;
+    --amber-light: #f4a261;
+    --stone: #a98467;
+    --mist: #e9e5dc;
+    --danger: #c1440e;
+    --success: #2d6a4f;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:'DM Sans',sans-serif;
+    background:var(--ink);
+    min-height:100vh;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    padding:20px;
+    position:relative;
+    overflow:hidden;
+  }
+  /* Dark forest atmosphere */
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background:
+      radial-gradient(ellipse at 30% 70%, rgba(58,90,64,0.35) 0%, transparent 55%),
+      radial-gradient(ellipse at 75% 25%, rgba(212,119,10,0.12) 0%, transparent 50%);
+    pointer-events:none;
+  }
+  body::after {
+    content:'';
+    position:fixed; bottom:-10%; left:-5%;
+    width:110%; height:50%;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 400'%3E%3Cpath d='M0 400 L100 200 L200 350 L300 150 L400 300 L500 100 L600 280 L700 120 L800 320 L900 80 L1000 260 L1100 180 L1200 400 Z' fill='rgba(58,90,64,0.15)'/%3E%3C/svg%3E") no-repeat bottom;
+    background-size:cover;
+    pointer-events:none;
+  }
+ 
+  .logo-bar {
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    padding:14px 20px;
+    display:flex; align-items:center; gap:10px;
+    background:rgba(15,17,23,0.85);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid rgba(58,90,64,0.3);
+  }
+  .logo-icon {
+    width:30px; height:30px;
+    background:var(--moss);
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .logo-icon svg { width:16px; height:16px; fill:none; stroke:#fff; stroke-width:2.2; }
+  .logo-text {
+    font-family:'Syne',sans-serif;
+    font-weight:800;
+    font-size:1.1rem;
+    color:#fff;
+    letter-spacing:-0.3px;
+  }
+  .logo-text span { color:#6aaa75; }
+ 
+  .container {
+    position:relative; z-index:10;
+    width:min(440px, 100%);
+    margin-top:60px;
+  }
+ 
+  .user-card {
+    background:rgba(255,252,245,0.06);
+    border:1px solid rgba(106,170,117,0.25);
+    border-radius:4px;
+    padding:20px 24px;
+    margin-bottom:16px;
+    display:flex; align-items:center; gap:16px;
+  }
+  .avatar {
+    width:48px; height:48px;
+    background:linear-gradient(135deg,var(--moss),var(--moss-light));
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .avatar svg { width:26px; height:26px; fill:none; stroke:#fff; stroke-width:1.8; }
+  .user-details { flex:1; min-width:0; }
+  .user-name {
+    font-family:'Syne',sans-serif;
+    font-weight:700;
+    font-size:1.1rem;
+    color:#fff;
+    margin-bottom:4px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .user-trip {
+    font-size:0.8rem;
+    color:rgba(255,255,255,0.45);
+    letter-spacing:0.05em;
+  }
+  .user-trip strong { color:#6aaa75; font-weight:500; }
+  .not-logged {
+    font-size:0.875rem;
+    color:rgba(255,255,255,0.5);
+  }
+  .not-logged a { color:#6aaa75; }
+ 
+  .main-card {
+    background:rgba(255,252,245,0.05);
+    border:1px solid rgba(255,252,245,0.1);
+    border-radius:4px;
+    padding:28px 24px;
+    margin-bottom:16px;
+  }
+ 
+  .section-title {
+    font-size:0.7rem;
+    font-weight:500;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:rgba(255,255,255,0.3);
+    margin-bottom:14px;
+  }
+ 
+  textarea {
+    width:100%;
+    background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:3px;
+    color:#fff;
+    font-family:'DM Sans',sans-serif;
+    font-size:0.9375rem;
+    padding:12px 16px;
+    resize:none;
+    outline:none;
+    transition:border-color 0.2s;
+    min-height:80px;
+    line-height:1.5;
+  }
+  textarea:focus { border-color:rgba(106,170,117,0.5); }
+  textarea::placeholder { color:rgba(255,255,255,0.25); }
+ 
+  .gps-status {
+    display:flex; align-items:center; gap:8px;
+    margin-top:12px;
+    font-size:0.8rem;
+    color:rgba(255,255,255,0.35);
+  }
+  .gps-dot {
+    width:8px; height:8px; border-radius:50%;
+    background:rgba(255,255,255,0.2);
+    flex-shrink:0;
+  }
+  .gps-dot.ready { background:#6aaa75; box-shadow:0 0 6px rgba(106,170,117,0.6); }
+  .gps-dot.waiting { background:var(--amber); animation:pulse 1.2s infinite; }
+  .gps-dot.error { background:var(--danger); }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+ 
+  .btn-checkin {
+    width:100%;
+    padding:18px;
+    background:linear-gradient(135deg,var(--moss),var(--moss-light));
+    border:none; border-radius:4px;
+    font-family:'Syne',sans-serif;
+    font-size:1.1rem;
+    font-weight:700;
+    color:#fff;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    box-shadow:0 6px 24px rgba(58,90,64,0.5);
+    transition:transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+    letter-spacing:0.03em;
+    margin-top:20px;
+  }
+  .btn-checkin:hover { transform:translateY(-2px); box-shadow:0 10px 32px rgba(58,90,64,0.65); }
+  .btn-checkin:active { transform:translateY(0); box-shadow:0 4px 14px rgba(58,90,64,0.4); }
+  .btn-checkin:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+  .btn-checkin svg { width:20px; height:20px; fill:none; stroke:#fff; stroke-width:2; }
+ 
+  .btn-update {
+    width:100%;
+    padding:14px;
+    background:transparent;
+    border:1px solid rgba(212,119,10,0.4);
+    border-radius:4px;
+    font-family:'Syne',sans-serif;
+    font-size:0.9rem;
+    font-weight:600;
+    color:var(--amber-light);
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    transition:background 0.2s, border-color 0.2s;
+    letter-spacing:0.02em;
+  }
+  .btn-update:hover { background:rgba(212,119,10,0.1); border-color:rgba(212,119,10,0.7); }
+  .btn-update svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2; }
+ 
+  .result-toast {
+    position:fixed;
+    top:72px; left:50%; transform:translateX(-50%);
+    z-index:200;
+    background:var(--success);
+    color:#fff;
+    padding:12px 24px;
+    border-radius:40px;
+    font-family:'Syne',sans-serif;
+    font-weight:600;
+    font-size:0.9375rem;
+    box-shadow:0 4px 20px rgba(0,0,0,0.3);
+    opacity:0;
+    transition:opacity 0.3s, transform 0.3s;
+    pointer-events:none;
+    white-space:nowrap;
+  }
+  .result-toast.show { opacity:1; transform:translateX(-50%) translateY(4px); }
+  .result-toast.error { background:var(--danger); }
+ 
+  .history-card {
+    background:rgba(255,252,245,0.04);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:4px;
+    padding:20px 24px;
+  }
+  .history-item {
+    padding:10px 0;
+    border-bottom:1px solid rgba(255,255,255,0.06);
+    display:flex; gap:12px;
+    align-items:flex-start;
+  }
+  .history-item:last-child { border-bottom:none; padding-bottom:0; }
+  .history-item:first-child { padding-top:0; }
+  .history-time {
+    font-size:0.75rem;
+    color:rgba(255,255,255,0.3);
+    white-space:nowrap;
+    margin-top:2px;
+    flex-shrink:0;
+  }
+  .history-note {
+    font-size:0.875rem;
+    color:rgba(255,255,255,0.65);
+    line-height:1.4;
+  }
+  .history-coord {
+    font-size:0.7rem;
+    color:rgba(106,170,117,0.6);
+    margin-top:2px;
+  }
+  .empty-history {
+    font-size:0.875rem;
+    color:rgba(255,255,255,0.25);
+    text-align:center;
+    padding:8px;
+  }
+ 
+  .spinner {
+    display:inline-block;
+    width:16px; height:16px;
+    border:2px solid rgba(255,255,255,0.3);
+    border-top-color:#fff;
+    border-radius:50%;
+    animation:spin 0.7s linear infinite;
+    vertical-align:middle;
+  }
+  @keyframes spin { to{transform:rotate(360deg);} }
+ 
+  .offline-badge {
+    display:none;
+    align-items:center; gap:6px;
+    padding:8px 14px;
+    background:rgba(212,119,10,0.15);
+    border:1px solid rgba(212,119,10,0.3);
+    border-radius:3px;
+    font-size:0.8rem;
+    color:var(--amber-light);
+    margin-bottom:16px;
+  }
+  .offline-badge.show { display:flex; }
+  .offline-badge svg { width:14px; height:14px; fill:none; stroke:currentColor; stroke-width:2; flex-shrink:0; }
+ 
+  .nav-links {
+    display:flex; gap:16px; margin-top:20px; justify-content:center;
+  }
+  .nav-links a {
+    font-size:0.8rem;
+    color:rgba(255,255,255,0.3);
+    text-decoration:none;
+    transition:color 0.2s;
+  }
+  .nav-links a:hover { color:rgba(255,255,255,0.7); }
+</style>
+</head>
+<body>
+ 
+<div class="logo-bar">
+  <div class="logo-icon">
+    <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5" fill="white" stroke="none"/></svg>
+  </div>
+  <div class="logo-text">My<span>Track</span>In</div>
+</div>
+ 
+<div class="result-toast" id="toast"></div>
+ 
+<div class="container">
+  <!-- Offline notice -->
+  <div class="offline-badge" id="offlineBadge">
+    <svg viewBox="0 0 24 24"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0119 12.55M5 12.55a10.94 10.94 0 015.17-2.39M10.71 5.05A16 16 0 0122.56 9M1.42 9a15.91 15.91 0 014.7-2.88M8.53 16.11a6 6 0 016.95 0M12 20h.01" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    離線模式：打卡資料將在恢復網路後自動送出
+  </div>
+ 
+  <!-- User info -->
+  <div class="user-card" id="userCard">
+    <div class="avatar">
+      <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </div>
+    <div class="user-details">
+      <div class="user-name" id="displayName">—</div>
+      <div class="user-trip">行程代碼：<strong id="displayTrip">—</strong></div>
+    </div>
+  </div>
+ 
+  <!-- Main check-in card -->
+  <div class="main-card">
+    <div class="section-title">新增打卡紀錄</div>
+    <textarea id="noteInput" placeholder="備註（選填）：目前在哪裡？做什麼？…" rows="3"></textarea>
+    <div class="gps-status">
+      <div class="gps-dot" id="gpsDot"></div>
+      <span id="gpsText">按下送出後將自動取得 GPS 位置</span>
+    </div>
+    <button class="btn-checkin" id="checkinBtn" onclick="doCheckin()">
+      <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      送出打卡
+    </button>
+  </div>
+ 
+  <!-- Update tripcode button -->
+  <button class="btn-update" onclick="goUpdate()">
+    <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    更新行程代碼 (Trip Code)
+  </button>
+ 
+  <!-- Recent history -->
+  <div class="history-card" style="margin-top:16px;">
+    <div class="section-title">本次行程打卡紀錄</div>
+    <div id="historyList"><div class="empty-history">尚無本地紀錄</div></div>
+  </div>
+ 
+  <div class="nav-links">
+    <a href="register.html">← 重新登入</a>
+    <a href="tripmap.html">地圖查詢 →</a>
+  </div>
+</div>
+ 
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+ 
+  // ===== 請填入您的 Firebase 設定 =====
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    databaseURL: "YOUR_DATABASE_URL",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+  // ====================================
+ 
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+ 
+  // Load user info from localStorage
+  const nickname = localStorage.getItem('mytracking_nickname') || '';
+  const tripcode = localStorage.getItem('mytracking_tripcode') || '';
+ 
+  document.getElementById('displayName').textContent = nickname || '（未設定）';
+  document.getElementById('displayTrip').textContent = tripcode || '（未設定）';
+ 
+  if (!nickname || !tripcode) {
+    document.getElementById('userCard').innerHTML = `
+      <div class="user-details">
+        <div class="not-logged">尚未設定資料，請先前往 <a href="register.html">身份確認頁</a></div>
+      </div>`;
+  }
+ 
+  // Offline queue
+  let offlineQueue = JSON.parse(localStorage.getItem('mytracking_queue') || '[]');
+  let isOnline = navigator.onLine;
+ 
+  window.addEventListener('online', () => { isOnline = true; updateOfflineBadge(); tryFlushQueue(); });
+  window.addEventListener('offline', () => { isOnline = false; updateOfflineBadge(); });
+ 
+  function updateOfflineBadge() {
+    document.getElementById('offlineBadge').classList.toggle('show', !isOnline);
+  }
+  updateOfflineBadge();
+ 
+  // Local history
+  let localHistory = JSON.parse(localStorage.getItem('mytracking_history') || '[]');
+  renderHistory();
+ 
+  function renderHistory() {
+    const el = document.getElementById('historyList');
+    if (!localHistory.length) {
+      el.innerHTML = '<div class="empty-history">尚無本地紀錄</div>';
+      return;
+    }
+    const items = localHistory.slice().reverse().slice(0, 5).map(item => `
+      <div class="history-item">
+        <div class="history-time">${item.timeStr}</div>
+        <div>
+          <div class="history-note">${item.note || '（無備註）'}</div>
+          <div class="history-coord">${item.lat ? `${item.lat.toFixed(5)}, ${item.lng.toFixed(5)}` : '位置取得中…'}</div>
+        </div>
+      </div>`).join('');
+    el.innerHTML = items;
+  }
+ 
+  function showToast(msg, isError = false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'result-toast' + (isError ? ' error' : '') + ' show';
+    setTimeout(() => { t.classList.remove('show'); }, 3000);
+  }
+ 
+  function setGpsStatus(state, text) {
+    const dot = document.getElementById('gpsDot');
+    dot.className = 'gps-dot ' + state;
+    document.getElementById('gpsText').textContent = text;
+  }
+ 
+  function getTaipeiTimeStr() {
+    return new Date().toLocaleString('zh-TW', {
+      timeZone: 'Asia/Taipei',
+      year:'numeric', month:'2-digit', day:'2-digit',
+      hour:'2-digit', minute:'2-digit', second:'2-digit',
+      hour12:false
+    });
+  }
+ 
+  async function getPosition() {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) { reject(new Error('裝置不支援 GPS')); return; }
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      });
+    });
+  }
+ 
+  async function uploadCheckin(data) {
+    const checkinsRef = ref(db, 'checkins');
+    await push(checkinsRef, {
+      ...data,
+      serverTimestamp: serverTimestamp()
+    });
+  }
+ 
+  async function tryFlushQueue() {
+    if (!offlineQueue.length || !isOnline) return;
+    const toSend = [...offlineQueue];
+    offlineQueue = [];
+    localStorage.setItem('mytracking_queue', '[]');
+    for (const item of toSend) {
+      try { await uploadCheckin(item); } catch(e) { offlineQueue.push(item); }
+    }
+    if (offlineQueue.length) {
+      localStorage.setItem('mytracking_queue', JSON.stringify(offlineQueue));
+    } else {
+      showToast('✓ 離線打卡已同步成功');
+    }
+  }
+ 
+  window.doCheckin = async function() {
+    if (!nickname || !tripcode) {
+      showToast('請先完成身份設定', true); return;
+    }
+    const note = document.getElementById('noteInput').value.trim();
+    const btn = document.getElementById('checkinBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> 取得位置中…';
+    setGpsStatus('waiting', '正在取得 GPS 位置…');
+ 
+    let lat = null, lng = null, accuracy = null;
+ 
+    try {
+      const pos = await getPosition();
+      lat = pos.coords.latitude;
+      lng = pos.coords.longitude;
+      accuracy = pos.coords.accuracy;
+      setGpsStatus('ready', `已取得位置（精度 ±${Math.round(accuracy)}m）`);
+    } catch(e) {
+      setGpsStatus('error', 'GPS 取得失敗：' + (e.message || '未知錯誤'));
+    }
+ 
+    const timeStr = getTaipeiTimeStr();
+    const checkinData = {
+      nickname,
+      tripcode,
+      note: note || '',
+      lat,
+      lng,
+      accuracy,
+      timestamp: timeStr,
+      clientTime: new Date().toISOString()
+    };
+ 
+    // Save to local history
+    localHistory.push({ timeStr, note, lat, lng });
+    if (localHistory.length > 50) localHistory = localHistory.slice(-50);
+    localStorage.setItem('mytracking_history', JSON.stringify(localHistory));
+    renderHistory();
+ 
+    if (isOnline) {
+      try {
+        await uploadCheckin(checkinData);
+        showToast('✓ 打卡成功！');
+        document.getElementById('noteInput').value = '';
+      } catch(e) {
+        // Push to offline queue
+        offlineQueue.push(checkinData);
+        localStorage.setItem('mytracking_queue', JSON.stringify(offlineQueue));
+        showToast('網路異常，已暫存，恢復連線後自動送出', true);
+      }
+    } else {
+      offlineQueue.push(checkinData);
+      localStorage.setItem('mytracking_queue', JSON.stringify(offlineQueue));
+      showToast('目前離線，已暫存，連線後自動送出', true);
+      document.getElementById('noteInput').value = '';
+    }
+ 
+    btn.disabled = false;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>送出打卡`;
+  };
+ 
+  window.goUpdate = function() {
+    window.location.href = 'register.html';
+  };
+ 
+  // Try flushing any pending queue on load
+  if (isOnline) tryFlushQueue();
+</script>
+</body>
+</html>
