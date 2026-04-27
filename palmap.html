@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAL_MAP 團體位置共享</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 20px; background: #f4f4f9; }
+        nav { display: flex; gap: 10px; margin-bottom: 20px; }
+        button { padding: 10px; cursor: pointer; border: none; border-radius: 4px; background: #007bff; color: white; }
+        .page { display: none; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .active { display: block; }
+        input { display: block; width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; }
+        #status { margin-top: 15px; font-weight: bold; color: #d9534f; }
+        #map { height: 400px; width: 100%; margin-top: 20px; border-radius: 8px; }
+        .success-box { border: 2px solid #28a745; padding: 10px; margin-top: 10px; background: #e9f7ef; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <button onclick="showPage('register')">註冊頁</button>
+    <button onclick="showPage('report')">回報頁</button>
+    <button onclick="showPage('mapPage')">瀏覽地圖</button>
+</nav>
+
+<div id="register" class="page active">
+    <h2>團員註冊</h2>
+    <input type="text" id="reg-nickname" placeholder="請輸入暱稱 (Nickname)">
+    <input type="text" id="reg-tripcode" placeholder="請輸入團隊編號 (Trip Code)">
+    <button onclick="handleAction('register')">註冊並送出位置</button>
+    <div id="reg-result"></div>
+</div>
+
+<div id="report" class="page">
+    <h2>位置回報</h2>
+    <input type="text" id="rep-nickname" placeholder="請輸入暱稱">
+    <input type="text" id="rep-tripcode" placeholder="請輸入團隊編號">
+    <button onclick="handleAction('report')">更新目前位置</button>
+    <div id="rep-result"></div>
+</div>
+
+<div id="mapPage" class="page">
+    <h2>團隊地圖</h2>
+    <input type="text" id="view-nickname" placeholder="請輸入暱稱">
+    <input type="text" id="view-tripcode" placeholder="請輸入團隊編號">
+    <button onclick="handleAction('viewMap')">驗證並查看地圖</button>
+    <div id="map-status"></div>
+    <div id="map"></div>
+</div>
+
+<div id="global-status"></div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, get, child, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    // --- 請替換成您的 Firebase 專案設定 ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyA58jfhZO7xVVDF8v54daa2i-YU2xUZEkQ",
+        authDomain: "palmap-98faa.firebaseapp.com",
+        databaseURL: "https://palmap-98faa-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "palmap-98faa",
+        storageBucket: "palmap-98faa.firebasestorage.app",
+        messagingSenderId: "647835530592",
+        appId: "1:647835530592:web:c6fbb642b23c4a52a31a05",
+        measurementId: "G-VJPFD7YZP4"
+        
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // 產生或取得手機唯一 UID (存於 localStorage)
+    let deviceUID = localStorage.getItem('pal_map_uid');
+    if (!deviceUID) {
+        deviceUID = 'UID-' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('pal_map_uid', deviceUID);
+    }
+
+    // 頁面切換邏輯
+    window.showPage = (pageId) => {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+    };
+
+    // 核心處理邏輯
+    window.handleAction = async (type) => {
+        const prefix = type === 'register' ? 'reg' : (type === 'report' ? 'rep' : 'view');
+        const nickname = document.getElementById(`${prefix}-nickname`).value.trim();
+        const tripcode = document.getElementById(`${prefix}-tripcode`).value.trim();
+        const resultDiv = document.getElementById(type === 'viewMap' ? 'map-status' : `${prefix}-result`);
+
+        if (!nickname || !tripcode) {
+            alert("請完整輸入暱稱與編號");
+            return;
+        }
+
+        resultDiv.innerHTML = "⌛ 送出中...";
+
+        try {
+            // 獲取 GPS 位置
+            const pos = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true });
+            });
+
+            const { latitude, longitude } = pos.coords;
+            const timestamp = new Date().toLocaleString();
+            const data = {
+                nickname,
+                tripcode,
+                uid: deviceUID,
+                lat: latitude,
+                lng: longitude,
+                time: timestamp
+            };
+
+            if (type === 'register' || type === 'report') {
+                // 寫入 Firebase
+                await set(ref(db, `locations/${tripcode}/${deviceUID}`), data);
+                // 註冊時額外存一份身份檔做驗證
+                await set(ref(db, `users/${tripcode}/${deviceUID}`), { nickname });
+
+                resultDiv.innerHTML = `
+                    <div class="success-box">
+                        ✅ 成功！<br>
+                        暱稱：${nickname}<br>
+                        團隊：${tripcode}<br>
+                        時間：${timestamp}<br>
+                        <small>請截圖保存。日後以此資訊查詢地圖。</small>
+                    </div>`;
+            } 
+            else if (type === 'viewMap') {
+                // 驗證 UID + Nickname + Tripcode
+                const userSnapshot = await get(ref(db, `users/${tripcode}/${deviceUID}`));
+                if (userSnapshot.exists() && userSnapshot.val().nickname === nickname) {
+                    resultDiv.innerHTML = "✅ 驗證成功，載入地圖中...";
+                    loadMap(tripcode);
+                } else {
+                    resultDiv.innerHTML = "❌ 驗證失敗：您無權查看此地圖。";
+                }
+            }
+        } catch (error) {
+            resultDiv.innerHTML = "❌ 失敗：" + error.message;
+        }
+    };
+
+    // 地圖顯示邏輯
+    let leafletMap;
+    function loadMap(tripcode) {
+        if (!leafletMap) {
+            leafletMap = L.map('map').setView([23.5, 121], 7);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(leafletMap);
+        }
+
+        const locationsRef = ref(db, `locations/${tripcode}`);
+        onValue(locationsRef, (snapshot) => {
+            const data = snapshot.val();
+            // 清除現有標記 (簡單做法)
+            leafletMap.eachLayer((layer) => {
+                if (layer instanceof L.Marker) leafletMap.removeLayer(layer);
+            });
+
+            const bounds = [];
+            for (let uid in data) {
+                const user = data[uid];
+                const marker = L.marker([user.lat, user.lng]).addTo(leafletMap)
+                    .bindPopup(`<b>${user.nickname}</b><br>${user.time}`)
+                    .openPopup();
+                bounds.push([user.lat, user.lng]);
+            }
+            if (bounds.length > 0) leafletMap.fitBounds(bounds);
+        });
+    }
+</script>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</body>
+</html>
