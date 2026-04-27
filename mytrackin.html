@@ -346,6 +346,8 @@ textarea::placeholder { color:#b5afa5; }
       <div class="field"><label>行程代碼 Trip Code</label><input type="text" id="inTripcode" placeholder="例如：TRIP2025" maxlength="30"></div>
       <button class="btn btn-moss" id="saveBtn">確認並儲存</button>
       <button class="btn btn-outline" id="skipBtn">保留現有設定，前往打卡</button>
+      <button class="btn btn-outline" id="queryTripsBtn">查詢此暱稱的所有行程代碼</button>
+      <div id="tripsResult" style="margin-top:12px;"></div>
       <div class="msg" id="saveMsg"></div>
     </div>
   </div>
@@ -722,6 +724,61 @@ function sendCheckin(nickname, tripcode, note, lat, lng, accuracy) {
     showToast('離線已暫存，連線後自動送出', true);
     document.getElementById('noteInput').value = '';
   }
+}
+ 
+document.getElementById('queryTripsBtn').addEventListener('click', function() {
+  var nickname = document.getElementById('inNickname').value.trim();
+  if (!nickname) {
+    document.getElementById('tripsResult').innerHTML = '<div class="msg error">請先輸入暱稱</div>';
+    return;
+  }
+ 
+  var el = document.getElementById('tripsResult');
+  el.innerHTML = '<div class="msg info">查詢中…</div>';
+ 
+  db.ref('checkins').orderByChild('nickname').equalTo(nickname).once('value')
+    .then(function(snap) {
+      if (!snap.exists()) {
+        el.innerHTML = '<div class="msg error">找不到此暱稱的任何打卡紀錄</div>';
+        return;
+      }
+ 
+      var trips = {};
+      snap.forEach(function(child) {
+        var d = child.val();
+        if (d.tripcode) {
+          if (!trips[d.tripcode]) trips[d.tripcode] = 0;
+          trips[d.tripcode]++;
+        }
+      });
+ 
+      var codes = Object.keys(trips);
+      if (!codes.length) {
+        el.innerHTML = '<div class="msg error">找不到任何行程代碼</div>';
+        return;
+      }
+ 
+      var html = '<div style="background:rgba(58,90,64,0.07);border:1px solid rgba(58,90,64,0.18);border-radius:3px;padding:12px 14px;">'
+        + '<div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--stone);margin-bottom:10px;">「' + nickname + '」的行程代碼</div>'
+        + codes.map(function(code) {
+            return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid rgba(58,90,64,0.1);">'
+              + '<span style="font-family:Syne,sans-serif;font-weight:600;color:var(--ink);flex:1;">' + code + '</span>'
+              + '<span style="font-size:0.75rem;color:var(--stone);white-space:nowrap;">' + trips[code] + ' 筆打卡</span>'
+              + '<button onclick="fillTripcode(\'' + code + '\')" style="font-size:0.75rem;padding:4px 10px;background:var(--moss);color:#fff;border:none;border-radius:3px;cursor:pointer;font-family:Syne,sans-serif;font-weight:600;white-space:nowrap;">使用</button>'
+              + '</div>';
+          }).join('')
+        + '</div>';
+ 
+      el.innerHTML = html;
+    })
+    .catch(function(e) {
+      el.innerHTML = '<div class="msg error">查詢失敗：' + e.message + '</div>';
+    });
+});
+ 
+function fillTripcode(code) {
+  document.getElementById('inTripcode').value = code;
+  document.getElementById('tripsResult').innerHTML = '';
 }
  
 document.getElementById('updateTripBtn').addEventListener('click', function() {
