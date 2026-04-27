@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MyTrackIn · 身份確認</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0f1117;
+    --paper: #f5f0e8;
+    --moss: #3a5a40;
+    --moss-light: #588157;
+    --amber: #d4770a;
+    --amber-light: #f4a261;
+    --stone: #a98467;
+    --mist: #e9e5dc;
+    --danger: #c1440e;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--paper);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(58,90,64,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(212,119,10,0.08) 0%, transparent 50%);
+    pointer-events:none;
+  }
+  /* Topographic lines decoration */
+  body::after {
+    content:'';
+    position:fixed; inset:0;
+    background-image: repeating-linear-gradient(
+      0deg, transparent, transparent 39px, rgba(58,90,64,0.06) 40px
+    ), repeating-linear-gradient(
+      90deg, transparent, transparent 39px, rgba(58,90,64,0.06) 40px
+    );
+    pointer-events:none;
+  }
+ 
+  .card {
+    position: relative;
+    z-index:10;
+    background: rgba(255,252,245,0.92);
+    backdrop-filter: blur(12px);
+    border: 1.5px solid rgba(58,90,64,0.2);
+    border-radius: 4px;
+    padding: 48px 40px;
+    width: min(420px, 92vw);
+    box-shadow: 0 8px 40px rgba(15,17,23,0.12), 0 2px 8px rgba(15,17,23,0.06);
+  }
+ 
+  .logo-row {
+    display:flex; align-items:center; gap:10px; margin-bottom:32px;
+  }
+  .logo-icon {
+    width:36px; height:36px;
+    background: var(--moss);
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .logo-icon svg { width:20px; height:20px; fill:none; stroke:#fff; stroke-width:2; }
+  .logo-text {
+    font-family:'Syne',sans-serif;
+    font-weight:800;
+    font-size:1.3rem;
+    color:var(--ink);
+    letter-spacing:-0.5px;
+  }
+  .logo-text span { color:var(--moss); }
+ 
+  h1 {
+    font-family:'Syne',sans-serif;
+    font-size:1.6rem;
+    font-weight:700;
+    color:var(--ink);
+    margin-bottom:6px;
+    letter-spacing:-0.5px;
+  }
+  .subtitle {
+    font-size:0.875rem;
+    color:var(--stone);
+    margin-bottom:32px;
+    line-height:1.5;
+  }
+ 
+  .step { display:none; }
+  .step.active { display:block; }
+ 
+  .field { margin-bottom:20px; }
+  label {
+    display:block;
+    font-size:0.75rem;
+    font-weight:500;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--stone);
+    margin-bottom:8px;
+  }
+  input[type=email], input[type=password], input[type=text] {
+    width:100%;
+    padding:12px 16px;
+    background: var(--mist);
+    border: 1.5px solid transparent;
+    border-radius:3px;
+    font-family:'DM Sans',sans-serif;
+    font-size:1rem;
+    color:var(--ink);
+    outline:none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  input:focus {
+    border-color: var(--moss);
+    background: #fff;
+  }
+  input::placeholder { color:#b5afa5; }
+ 
+  .btn {
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:3px;
+    font-family:'Syne',sans-serif;
+    font-size:1rem;
+    font-weight:700;
+    cursor:pointer;
+    letter-spacing:0.02em;
+    transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+    margin-top:8px;
+  }
+  .btn-primary {
+    background: var(--moss);
+    color:#fff;
+    box-shadow: 0 4px 16px rgba(58,90,64,0.3);
+  }
+  .btn-primary:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(58,90,64,0.4); }
+  .btn-primary:active { transform:translateY(0); }
+  .btn-primary:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+ 
+  .btn-outline {
+    background:transparent;
+    color:var(--moss);
+    border:1.5px solid var(--moss);
+    margin-top:12px;
+  }
+  .btn-outline:hover { background:rgba(58,90,64,0.06); }
+ 
+  .msg {
+    margin-top:14px;
+    padding:10px 14px;
+    border-radius:3px;
+    font-size:0.875rem;
+    display:none;
+  }
+  .msg.error { background:rgba(193,68,14,0.1); color:var(--danger); border:1px solid rgba(193,68,14,0.2); display:block; }
+  .msg.success { background:rgba(58,90,64,0.1); color:var(--moss); border:1px solid rgba(58,90,64,0.2); display:block; }
+  .msg.info { background:rgba(212,119,10,0.1); color:var(--amber); border:1px solid rgba(212,119,10,0.2); display:block; }
+ 
+  .divider {
+    height:1px; background:rgba(58,90,64,0.12); margin:28px 0;
+  }
+ 
+  .step-indicator {
+    display:flex; gap:6px; margin-bottom:24px;
+  }
+  .step-dot {
+    width:6px; height:6px; border-radius:50%;
+    background: rgba(58,90,64,0.2);
+    transition:background 0.3s;
+  }
+  .step-dot.active { background:var(--moss); }
+ 
+  .user-info-banner {
+    background:rgba(58,90,64,0.07);
+    border:1px solid rgba(58,90,64,0.15);
+    border-radius:3px;
+    padding:12px 16px;
+    margin-bottom:20px;
+    font-size:0.875rem;
+    color:var(--moss);
+    display:none;
+  }
+  .user-info-banner.show { display:block; }
+ 
+  .spinner {
+    display:inline-block;
+    width:14px; height:14px;
+    border:2px solid rgba(255,255,255,0.3);
+    border-top-color:#fff;
+    border-radius:50%;
+    animation:spin 0.7s linear infinite;
+    vertical-align:middle;
+    margin-right:6px;
+  }
+  @keyframes spin { to{transform:rotate(360deg);} }
+ 
+  .nav-links {
+    display:flex; gap:16px; margin-top:24px; justify-content:center;
+  }
+  .nav-links a {
+    font-size:0.8rem;
+    color:var(--stone);
+    text-decoration:none;
+    border-bottom:1px solid transparent;
+    transition:color 0.2s, border-color 0.2s;
+  }
+  .nav-links a:hover { color:var(--moss); border-color:var(--moss); }
+</style>
+</head>
+<body>
+ 
+<div class="card">
+  <div class="logo-row">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5" fill="white" stroke="none"/></svg>
+    </div>
+    <div class="logo-text">My<span>Track</span>In</div>
+  </div>
+ 
+  <!-- Step 1: Login -->
+  <div class="step active" id="step1">
+    <div class="step-indicator">
+      <div class="step-dot active" id="dot1"></div>
+      <div class="step-dot" id="dot2"></div>
+    </div>
+    <h1>身份確認</h1>
+    <p class="subtitle">請輸入管理員提供的 Email 與密碼進行登入。</p>
+ 
+    <div class="field">
+      <label>電子郵件</label>
+      <input type="email" id="email" placeholder="your@email.com" autocomplete="email">
+    </div>
+    <div class="field">
+      <label>密碼</label>
+      <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">登入驗證</button>
+    <div class="msg" id="loginMsg"></div>
+  </div>
+ 
+  <!-- Step 2: Set nickname & tripcode -->
+  <div class="step" id="step2">
+    <div class="step-indicator">
+      <div class="step-dot" id="dot1b"></div>
+      <div class="step-dot active" id="dot2b"></div>
+    </div>
+    <h1>設定資料</h1>
+    <p class="subtitle">請設定您的暱稱與行程代碼，用於打卡與地圖查詢。</p>
+ 
+    <div class="user-info-banner" id="existingBanner"></div>
+ 
+    <div class="field">
+      <label>暱稱 Nickname</label>
+      <input type="text" id="nickname" placeholder="例如：小明" maxlength="20">
+    </div>
+    <div class="field">
+      <label>行程代碼 Trip Code</label>
+      <input type="text" id="tripcode" placeholder="例如：TRIP2025" maxlength="30">
+    </div>
+    <button class="btn btn-primary" id="saveBtn" onclick="doSave()">確認並儲存</button>
+    <button class="btn btn-outline" onclick="goToCheckin()">保留現有設定，前往打卡</button>
+    <div class="msg" id="saveMsg"></div>
+  </div>
+</div>
+ 
+<div class="nav-links">
+  <a href="checkin.html">→ 打卡頁</a>
+  <a href="tripmap.html">→ 地圖查詢</a>
+</div>
+ 
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+ 
+  // ===== 請填入您的 Firebase 設定 =====
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    databaseURL: "YOUR_DATABASE_URL",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+  // ====================================
+ 
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+ 
+  let currentUser = null;
+ 
+  function showMsg(elId, text, type) {
+    const el = document.getElementById(elId);
+    el.className = 'msg ' + type;
+    el.textContent = text;
+  }
+ 
+  function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    if (loading) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>處理中…';
+    } else {
+      btn.disabled = false;
+    }
+  }
+ 
+  window.doLogin = async function() {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    if (!email || !password) { showMsg('loginMsg','請填寫 Email 與密碼','error'); return; }
+ 
+    setLoading('loginBtn', true);
+    document.getElementById('loginBtn').innerHTML = '<span class="spinner"></span>驗證中…';
+ 
+    try {
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      currentUser = cred.user;
+ 
+      // Check if user has existing data in Firebase
+      const snap = await get(ref(db, 'users/' + currentUser.uid));
+      if (snap.exists()) {
+        const data = snap.val();
+        // Load existing data to localStorage too
+        localStorage.setItem('mytracking_nickname', data.nickname || '');
+        localStorage.setItem('mytracking_tripcode', data.tripcode || '');
+        localStorage.setItem('mytracking_uid', currentUser.uid);
+ 
+        const banner = document.getElementById('existingBanner');
+        banner.textContent = `已有資料：暱稱「${data.nickname}」，代碼「${data.tripcode}」，可直接保留或重新設定。`;
+        banner.classList.add('show');
+        document.getElementById('nickname').value = data.nickname || '';
+        document.getElementById('tripcode').value = data.tripcode || '';
+      } else {
+        localStorage.setItem('mytracking_uid', currentUser.uid);
+      }
+ 
+      // Go to step 2
+      document.getElementById('step1').classList.remove('active');
+      document.getElementById('step2').classList.add('active');
+      document.getElementById('dot1b').classList.add('active');
+      document.getElementById('dot2b').classList.add('active');
+ 
+    } catch(e) {
+      let msg = '登入失敗，請確認 Email 與密碼。';
+      if (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
+        msg = '電子郵件或密碼錯誤，請重新輸入。';
+      } else if (e.code === 'auth/too-many-requests') {
+        msg = '嘗試次數過多，請稍後再試。';
+      }
+      showMsg('loginMsg', msg, 'error');
+      document.getElementById('loginBtn').disabled = false;
+      document.getElementById('loginBtn').textContent = '登入驗證';
+    }
+  };
+ 
+  window.doSave = async function() {
+    const nickname = document.getElementById('nickname').value.trim();
+    const tripcode = document.getElementById('tripcode').value.trim();
+    if (!nickname) { showMsg('saveMsg','請輸入暱稱','error'); return; }
+    if (!tripcode) { showMsg('saveMsg','請輸入行程代碼','error'); return; }
+ 
+    setLoading('saveBtn', true);
+    document.getElementById('saveBtn').innerHTML = '<span class="spinner"></span>儲存中…';
+ 
+    try {
+      const uid = currentUser ? currentUser.uid : localStorage.getItem('mytracking_uid');
+      await set(ref(db, 'users/' + uid), {
+        nickname,
+        tripcode,
+        email: currentUser ? currentUser.email : '',
+        updatedAt: new Date().toISOString()
+      });
+      localStorage.setItem('mytracking_nickname', nickname);
+      localStorage.setItem('mytracking_tripcode', tripcode);
+ 
+      showMsg('saveMsg','設定成功！即將前往打卡頁…','success');
+      setTimeout(() => { window.location.href = 'checkin.html'; }, 1400);
+    } catch(e) {
+      showMsg('saveMsg','儲存失敗：' + e.message,'error');
+      document.getElementById('saveBtn').disabled = false;
+      document.getElementById('saveBtn').textContent = '確認並儲存';
+    }
+  };
+ 
+  window.goToCheckin = function() {
+    window.location.href = 'checkin.html';
+  };
+ 
+  // Enter key support
+  document.getElementById('password').addEventListener('keydown', e => {
+    if (e.key === 'Enter') window.doLogin();
+  });
+</script>
+</body>
+</html>
