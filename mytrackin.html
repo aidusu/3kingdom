@@ -1,0 +1,871 @@
+Mytracking · HTML
+Copy
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MyTrackIn</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root {
+  --ink: #0f1117;
+  --paper: #f5f0e8;
+  --moss: #3a5a40;
+  --moss-light: #588157;
+  --amber: #d4770a;
+  --amber-light: #f4a261;
+  --stone: #a98467;
+  --mist: #e9e5dc;
+  --danger: #c1440e;
+  --success: #2d6a4f;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; }
+body { font-family:'DM Sans',sans-serif; background:var(--ink); color:#fff; }
+ 
+/* ── Bottom nav ── */
+.bottom-nav {
+  position:fixed; bottom:0; left:0; right:0; z-index:1000;
+  background:rgba(10,12,16,0.97);
+  border-top:1px solid rgba(58,90,64,0.3);
+  display:flex;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.nav-tab {
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  padding:10px 4px 8px;
+  cursor:pointer; border:none; background:transparent;
+  color:rgba(255,255,255,0.3);
+  font-family:'DM Sans',sans-serif; font-size:0.68rem;
+  letter-spacing:0.04em; gap:4px;
+  transition:color 0.2s;
+}
+.nav-tab svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.8; }
+.nav-tab.active { color:#6aaa75; }
+.nav-tab.active svg { stroke:#6aaa75; }
+ 
+/* ── Pages ── */
+.page { display:none; height:100vh; overflow-y:auto; padding-bottom:70px; }
+.page.active { display:flex; flex-direction:column; }
+ 
+/* ════════════════════════════════
+   PAGE 1 · LOGIN / REGISTER
+════════════════════════════════ */
+#page-login {
+  background:var(--paper);
+  align-items:center; justify-content:center;
+  position:relative; overflow:hidden;
+}
+#page-login::before {
+  content:''; position:fixed; inset:0;
+  background:
+    radial-gradient(ellipse at 20% 50%,rgba(58,90,64,0.12) 0%,transparent 60%),
+    radial-gradient(ellipse at 80% 20%,rgba(212,119,10,0.08) 0%,transparent 50%);
+  pointer-events:none;
+}
+#page-login::after {
+  content:''; position:fixed; inset:0;
+  background-image:
+    repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(58,90,64,0.06) 40px),
+    repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(58,90,64,0.06) 40px);
+  pointer-events:none;
+}
+.login-card {
+  position:relative; z-index:10;
+  background:rgba(255,252,245,0.93);
+  backdrop-filter:blur(12px);
+  border:1.5px solid rgba(58,90,64,0.2);
+  border-radius:4px;
+  padding:40px 36px;
+  width:min(420px,92vw);
+  box-shadow:0 8px 40px rgba(15,17,23,0.14);
+}
+.logo-row { display:flex; align-items:center; gap:10px; margin-bottom:28px; }
+.logo-icon {
+  width:34px; height:34px; background:var(--moss); border-radius:50%;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.logo-icon svg { width:18px; height:18px; fill:none; stroke:#fff; stroke-width:2.2; }
+.logo-text { font-family:'Syne',sans-serif; font-weight:800; font-size:1.25rem; color:var(--ink); letter-spacing:-0.4px; }
+.logo-text span { color:var(--moss); }
+ 
+.login-step { display:none; }
+.login-step.active { display:block; }
+.step-dots { display:flex; gap:6px; margin-bottom:20px; }
+.step-dot { width:6px; height:6px; border-radius:50%; background:rgba(58,90,64,0.2); transition:background 0.3s; }
+.step-dot.on { background:var(--moss); }
+ 
+h2 { font-family:'Syne',sans-serif; font-size:1.5rem; font-weight:700; color:var(--ink); margin-bottom:5px; letter-spacing:-0.4px; }
+.subtitle { font-size:0.875rem; color:var(--stone); margin-bottom:26px; line-height:1.5; }
+ 
+.field { margin-bottom:18px; }
+.field label { display:block; font-size:0.72rem; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; color:var(--stone); margin-bottom:7px; }
+.field input {
+  width:100%; padding:11px 14px;
+  background:var(--mist); border:1.5px solid transparent; border-radius:3px;
+  font-family:'DM Sans',sans-serif; font-size:0.9375rem; color:var(--ink);
+  outline:none; transition:border-color 0.2s,background 0.2s;
+}
+.field input:focus { border-color:var(--moss); background:#fff; }
+.field input::placeholder { color:#c0b9af; }
+ 
+.btn { width:100%; padding:13px; border:none; border-radius:3px; font-family:'Syne',sans-serif; font-size:0.9375rem; font-weight:700; cursor:pointer; letter-spacing:0.02em; transition:transform 0.15s,box-shadow 0.15s,opacity 0.15s; margin-top:6px; }
+.btn-moss { background:var(--moss); color:#fff; box-shadow:0 4px 16px rgba(58,90,64,0.3); }
+.btn-moss:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(58,90,64,0.4); }
+.btn-moss:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+.btn-outline { background:transparent; color:var(--moss); border:1.5px solid var(--moss); margin-top:10px; }
+.btn-outline:hover { background:rgba(58,90,64,0.06); }
+ 
+.msg { margin-top:12px; padding:10px 13px; border-radius:3px; font-size:0.85rem; display:none; white-space:pre-line; line-height:1.5; }
+.msg.error  { background:rgba(193,68,14,0.1); color:var(--danger); border:1px solid rgba(193,68,14,0.2); display:block; }
+.msg.success{ background:rgba(58,90,64,0.1); color:var(--moss); border:1px solid rgba(58,90,64,0.2); display:block; }
+.msg.info   { background:rgba(212,119,10,0.1); color:var(--amber); border:1px solid rgba(212,119,10,0.2); display:block; }
+ 
+.existing-banner {
+  background:rgba(58,90,64,0.07); border:1px solid rgba(58,90,64,0.15);
+  border-radius:3px; padding:11px 14px; margin-bottom:18px;
+  font-size:0.85rem; color:var(--moss); display:none;
+}
+.existing-banner.show { display:block; }
+ 
+/* ════════════════════════════════
+   PAGE 2 · CHECKIN
+════════════════════════════════ */
+#page-checkin { background:var(--ink); }
+#page-checkin::before {
+  content:''; position:fixed; inset:0;
+  background:
+    radial-gradient(ellipse at 30% 70%,rgba(58,90,64,0.3) 0%,transparent 55%),
+    radial-gradient(ellipse at 75% 25%,rgba(212,119,10,0.1) 0%,transparent 50%);
+  pointer-events:none;
+}
+ 
+.page-header {
+  padding:16px 18px 14px;
+  border-bottom:1px solid rgba(255,255,255,0.07);
+  flex-shrink:0;
+}
+.page-header-title { font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; color:#fff; }
+.page-header-sub { font-size:0.75rem; color:rgba(255,255,255,0.3); margin-top:2px; }
+ 
+.checkin-body { padding:14px 16px; flex:1; position:relative; z-index:1; }
+ 
+.user-card {
+  background:rgba(255,255,255,0.05); border:1px solid rgba(106,170,117,0.2);
+  border-radius:4px; padding:16px 18px; margin-bottom:14px;
+  display:flex; align-items:center; gap:14px;
+}
+.avatar {
+  width:44px; height:44px; background:linear-gradient(135deg,var(--moss),var(--moss-light));
+  border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.avatar svg { width:22px; height:22px; fill:none; stroke:#fff; stroke-width:1.8; }
+.user-name { font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; color:#fff; margin-bottom:3px; }
+.user-trip { font-size:0.78rem; color:rgba(255,255,255,0.4); }
+.user-trip strong { color:#6aaa75; font-weight:500; }
+ 
+.section-label { font-size:0.68rem; font-weight:500; letter-spacing:0.12em; text-transform:uppercase; color:rgba(255,255,255,0.25); margin-bottom:10px; }
+ 
+.dark-card {
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08);
+  border-radius:4px; padding:18px; margin-bottom:12px;
+}
+ 
+textarea {
+  width:100%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
+  border-radius:3px; color:#fff; font-family:'DM Sans',sans-serif; font-size:0.9rem;
+  padding:11px 14px; resize:none; outline:none; transition:border-color 0.2s; min-height:76px; line-height:1.5;
+}
+textarea:focus { border-color:rgba(106,170,117,0.5); }
+textarea::placeholder { color:rgba(255,255,255,0.22); }
+ 
+.gps-status { display:flex; align-items:center; gap:8px; margin-top:10px; font-size:0.78rem; color:rgba(255,255,255,0.3); }
+.gps-dot { width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,0.18); flex-shrink:0; }
+.gps-dot.ready  { background:#6aaa75; box-shadow:0 0 5px rgba(106,170,117,0.5); }
+.gps-dot.waiting{ background:var(--amber); animation:blink 1.2s infinite; }
+.gps-dot.error  { background:var(--danger); }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:0.25} }
+ 
+.btn-checkin {
+  width:100%; padding:16px; background:linear-gradient(135deg,var(--moss),var(--moss-light));
+  border:none; border-radius:4px; font-family:'Syne',sans-serif; font-size:1.05rem; font-weight:700;
+  color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:9px;
+  box-shadow:0 5px 20px rgba(58,90,64,0.45); transition:transform 0.15s,box-shadow 0.15s,opacity 0.15s;
+  letter-spacing:0.02em; margin-top:16px;
+}
+.btn-checkin:hover { transform:translateY(-2px); box-shadow:0 9px 28px rgba(58,90,64,0.6); }
+.btn-checkin:active { transform:translateY(0); }
+.btn-checkin:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+.btn-checkin svg { width:18px; height:18px; fill:none; stroke:#fff; stroke-width:2; }
+ 
+.btn-update {
+  width:100%; padding:13px; background:transparent; border:1px solid rgba(212,119,10,0.35);
+  border-radius:4px; font-family:'Syne',sans-serif; font-size:0.875rem; font-weight:600;
+  color:var(--amber-light); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px;
+  transition:background 0.2s,border-color 0.2s; letter-spacing:0.02em;
+}
+.btn-update:hover { background:rgba(212,119,10,0.1); border-color:rgba(212,119,10,0.6); }
+.btn-update svg { width:14px; height:14px; fill:none; stroke:currentColor; stroke-width:2; }
+ 
+.history-item { padding:9px 0; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; gap:11px; align-items:flex-start; }
+.history-item:last-child { border-bottom:none; padding-bottom:0; }
+.history-item:first-child { padding-top:0; }
+.h-time { font-size:0.72rem; color:rgba(255,255,255,0.28); white-space:nowrap; margin-top:2px; flex-shrink:0; }
+.h-note { font-size:0.85rem; color:rgba(255,255,255,0.62); line-height:1.4; }
+.h-coord { font-size:0.68rem; color:rgba(106,170,117,0.55); margin-top:2px; }
+.empty-text { font-size:0.85rem; color:rgba(255,255,255,0.22); text-align:center; padding:6px; }
+ 
+.offline-badge {
+  display:none; align-items:center; gap:7px; padding:8px 13px;
+  background:rgba(212,119,10,0.13); border:1px solid rgba(212,119,10,0.28);
+  border-radius:3px; font-size:0.78rem; color:var(--amber-light); margin-bottom:12px;
+}
+.offline-badge.show { display:flex; }
+.offline-badge svg { width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:2; flex-shrink:0; }
+ 
+/* toast */
+.toast {
+  position:fixed; top:16px; left:50%; transform:translateX(-50%);
+  z-index:2000; background:var(--success); color:#fff;
+  padding:11px 22px; border-radius:40px; font-family:'Syne',sans-serif;
+  font-weight:600; font-size:0.9rem; box-shadow:0 4px 18px rgba(0,0,0,0.35);
+  opacity:0; transition:opacity 0.3s,transform 0.3s; pointer-events:none; white-space:nowrap;
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(4px); }
+.toast.err { background:var(--danger); }
+ 
+/* ════════════════════════════════
+   PAGE 3 · MAP
+════════════════════════════════ */
+#page-map { background:var(--ink); overflow:hidden; }
+.map-topbar {
+  background:rgba(10,12,16,0.97); border-bottom:1px solid rgba(58,90,64,0.3);
+  padding:10px 14px 12px; flex-shrink:0; z-index:500; position:relative;
+}
+.map-logo-row { display:flex; align-items:center; gap:8px; margin-bottom:9px; }
+.map-logo-text { font-family:'Syne',sans-serif; font-weight:800; font-size:0.95rem; color:#fff; letter-spacing:-0.3px; }
+.map-logo-text span { color:#6aaa75; }
+ 
+.query-row { display:flex; gap:7px; flex-wrap:wrap; }
+.query-fields { display:flex; gap:5px; flex:1; min-width:0; }
+.q-input {
+  flex:1; min-width:0; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.11);
+  border-radius:3px; color:#fff; font-family:'DM Sans',sans-serif; font-size:0.85rem;
+  padding:8px 11px; outline:none; transition:border-color 0.2s;
+}
+.q-input:focus { border-color:rgba(106,170,117,0.55); }
+.q-input::placeholder { color:rgba(255,255,255,0.22); }
+.query-btns { display:flex; gap:5px; }
+.btn-q {
+  padding:8px 12px; border:none; border-radius:3px;
+  font-family:'Syne',sans-serif; font-weight:700; font-size:0.78rem;
+  cursor:pointer; white-space:nowrap; letter-spacing:0.04em;
+  transition:transform 0.15s,opacity 0.15s;
+}
+.btn-q:disabled { opacity:0.45; cursor:not-allowed; }
+.btn-q-last { background:var(--moss); color:#fff; }
+.btn-q-last:hover { transform:translateY(-1px); }
+.btn-q-all  { background:rgba(212,119,10,0.85); color:#fff; }
+.btn-q-all:hover  { transform:translateY(-1px); }
+ 
+.map-status { margin-top:8px; font-size:0.74rem; color:rgba(255,255,255,0.28); min-height:15px; }
+.map-status.loading { color:var(--amber-light); }
+.map-status.ok  { color:#6aaa75; }
+.map-status.err { color:#e07a5f; }
+ 
+#map { flex:1; min-height:0; }
+ 
+/* Leaflet popup dark theme */
+.custom-popup .leaflet-popup-content-wrapper {
+  background:rgba(12,15,20,0.95); color:#fff;
+  border:1px solid rgba(106,170,117,0.25); border-radius:4px;
+  font-family:'DM Sans',sans-serif; box-shadow:0 8px 24px rgba(0,0,0,0.5);
+}
+.custom-popup .leaflet-popup-tip { background:rgba(12,15,20,0.95); }
+.popup-name { font-family:'Syne',sans-serif; font-weight:700; font-size:0.875rem; color:#6aaa75; margin-bottom:3px; }
+.popup-time { font-size:0.72rem; color:rgba(255,255,255,0.38); margin-bottom:5px; }
+.popup-note { font-size:0.85rem; color:rgba(255,255,255,0.78); }
+.popup-coord { font-size:0.68rem; color:rgba(106,170,117,0.5); margin-top:5px; }
+ 
+.info-pill {
+  position:absolute; bottom:80px; left:50%; transform:translateX(-50%);
+  z-index:400; background:rgba(12,15,20,0.9); border:1px solid rgba(106,170,117,0.22);
+  border-radius:40px; padding:7px 18px; font-size:0.78rem; color:rgba(255,255,255,0.55);
+  pointer-events:none; opacity:0; transition:opacity 0.3s; white-space:nowrap;
+}
+.info-pill.show { opacity:1; }
+.info-pill strong { color:#6aaa75; }
+ 
+/* ── Shared spinner ── */
+.spinner {
+  display:inline-block; width:13px; height:13px;
+  border:2px solid rgba(255,255,255,0.25); border-top-color:#fff;
+  border-radius:50%; animation:spin 0.7s linear infinite; vertical-align:middle; margin-right:5px;
+}
+.spinner-sm {
+  display:inline-block; width:11px; height:11px;
+  border:1.5px solid rgba(255,255,255,0.18); border-top-color:var(--amber-light);
+  border-radius:50%; animation:spin 0.7s linear infinite; vertical-align:middle; margin-right:4px;
+}
+@keyframes spin { to{transform:rotate(360deg);} }
+</style>
+</head>
+<body>
+ 
+<!-- ══ TOAST ══ -->
+<div class="toast" id="toast"></div>
+ 
+<!-- ══════════════════════════════════════
+     PAGE 1 · 登入 / 設定
+══════════════════════════════════════ -->
+<div class="page active" id="page-login">
+  <div class="login-card">
+    <div class="logo-row">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5" fill="white" stroke="none"/></svg>
+      </div>
+      <div class="logo-text">My<span>Track</span>In</div>
+    </div>
+ 
+    <!-- Step A: Login -->
+    <div class="login-step active" id="lstepA">
+      <div class="step-dots"><div class="step-dot on"></div><div class="step-dot"></div></div>
+      <h2>身份確認</h2>
+      <p class="subtitle">請輸入管理員提供的 Email 與密碼。</p>
+      <div class="field"><label>電子郵件</label><input type="email" id="inEmail" placeholder="your@email.com" autocomplete="email"></div>
+      <div class="field"><label>密碼</label><input type="password" id="inPassword" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="btn btn-moss" id="loginBtn">登入驗證</button>
+      <div class="msg" id="loginMsg"></div>
+    </div>
+ 
+    <!-- Step B: Set profile -->
+    <div class="login-step" id="lstepB">
+      <div class="step-dots"><div class="step-dot on"></div><div class="step-dot on"></div></div>
+      <h2>設定資料</h2>
+      <p class="subtitle">設定暱稱與行程代碼，用於打卡與查詢。</p>
+      <div class="existing-banner" id="existingBanner"></div>
+      <div class="field"><label>暱稱 Nickname</label><input type="text" id="inNickname" placeholder="例如：小明" maxlength="20"></div>
+      <div class="field"><label>行程代碼 Trip Code</label><input type="text" id="inTripcode" placeholder="例如：TRIP2025" maxlength="30"></div>
+      <button class="btn btn-moss" id="saveBtn">確認並儲存</button>
+      <button class="btn btn-outline" id="skipBtn">保留現有設定，前往打卡</button>
+      <div class="msg" id="saveMsg"></div>
+    </div>
+  </div>
+</div>
+ 
+<!-- ══════════════════════════════════════
+     PAGE 2 · 打卡
+══════════════════════════════════════ -->
+<div class="page" id="page-checkin">
+  <div class="page-header">
+    <div class="page-header-title">打卡</div>
+    <div class="page-header-sub" id="checkinHeaderSub">載入中…</div>
+  </div>
+  <div class="checkin-body">
+    <!-- Offline notice -->
+    <div class="offline-badge" id="offlineBadge">
+      <svg viewBox="0 0 24 24"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0119 12.55M5 12.55a10.94 10.94 0 015.17-2.39M10.71 5.05A16 16 0 0122.56 9M1.42 9a15.91 15.91 0 014.7-2.88M8.53 16.11a6 6 0 016.95 0M12 20h.01" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      離線模式：打卡資料將在恢復網路後自動送出
+    </div>
+ 
+    <!-- User card -->
+    <div class="user-card">
+      <div class="avatar">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div>
+        <div class="user-name" id="ci-name">—</div>
+        <div class="user-trip">行程代碼：<strong id="ci-trip">—</strong></div>
+      </div>
+    </div>
+ 
+    <!-- Note & submit -->
+    <div class="dark-card">
+      <div class="section-label">新增打卡紀錄</div>
+      <textarea id="noteInput" placeholder="備註（選填）：目前在哪裡？做什麼？…" rows="3"></textarea>
+      <div class="gps-status"><div class="gps-dot" id="gpsDot"></div><span id="gpsText">按下送出後自動取得 GPS 位置</span></div>
+      <button class="btn-checkin" id="checkinBtn">
+        <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        送出打卡
+      </button>
+    </div>
+ 
+    <!-- Update tripcode -->
+    <button class="btn-update" id="updateTripBtn">
+      <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      更新行程代碼
+    </button>
+ 
+    <!-- Local history -->
+    <div class="dark-card" style="margin-top:12px;">
+      <div class="section-label">本次行程打卡紀錄</div>
+      <div id="historyList"><div class="empty-text">尚無本地紀錄</div></div>
+    </div>
+  </div>
+</div>
+ 
+<!-- ══════════════════════════════════════
+     PAGE 3 · 地圖查詢
+══════════════════════════════════════ -->
+<div class="page" id="page-map">
+  <div class="map-topbar">
+    <div class="map-logo-row">
+      <div class="logo-icon" style="width:26px;height:26px;">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5" fill="white" stroke="none"/></svg>
+      </div>
+      <div class="map-logo-text">My<span>Track</span>In <span style="color:rgba(255,255,255,0.28);font-size:0.8rem;font-weight:400">· 行程地圖</span></div>
+    </div>
+    <div class="query-row">
+      <div class="query-fields">
+        <input class="q-input" id="qNickname" placeholder="暱稱" type="text">
+        <input class="q-input" id="qTripcode" placeholder="行程代碼" type="text">
+      </div>
+      <div class="query-btns">
+        <button class="btn-q btn-q-last" id="btnLast">最新點</button>
+        <button class="btn-q btn-q-all"  id="btnAll">全程線</button>
+      </div>
+    </div>
+    <div class="map-status" id="mapStatus">輸入暱稱與代碼後查詢</div>
+  </div>
+  <div id="map"></div>
+  <div class="info-pill" id="infoPill"></div>
+</div>
+ 
+<!-- ══ Bottom Nav ══ -->
+<nav class="bottom-nav">
+  <button class="nav-tab active" id="tab-login" data-page="login">
+    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    身份 / 設定
+  </button>
+  <button class="nav-tab" id="tab-checkin" data-page="checkin">
+    <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    打卡
+  </button>
+  <button class="nav-tab" id="tab-map" data-page="map">
+    <svg viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+    地圖查詢
+  </button>
+</nav>
+ 
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+ 
+<!-- Firebase + App Logic -->
+<script type="module">
+import { initializeApp }            from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getDatabase, ref, set, get, push, query, orderByChild, equalTo, serverTimestamp }
+                                    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+ 
+// ╔══════════════════════════════════════╗
+// ║   請填入您的 Firebase 設定           ║
+// ╚══════════════════════════════════════╝
+const firebaseConfig = {
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_AUTH_DOMAIN",
+  databaseURL:       "YOUR_DATABASE_URL",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId:             "YOUR_APP_ID"
+};
+ 
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getDatabase(app);
+ 
+let currentUser = null;
+ 
+// ─────────────────────────────────────
+// NAVIGATION
+// ─────────────────────────────────────
+const pages = { login:'page-login', checkin:'page-checkin', map:'page-map' };
+ 
+function showPage(name) {
+  Object.values(pages).forEach(id => document.getElementById(id).classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(pages[name]).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if (name === 'checkin') refreshCheckinUI();
+  if (name === 'map') setTimeout(() => mapObj && mapObj.invalidateSize(), 100);
+}
+ 
+document.querySelectorAll('.nav-tab').forEach(tab => {
+  tab.addEventListener('click', () => showPage(tab.dataset.page));
+});
+ 
+// ─────────────────────────────────────
+// SHARED HELPERS
+// ─────────────────────────────────────
+function showToast(msg, isErr=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast' + (isErr?' err':'') + ' show';
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+ 
+function showMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.className = 'msg ' + type;
+  el.textContent = text;
+}
+ 
+function getTaipeiTimeStr() {
+  return new Date().toLocaleString('zh-TW', {
+    timeZone:'Asia/Taipei', year:'numeric', month:'2-digit', day:'2-digit',
+    hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false
+  });
+}
+ 
+// ─────────────────────────────────────
+// PAGE 1 · LOGIN / PROFILE SETUP
+// ─────────────────────────────────────
+document.getElementById('loginBtn').addEventListener('click', doLogin);
+document.getElementById('saveBtn').addEventListener('click', doSave);
+document.getElementById('skipBtn').addEventListener('click', () => showPage('checkin'));
+document.getElementById('inPassword').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+ 
+async function doLogin() {
+  const email    = document.getElementById('inEmail').value.trim();
+  const password = document.getElementById('inPassword').value;
+  if (!email || !password) { showMsg('loginMsg','請填寫 Email 與密碼','error'); return; }
+ 
+  document.getElementById('loginBtn').disabled = true;
+  showMsg('loginMsg','步驟1：正在連線 Firebase Auth…','info');
+ 
+  try {
+    let cred;
+    try {
+      cred = await signInWithEmailAndPassword(auth, email, password);
+    } catch(authErr) {
+      showMsg('loginMsg','❌ Auth 失敗｜' + authErr.code + '｜' + authErr.message,'error');
+      document.getElementById('loginBtn').disabled = false;
+      return;
+    }
+ 
+    currentUser = cred.user;
+    showMsg('loginMsg','✓ Auth 成功！正在讀取資料庫…','info');
+ 
+    let snap;
+    try {
+      snap = await get(ref(db, 'users/' + currentUser.uid));
+    } catch(dbErr) {
+      showMsg('loginMsg','❌ Database 失敗｜' + dbErr.code + '｜' + dbErr.message,'error');
+      document.getElementById('loginBtn').disabled = false;
+      return;
+    }
+ 
+    localStorage.setItem('mytracking_uid', currentUser.uid);
+    if (snap.exists()) {
+      const data = snap.val();
+      localStorage.setItem('mytracking_nickname', data.nickname || '');
+      localStorage.setItem('mytracking_tripcode',  data.tripcode  || '');
+      const banner = document.getElementById('existingBanner');
+      banner.textContent = `已有資料：暱稱「${data.nickname}」，代碼「${data.tripcode}」`;
+      banner.classList.add('show');
+      document.getElementById('inNickname').value = data.nickname || '';
+      document.getElementById('inTripcode').value  = data.tripcode  || '';
+    }
+ 
+    document.getElementById('lstepA').classList.remove('active');
+    document.getElementById('lstepB').classList.add('active');
+    showMsg('loginMsg','','');
+ 
+  } catch(e) {
+    showMsg('loginMsg','❌ 未知錯誤｜' + e.message,'error');
+    document.getElementById('loginBtn').disabled = false;
+  }
+}
+ 
+async function doSave() {
+  const nickname = document.getElementById('inNickname').value.trim();
+  const tripcode  = document.getElementById('inTripcode').value.trim();
+  if (!nickname) { showMsg('saveMsg','請輸入暱稱','error'); return; }
+  if (!tripcode)  { showMsg('saveMsg','請輸入行程代碼','error'); return; }
+ 
+  document.getElementById('saveBtn').disabled = true;
+  document.getElementById('saveBtn').innerHTML = '<span class="spinner"></span>儲存中…';
+ 
+  try {
+    const uid = currentUser ? currentUser.uid : localStorage.getItem('mytracking_uid');
+    await set(ref(db, 'users/' + uid), {
+      nickname, tripcode,
+      email: currentUser ? currentUser.email : '',
+      updatedAt: new Date().toISOString()
+    });
+    localStorage.setItem('mytracking_nickname', nickname);
+    localStorage.setItem('mytracking_tripcode',  tripcode);
+    showMsg('saveMsg','✓ 設定成功！','success');
+    setTimeout(() => showPage('checkin'), 900);
+  } catch(e) {
+    showMsg('saveMsg','儲存失敗：' + e.message,'error');
+  } finally {
+    document.getElementById('saveBtn').disabled = false;
+    document.getElementById('saveBtn').textContent = '確認並儲存';
+  }
+}
+ 
+// ─────────────────────────────────────
+// PAGE 2 · CHECK-IN
+// ─────────────────────────────────────
+let offlineQueue  = JSON.parse(localStorage.getItem('mytracking_queue')   || '[]');
+let localHistory  = JSON.parse(localStorage.getItem('mytracking_history') || '[]');
+let isOnline      = navigator.onLine;
+ 
+window.addEventListener('online',  () => { isOnline=true;  updateOfflineBadge(); tryFlushQueue(); });
+window.addEventListener('offline', () => { isOnline=false; updateOfflineBadge(); });
+ 
+function updateOfflineBadge() {
+  document.getElementById('offlineBadge').classList.toggle('show', !isOnline);
+}
+updateOfflineBadge();
+ 
+function refreshCheckinUI() {
+  const nn = localStorage.getItem('mytracking_nickname') || '（未設定）';
+  const tc = localStorage.getItem('mytracking_tripcode')  || '（未設定）';
+  document.getElementById('ci-name').textContent  = nn;
+  document.getElementById('ci-trip').textContent  = tc;
+  document.getElementById('checkinHeaderSub').textContent = nn + '  ·  ' + tc;
+  renderHistory();
+}
+ 
+function renderHistory() {
+  const el = document.getElementById('historyList');
+  if (!localHistory.length) { el.innerHTML='<div class="empty-text">尚無本地紀錄</div>'; return; }
+  el.innerHTML = localHistory.slice().reverse().slice(0,6).map(h => `
+    <div class="history-item">
+      <div class="h-time">${h.timeStr}</div>
+      <div>
+        <div class="h-note">${h.note || '（無備註）'}</div>
+        <div class="h-coord">${h.lat ? h.lat.toFixed(5)+', '+h.lng.toFixed(5) : '位置未取得'}</div>
+      </div>
+    </div>`).join('');
+}
+ 
+function setGps(state, text) {
+  document.getElementById('gpsDot').className = 'gps-dot ' + state;
+  document.getElementById('gpsText').textContent = text;
+}
+ 
+async function getPosition() {
+  return new Promise((res,rej) => {
+    if (!navigator.geolocation) { rej(new Error('裝置不支援 GPS')); return; }
+    navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy:true, timeout:15000, maximumAge:0 });
+  });
+}
+ 
+async function uploadCheckin(data) {
+  await push(ref(db,'checkins'), { ...data, serverTimestamp: serverTimestamp() });
+}
+ 
+async function tryFlushQueue() {
+  if (!offlineQueue.length || !isOnline) return;
+  const toSend = [...offlineQueue];
+  offlineQueue = [];
+  localStorage.setItem('mytracking_queue','[]');
+  for (const item of toSend) {
+    try { await uploadCheckin(item); }
+    catch { offlineQueue.push(item); }
+  }
+  localStorage.setItem('mytracking_queue', JSON.stringify(offlineQueue));
+  if (!offlineQueue.length) showToast('✓ 離線打卡已同步');
+}
+ 
+document.getElementById('checkinBtn').addEventListener('click', async () => {
+  const nickname = localStorage.getItem('mytracking_nickname');
+  const tripcode  = localStorage.getItem('mytracking_tripcode');
+  if (!nickname || !tripcode) { showToast('請先完成身份設定',true); showPage('login'); return; }
+ 
+  const note = document.getElementById('noteInput').value.trim();
+  const btn  = document.getElementById('checkinBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>取得位置中…';
+  setGps('waiting','正在取得 GPS 位置…');
+ 
+  let lat=null, lng=null, accuracy=null;
+  try {
+    const pos = await getPosition();
+    lat = pos.coords.latitude; lng = pos.coords.longitude; accuracy = pos.coords.accuracy;
+    setGps('ready', `已取得位置（精度 ±${Math.round(accuracy)}m）`);
+  } catch(e) {
+    setGps('error','GPS 取得失敗：' + (e.message||'未知'));
+  }
+ 
+  const timeStr = getTaipeiTimeStr();
+  const data = { nickname, tripcode, note:note||'', lat, lng, accuracy, timestamp:timeStr, clientTime:new Date().toISOString() };
+ 
+  localHistory.push({ timeStr, note, lat, lng });
+  if (localHistory.length > 60) localHistory = localHistory.slice(-60);
+  localStorage.setItem('mytracking_history', JSON.stringify(localHistory));
+  renderHistory();
+ 
+  if (isOnline) {
+    try {
+      await uploadCheckin(data);
+      showToast('✓ 打卡成功！');
+      document.getElementById('noteInput').value = '';
+    } catch {
+      offlineQueue.push(data);
+      localStorage.setItem('mytracking_queue', JSON.stringify(offlineQueue));
+      showToast('網路異常，已暫存將自動重傳', true);
+    }
+  } else {
+    offlineQueue.push(data);
+    localStorage.setItem('mytracking_queue', JSON.stringify(offlineQueue));
+    showToast('離線已暫存，連線後自動送出', true);
+    document.getElementById('noteInput').value = '';
+  }
+ 
+  btn.disabled = false;
+  btn.innerHTML = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>送出打卡`;
+});
+ 
+document.getElementById('updateTripBtn').addEventListener('click', () => {
+  // Go to login step B to update
+  document.getElementById('lstepA').classList.remove('active');
+  document.getElementById('lstepB').classList.add('active');
+  showPage('login');
+});
+ 
+if (isOnline) tryFlushQueue();
+ 
+// ─────────────────────────────────────
+// PAGE 3 · MAP
+// ─────────────────────────────────────
+const mapObj = L.map('map', { center:[23.8,121.0], zoom:7, zoomControl:true });
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution:'&copy; CARTO', maxZoom:19
+}).addTo(mapObj);
+ 
+const markersLayer = L.layerGroup().addTo(mapObj);
+let polyLayer = null;
+ 
+function clearMapLayers() {
+  markersLayer.clearLayers();
+  if (polyLayer) { mapObj.removeLayer(polyLayer); polyLayer=null; }
+  document.getElementById('infoPill').classList.remove('show');
+}
+ 
+function setMapStatus(msg, type='') {
+  const el = document.getElementById('mapStatus');
+  el.className = 'map-status ' + type;
+  el.innerHTML = msg;
+}
+ 
+function setMapBtns(disabled) {
+  document.getElementById('btnLast').disabled = disabled;
+  document.getElementById('btnAll').disabled  = disabled;
+}
+ 
+function makeMarkerIcon(color='#3a5a40') {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38">
+    <path d="M15 0C9.48 0 5 4.48 5 10c0 9.75 10 28 10 28S25 19.75 25 10C25 4.48 20.52 0 15 0z" fill="${color}" stroke="rgba(0,0,0,0.25)" stroke-width="1"/>
+    <circle cx="15" cy="10" r="5" fill="rgba(255,255,255,0.85)" stroke="none"/>
+  </svg>`;
+  return L.divIcon({ html:svg, className:'', iconSize:[30,38], iconAnchor:[15,38], popupAnchor:[0,-38] });
+}
+ 
+async function fetchCheckins(nickname, tripcode) {
+  const q = query(ref(db,'checkins'), orderByChild('tripcode'), equalTo(tripcode));
+  const snap = await get(q);
+  if (!snap.exists()) return [];
+  const items = [];
+  snap.forEach(child => {
+    const d = child.val();
+    if (d.nickname === nickname && d.lat != null) items.push(d);
+  });
+  items.sort((a,b) => (a.clientTime||a.timestamp||'').localeCompare(b.clientTime||b.timestamp||''));
+  return items;
+}
+ 
+document.getElementById('btnLast').addEventListener('click', async () => {
+  const nickname = document.getElementById('qNickname').value.trim();
+  const tripcode  = document.getElementById('qTripcode').value.trim();
+  if (!nickname || !tripcode) { setMapStatus('請填寫暱稱與行程代碼','err'); return; }
+ 
+  clearMapLayers();
+  setMapBtns(true);
+  setMapStatus('<span class="spinner-sm"></span>查詢中…','loading');
+ 
+  try {
+    const items = await fetchCheckins(nickname, tripcode);
+    if (!items.length) { setMapStatus(`找不到「${nickname}」在「${tripcode}」的紀錄`,'err'); setMapBtns(false); return; }
+ 
+    const last = items[items.length-1];
+    const m = L.marker([last.lat,last.lng], { icon:makeMarkerIcon('#3a5a40') });
+    m.bindPopup(`
+      <div class="popup-name">${last.nickname}</div>
+      <div class="popup-time">🕐 ${last.timestamp||''}</div>
+      ${last.note ? `<div class="popup-note">📝 ${last.note}</div>` : ''}
+      <div class="popup-coord">${last.lat.toFixed(5)}, ${last.lng.toFixed(5)}</div>
+    `, { className:'custom-popup', maxWidth:240 });
+    markersLayer.addLayer(m);
+    mapObj.setView([last.lat,last.lng], 15);
+    m.openPopup();
+    setMapStatus(`✓ 顯示「${nickname}」最新打卡位置`,'ok');
+    const pill = document.getElementById('infoPill');
+    pill.innerHTML = `<strong>${nickname}</strong> · ${last.timestamp||'時間不詳'}`;
+    pill.classList.add('show');
+  } catch(e) {
+    setMapStatus('查詢失敗：' + e.message,'err');
+  }
+  setMapBtns(false);
+});
+ 
+document.getElementById('btnAll').addEventListener('click', async () => {
+  const nickname = document.getElementById('qNickname').value.trim();
+  const tripcode  = document.getElementById('qTripcode').value.trim();
+  if (!nickname || !tripcode) { setMapStatus('請填寫暱稱與行程代碼','err'); return; }
+ 
+  clearMapLayers();
+  setMapBtns(true);
+  setMapStatus('<span class="spinner-sm"></span>查詢中…','loading');
+ 
+  try {
+    const items = await fetchCheckins(nickname, tripcode);
+    if (!items.length) { setMapStatus(`找不到「${nickname}」在「${tripcode}」的紀錄`,'err'); setMapBtns(false); return; }
+ 
+    const coords = items.map(d => [d.lat,d.lng]);
+ 
+    polyLayer = L.polyline(coords, { color:'#6aaa75', weight:3, opacity:0.65, dashArray:'7 4' }).addTo(mapObj);
+ 
+    // Start (amber)
+    const startSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="26" height="34" viewBox="0 0 26 34">
+      <path d="M13 0C8.03 0 4 4.03 4 9c0 8.75 9 25 9 25S22 17.75 22 9C22 4.03 17.97 0 13 0z" fill="#d4770a" stroke="rgba(0,0,0,0.25)" stroke-width="1"/>
+      <circle cx="13" cy="9" r="4" fill="rgba(255,255,255,0.85)"/>
+    </svg>`;
+    markersLayer.addLayer(L.marker(coords[0], { icon:L.divIcon({ html:startSvg, className:'', iconSize:[26,34], iconAnchor:[13,34] }) }).bindTooltip('起點'));
+ 
+    // End (moss)
+    markersLayer.addLayer(L.marker(coords[coords.length-1], { icon:makeMarkerIcon('#3a5a40') }).bindTooltip('最新'));
+ 
+    // Midpoints
+    items.slice(1,-1).forEach(d => {
+      markersLayer.addLayer(L.circleMarker([d.lat,d.lng], { radius:4, color:'#6aaa75', fillColor:'#6aaa75', fillOpacity:0.55, weight:1.5 }));
+    });
+ 
+    mapObj.fitBounds(L.latLngBounds(coords), { padding:[36,36] });
+    setMapStatus(`✓ 共 ${items.length} 個打卡點，顯示完整路線`,'ok');
+    const pill = document.getElementById('infoPill');
+    pill.innerHTML = `<strong>${nickname}</strong> · 共 <strong>${items.length}</strong> 點 · ${tripcode}`;
+    pill.classList.add('show');
+  } catch(e) {
+    setMapStatus('查詢失敗：' + e.message,'err');
+  }
+  setMapBtns(false);
+});
+ 
+// Enter key in map query
+[document.getElementById('qNickname'), document.getElementById('qTripcode')].forEach(el => {
+  el.addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('btnLast').click(); });
+});
+ 
+// Autofill map query from localStorage
+document.getElementById('qNickname').value = localStorage.getItem('mytracking_nickname') || '';
+document.getElementById('qTripcode').value  = localStorage.getItem('mytracking_tripcode')  || '';
+ 
+</script>
+</body>
+</html>
