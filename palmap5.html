@@ -79,7 +79,7 @@
     .hint { font-size:13px; color:var(--muted); margin-bottom:16px; line-height:1.65; }
 
     /* ── Forms ── */
-    .form-group { margin-bottom:13px; }
+    .form-group { margin-bottom:15px; }
     label {
         display:block; font-size:11px; font-weight:700;
         margin-bottom:5px; color:var(--muted);
@@ -284,21 +284,19 @@
 <div id="register" class="page active">
     <h2>組員首次註冊</h2>
     <p class="hint">
-        輸入你的群組代碼，您的暱稱與4位數通行碼。<br>
-        <b>群組代碼/暱稱/通行碼請妥善記住，瀏覽地圖需輸入。</b>
-    </p>
+        輸入你的群組代碼，您的暱稱與4位數通行碼。</p>
 <div class="form-group">
     <label>暱稱</label>
-    <input type="text" id="reg-nickname" placeholder="例：小明">
+    <input type="text" id="reg-nickname" placeholder="例：Tom">
     <div class="input-note">⚠️ 不分大小寫，輸入後不可更改</div>
 </div>
 <div class="form-group">
     <label>群組代碼</label>
-    <input type="text" id="reg-tripcode" placeholder="例：TOUR2025">
+    <input type="text" id="reg-tripcode" placeholder="例：A2025">
 </div>
 <div class="form-group">
     <label>通行碼（4位數字）</label>
-    <input type="password" id="reg-passcode" placeholder="例：7749" maxlength="4" inputmode="numeric">
+    <input type="password" id="reg-passcode" placeholder="例：1919" maxlength="4" inputmode="numeric">
     <div class="input-note">⚠️ 請截圖記錄通行碼，查看地圖時需要</div>
 </div>
 
@@ -307,8 +305,8 @@
 </button>
 <div id="reg-result" class="result-box"></div>
 
-<div class="section-divider"><span>換手機/網頁</span></div>
-     <h2>組員換了手機或換了瀏覽器</h2>
+<div class="section-divider"><span>換手機或瀏覽器</span></div>
+     <h2>組員換手機或瀏覽器</h2>
 <p class="hint" style="margin-bottom:8px">
     暱稱已在其他裝置註冊過？輸入通行碼重新綁定。
 </p>
