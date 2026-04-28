@@ -255,7 +255,7 @@
 
 <header>
     <div>
-        <div class="logo">🗺️ PALMAP</div>
+        <div class="logo">🗺️TRIPPAL旅伴</div>
         <div class="sub">群組同伴在哪裡?</div>
     </div>
     <div id="auth-badge">⏳ 連線中</div>
@@ -337,7 +337,7 @@
 <div id="report" class="page">
     <h2>打卡回報位置</h2>
 <div id="leave-banner">
-    🚪 您已離開本群組，地圖上不再顯示您的位置。
+    🚪您已離開本群組，地圖上不再顯示您的位置。
     如需重新加入，請點擊下方「重新加入群組」。
 </div>
 
@@ -1303,7 +1303,7 @@
 
         try {
             const snap=await get(ref(db,`trips/${tripcode}`));
-            if (!snap.exists()) { showResult(resultEl,'error',`❌ 查無此 Tripcode「${tripcode}」`); return; }
+            if (!snap.exists()) { showResult(resultEl,'error',`❌ 查無此群組代碼「${tripcode}」`); return; }
             if (snap.val().leader.toLowerCase()!==leader.toLowerCase()) {
                 showResult(resultEl,'error',"❌ 組長暱稱不符，請確認後重試"); return;
             }
