@@ -255,8 +255,8 @@
 
 <header>
     <div>
-        <div class="logo">🗺️ PAL MAP 2.0</div>
-        <div class="sub">旅遊團隊定位系統</div>
+        <div class="logo">🗺️ PALMAP</div>
+        <div class="sub">群組同伴在哪裡?</div>
     </div>
     <div id="auth-badge">⏳ 連線中</div>
 </header>
@@ -284,23 +284,22 @@
 <div id="register" class="page active">
     <h2>組員首次註冊</h2>
     <p class="hint">
-        請輸入導遊提供的團隊編號，並填入您的暱稱與4位數通行碼。<br>
-        <b>暱稱一旦使用即不能重複。通行碼請妥善記住，查看地圖時需要輸入。</b>
+        輸入你的群組代碼，您的暱稱與4位數通行碼。<br>
+        <b>群組代碼/暱稱/通行碼請妥善記住，瀏覽地圖需輸入。</b>
     </p>
-
 <div class="form-group">
-    <label>團隊編號 Tripcode</label>
-    <input type="text" id="reg-tripcode" placeholder="例：TOUR2025">
-</div>
-<div class="form-group">
-    <label>暱稱 Nickname</label>
+    <label>暱稱</label>
     <input type="text" id="reg-nickname" placeholder="例：小明">
     <div class="input-note">⚠️ 不分大小寫，輸入後不可更改</div>
 </div>
 <div class="form-group">
-    <label>通行碼 Passcode（4位數字）</label>
+    <label>群組代碼</label>
+    <input type="text" id="reg-tripcode" placeholder="例：TOUR2025">
+</div>
+<div class="form-group">
+    <label>通行碼（4位數字）</label>
     <input type="password" id="reg-passcode" placeholder="例：7749" maxlength="4" inputmode="numeric">
-    <div class="input-note">⚠️ 請截圖或記錄通行碼，查看地圖時需要</div>
+    <div class="input-note">⚠️ 請截圖記錄通行碼，查看地圖時需要</div>
 </div>
 
 <button class="btn btn-primary" id="btn-reg" onclick="handleRegister()" disabled>
@@ -308,21 +307,22 @@
 </button>
 <div id="reg-result" class="result-box"></div>
 
-<div class="section-divider"><span>換手機 / 換裝置</span></div>
+<div class="section-divider"><span>換手機/網頁</span></div>
+     <h2>組員換了手機或換了瀏覽器</h2>
 <p class="hint" style="margin-bottom:8px">
-    已在其他裝置註冊過？請在此更新裝置綁定，輸入通行碼即可將此手機綁定為新裝置。
+    暱稱已在其他裝置註冊過？輸入通行碼重新綁定。
 </p>
 <div class="form-group">
-    <label>團隊編號 Tripcode</label>
-    <input type="text" id="chg-tripcode" placeholder="例：TOUR2025">
+    <label>暱稱</label>
+    <input type="text" id="chg-nickname" placeholder="例：Tom">
+</div>    
+<div class="form-group">
+    <label>群組代碼</label>
+    <input type="text" id="chg-tripcode" placeholder="例：A2025">
 </div>
 <div class="form-group">
-    <label>暱稱 Nickname</label>
-    <input type="text" id="chg-nickname" placeholder="例：小明">
-</div>
-<div class="form-group">
-    <label>通行碼 Passcode（4位數字）</label>
-    <input type="password" id="chg-passcode" placeholder="例：7749" maxlength="4" inputmode="numeric">
+    <label>通行碼（4位數字）</label>
+    <input type="password" id="chg-passcode" placeholder="例：1919" maxlength="4" inputmode="numeric">
 </div>
 <button class="btn btn-outline" id="btn-chg" onclick="handleChangeDevice()" disabled>
     📱 更新為此裝置
@@ -339,43 +339,43 @@
 <div id="report" class="page">
     <h2>打卡回報位置</h2>
 <div id="leave-banner">
-    🚪 您已離開本次行程，地圖上不再顯示您的位置。
-    如需重新加入，請點擊下方「重新加入行程」。
+    🚪 您已離開本群組，地圖上不再顯示您的位置。
+    如需重新加入，請點擊下方「重新加入群組」。
 </div>
 
 <div class="info-card" id="saved-info-card" style="display:none">
     <div class="row"><span>暱稱</span><span class="val" id="s-nickname">-</span></div>
-    <div class="row"><span>團隊</span><span class="val" id="s-tripcode">-</span></div>
+    <div class="row"><span>群組</span><span class="val" id="s-tripcode">-</span></div>
     <div class="row"><span>上次打卡</span><span class="val" id="s-last-time">尚未打卡</span></div>
     <div class="row"><span>狀態</span><span class="val" id="s-status">✅ 行程中</span></div>
 </div>
 
 <div id="report-actions">
     <div class="form-group">
-        <label>暱稱 Nickname</label>
-        <input type="text" id="rep-nickname" placeholder="例：小明">
+        <label>暱稱</label>
+        <input type="text" id="rep-nickname" placeholder="例：Tom">
     </div>
     <div class="form-group">
-        <label>團隊編號 Tripcode</label>
-        <input type="text" id="rep-tripcode" placeholder="例：TOUR2025">
+        <label>群組代碼</label>
+        <input type="text" id="rep-tripcode" placeholder="例：A2025">
     </div>
     <button class="btn btn-primary" onclick="handleReport()">📍 打卡：回報目前位置</button>
 
-    <div class="section-divider"><span>離開行程</span></div>
-    <p class="hint" style="margin-bottom:8px">離開後您的位置將從地圖移除。您可以隨時重新加入。</p>
-    <button class="btn btn-danger" onclick="confirmLeave()">🚪 我要離開行程</button>
+    <div class="section-divider"><span>離開群組</span></div>
+    <p class="hint" style="margin-bottom:8px">離開後您的位置將從地圖移除。您可以重新加入。</p>
+    <button class="btn btn-danger" onclick="confirmLeave()">🚪 我要離開群組</button>
 </div>
 
 <div id="rejoin-actions" style="display:none">
     <div class="form-group">
-        <label>暱稱 Nickname</label>
-        <input type="text" id="rej-nickname" placeholder="例：小明">
+        <label>暱稱</label>
+        <input type="text" id="rej-nickname" placeholder="例：Tom">
     </div>
     <div class="form-group">
-        <label>團隊編號 Tripcode</label>
-        <input type="text" id="rej-tripcode" placeholder="例：TOUR2025">
+        <label>群組代碼</label>
+        <input type="text" id="rej-tripcode" placeholder="例：A2025">
     </div>
-    <button class="btn btn-outline" onclick="handleRejoin()">🔄 重新加入行程</button>
+    <button class="btn btn-outline" onclick="handleRejoin()">🔄 重新加入群組</button>
 </div>
 
 <div id="rep-result" class="result-box"></div>
@@ -388,32 +388,32 @@
      ══════════════════════════════════════ -->
 
 <div id="mapPage" class="page">
-    <h2>團員動態地圖</h2>
+    <h2>組員動態地圖</h2>
 
 <div id="map-auth-form">
     <p class="hint">查看地圖需要驗證身份。請輸入您的資料。</p>
     <div class="form-group">
-        <label>暱稱 Nickname</label>
-        <input type="text" id="map-nickname" placeholder="例：小明">
+        <label>暱稱</label>
+        <input type="text" id="map-nickname" placeholder="例：Tom">
     </div>
     <div class="form-group">
-        <label>通行碼 Passcode</label>
-        <input type="password" id="map-passcode" placeholder="4位數字" maxlength="4" inputmode="numeric">
-    </div>
-    <div class="form-group">
-        <label>團隊編號 Tripcode</label>
+        <label>群組代碼</label>
         <input type="text" id="map-tripcode" placeholder="例：TOUR2025">
+    </div>
+    <div class="form-group">
+        <label>通行碼</label>
+        <input type="password" id="map-passcode" placeholder="4位數字" maxlength="4" inputmode="numeric">
     </div>
     <button class="btn btn-primary" onclick="handleMapAuth()">🔐 驗證並開啟地圖</button>
     <div id="map-auth-result" class="result-box"></div>
 </div>
 
 <div id="map-content" style="display:none">
-    <p class="hint">點擊「立即更新」取得最新位置。點擊成員名稱可移動至其位置。</p>
+    <p class="hint">點擊「立即更新」取得最新位置。點擊組員可移動至其位置。</p>
     <div class="map-toolbar">
         <button onclick="fetchMapData()">🔄 立即更新</button>
         <button onclick="fitAllMarkers()">⊞ 全員顯示</button>
-        <button class="tb-danger" onclick="confirmLeaveFromMap()">🚪 離開行程</button>
+        <button class="tb-danger" onclick="confirmLeaveFromMap()">🚪 離開群組</button>
     </div>
     <div id="map"></div>
 
@@ -422,8 +422,8 @@
 
     <!-- 距離計算區 -->
     <div id="distance-section" style="display:none">
-        <div class="section-divider" style="margin-top:18px"><span>📏 與其他成員的距離</span></div>
-        <p class="hint" style="margin-bottom:8px">以下距離以您最後打卡位置為基準計算（直線距離）。</p>
+        <div class="section-divider" style="margin-top:18px"><span>📏 與其他組員的距離</span></div>
+        <p class="hint" style="margin-bottom:8px">距離以您最後打卡位置計算直線距離。</p>
         <div id="distance-list"></div>
     </div>
 </div>
@@ -441,9 +441,9 @@
 
 <!-- 登入區 -->
 <div id="admin-login-section">
-    <p class="hint">此頁面僅供授權管理員使用。請以管理員帳號登入。</p>
+    <p class="hint">僅供管理員使用。請以帳號密碼登入。</p>
     <div class="form-group">
-        <label>管理員 Email</label>
+        <label>Email</label>
         <input type="email" id="admin-email" placeholder="admin@example.com">
     </div>
     <div class="form-group">
@@ -463,30 +463,30 @@
 
     <!-- ── (1) 建立 Tripcode ── -->
     <div class="admin-card">
-        <div class="admin-card-title">🏕️ (1) 建立 Tripcode（群組）</div>
+        <div class="admin-card-title">🏕️ (1) 建立群組</div>
         <div class="form-group">
             <label>Tripcode</label>
-            <input type="text" id="create-tripcode" placeholder="例：TOUR2025">
+            <input type="text" id="create-tripcode" placeholder="例：A2025">
         </div>
         <div class="form-group">
             <label>組長暱稱</label>
-            <input type="text" id="create-leader-nickname" placeholder="例：導遊王大明">
+            <input type="text" id="create-leader-nickname" placeholder="例：Sunny">
         </div>
         <div class="form-group">
             <label>組長通行碼（4位數字）</label>
             <input type="password" id="create-leader-passcode" placeholder="例：1234" maxlength="4" inputmode="numeric">
-            <div class="input-note">⚠️ 組長日後打卡及查看地圖均需使用此通行碼，請妥善記錄</div>
+            <div class="input-note">⚠️ 組長打卡及查看地圖均需使用此通行碼，請妥善記錄</div>
         </div>
-        <button class="btn btn-admin" onclick="handleCreateTripcode()">➕ 建立 Tripcode</button>
+        <button class="btn btn-admin" onclick="handleCreateTripcode()">➕ 建立群組代碼</button>
         <div id="create-result" class="result-box"></div>
     </div>
 
     <!-- ── (2) 查詢成員 ── -->
     <div class="admin-card">
-        <div class="admin-card-title">🔍 (2) 查詢 Tripcode 成員</div>
+        <div class="admin-card-title">🔍 (2) 查詢組員清單</div>
         <div class="form-group">
             <label>Tripcode</label>
-            <input type="text" id="query-tripcode" placeholder="例：TOUR2025">
+            <input type="text" id="query-tripcode" placeholder="例：A2025">
         </div>
         <button class="btn btn-admin" onclick="handleQueryMembers()">🔍 查詢成員清單</button>
         <div id="query-result" class="result-box"></div>
@@ -494,14 +494,14 @@
 
     <!-- ── (3) 刪除成員 ── -->
     <div class="admin-card">
-        <div class="admin-card-title">🗑️ (3) 刪除指定成員</div>
+        <div class="admin-card-title">🗑️ (3) 刪除指定組員</div>
         <div class="form-group">
             <label>Tripcode</label>
-            <input type="text" id="del-member-tripcode" placeholder="例：TOUR2025">
+            <input type="text" id="del-member-tripcode" placeholder="例：A2025">
         </div>
         <div class="form-group">
             <label>要刪除的成員暱稱</label>
-            <input type="text" id="del-member-nickname" placeholder="例：小明">
+            <input type="text" id="del-member-nickname" placeholder="例：Mary">
         </div>
         <button class="btn btn-danger" onclick="handleDeleteMember()">🗑️ 刪除該成員</button>
         <div id="del-member-result" class="result-box"></div>
@@ -512,7 +512,7 @@
         <div class="admin-card-title">💣 (4) 刪除整個群組</div>
         <div class="form-group">
             <label>Tripcode</label>
-            <input type="text" id="del-group-tripcode" placeholder="例：TOUR2025">
+            <input type="text" id="del-group-tripcode" placeholder="例：A2025">
         </div>
         <div class="form-group">
             <label>組長暱稱（確認用）</label>
@@ -530,8 +530,8 @@
 <div class="modal-overlay" id="modal-leave">
     <div class="modal-box">
         <div class="modal-icon">🚪</div>
-        <h3>確認離開行程？</h3>
-        <p>離開後您的位置將從地圖上移除，其他團員將無法看到您。<br>您可以隨時重新加入。</p>
+        <h3>確認離開群組？</h3>
+        <p>離開後您的位置將從地圖上移除，他人無法看到您。<br>您可以重新加入。</p>
         <div class="modal-actions">
             <button class="modal-cancel"  onclick="closeModal('modal-leave')">取消</button>
             <button class="modal-confirm" onclick="executeLeave()">確認離開</button>
@@ -680,14 +680,14 @@
         if (!/^\d{4}$/.test(passcode))       { showResult(resultEl,'error',"⚠️ 通行碼必須是 4 位數字"); return; }
 
         const nk = nickKey(nickname);
-        showResult(resultEl,'loading',"⌛ 檢查 Tripcode 是否存在…");
+        showResult(resultEl,'loading',"⌛ 檢查群組代碼是否存在…");
         document.getElementById('btn-reg').disabled = true;
 
         try {
             /* ① 確認 tripcode 由管理員建立 */
             const tripSnap = await get(ref(db, `trips/${tripcode}`));
             if (!tripSnap.exists()) {
-                showResult(resultEl,'error', `❌ 無此 Tripcode「${tripcode}」，請確認導遊提供的編號是否正確。`);
+                showResult(resultEl,'error', `❌ 無此群組代碼「${tripcode}」，請確認組長提供的代碼是否正確。`);
                 return;
             }
 
@@ -721,7 +721,7 @@
                 `✅ 註冊成功！<br>` +
                 `暱稱：<b>${nickname}</b> ／ 團隊：<b>${tripcode}</b><br>` +
                 `時間：${timeStr}<br><br>` +
-                `📸 <b>請截圖保存！</b>日後打卡及查看地圖需輸入相同暱稱、通行碼與團隊編號。`);
+                `📸 <b>請截圖保存！</b>日後打卡及查看地圖需輸入相同暱稱、通行碼與群組代碼。`);
         } catch(err) {
             showResult(resultEl,'error',"❌ "+(err.code?geoErr(err):err.message));
         } finally {
@@ -799,7 +799,7 @@
 
             showResult(resultEl,'success',
                 `✅ 換裝置成功！<br>` +
-                `暱稱：<b>${snap.val().nickname}</b> ／ 團隊：<b>${tripcode}</b><br>` +
+                `暱稱：<b>${snap.val().nickname}</b> ／ 群組：<b>${tripcode}</b><br>` +
                 `時間：${timeStr}<br><br>` +
                 `此手機已完成綁定，現在可以正常打卡及查看地圖。`);
         } catch(err) {
@@ -828,8 +828,8 @@
             const snap = await get(ref(db, `users/${tripcode}/${nk}`));
             if (!snap.exists() || snap.val().uid !== currentUID) {
                 showResult(resultEl,'error',
-                    "❌ 驗證失敗：暱稱或團隊編號不正確，或此裝置與當初註冊裝置不同。<br><br>" +
-                    "📱 <b>換手機了嗎？</b>請前往「註冊」頁下方的「換手機 / 換裝置」區塊，" +
+                    "❌ 驗證失敗：暱稱或群組代碼不正確，或此裝置與當初註冊裝置不同。<br><br>" +
+                    "📱 <b>換手機了嗎？</b>請前往「註冊」頁下方的「換手機或瀏覽器」區塊，" +
                     "輸入通行碼更新裝置綁定。");
                 return;
             }
@@ -856,7 +856,7 @@
             document.getElementById('rejoin-actions').style.display  = 'none';
 
             showResult(resultEl,'success',
-                `✅ 打卡成功！<br>暱稱：<b>${snap.val().nickname}</b> ／ 團隊：<b>${tripcode}</b><br>時間：${timeStr}`);
+                `✅ 打卡成功！<br>暱稱：<b>${snap.val().nickname}</b> ／群組：<b>${tripcode}</b><br>時間：${timeStr}`);
         } catch(err) {
             showResult(resultEl,'error',"❌ "+(err.code?geoErr(err):err.message));
         }
@@ -1061,7 +1061,7 @@
             await remove(ref(db,`locations/${tripcode}/${nk}`));
             if (markers[nk]&&leafletMap) { leafletMap.removeLayer(markers[nk]); delete markers[nk]; }
             document.getElementById('saved-info-card').style.display = 'block';
-            document.getElementById('s-status').textContent = '🚪 已離開行程';
+            document.getElementById('s-status').textContent = '🚪 已離開群組';
             document.getElementById('s-status').className   = 'val danger';
             document.getElementById('leave-banner').style.display   = 'block';
             document.getElementById('report-actions').style.display = 'none';
@@ -1069,7 +1069,7 @@
             document.getElementById('rej-nickname').value=snap.val().nickname;
             document.getElementById('rej-tripcode').value=tripcode;
             showPage('report');
-            setTimeout(()=>showResult('rep-result','success',"🚪 已成功離開行程，地圖上已移除您的位置。"),100);
+            setTimeout(()=>showResult('rep-result','success',"🚪 已成功離開群組，地圖上已移除您的位置。"),100);
         } catch(err) { alert("離開失敗："+err.message); }
     };
 
@@ -1148,13 +1148,13 @@
         if (!/^\d{4}$/.test(passcode))     { showResult(resultEl,'error',"⚠️ 通行碼必須是 4 位數字"); return; }
 
         const nk = nickKey(leader);
-        showResult(resultEl,'loading',"⌛ 檢查 Tripcode 是否已存在…");
+        showResult(resultEl,'loading',"⌛ 檢查群組代碼是否已存在…");
 
         try {
             // 確認 tripcode 尚未被建立
             const snap = await get(ref(db, `trips/${tripcode}`));
             if (snap.exists()) {
-                showResult(resultEl,'error',`❌ 建立失敗：Tripcode「${tripcode}」已存在。`);
+                showResult(resultEl,'error',`❌ 建立失敗：群組代碼「${tripcode}」已存在。`);
                 return;
             }
 
@@ -1200,7 +1200,7 @@
                 `組長暱稱：<b>${leader}</b><br>` +
                 `時間：${timeStr}<br><br>` +
                 `📸 <b>請截圖保存通行碼！</b>組長日後打卡及查看地圖均需使用此通行碼。<br>` +
-                `請將 Tripcode「${tripcode}」提供給所有團員。`);
+                `請將群組代碼「${tripcode}」提供給所有團員。`);
         } catch(err) {
             showResult(resultEl,'error',"❌ "+(err.code?geoErr(err):err.message));
         }
@@ -1219,12 +1219,12 @@
         try {
             // 確認群組存在
             const tripSnap=await get(ref(db,`trips/${tripcode}`));
-            if (!tripSnap.exists()) { showResult(resultEl,'error',`❌ 查無此 Tripcode「${tripcode}」`); return; }
+            if (!tripSnap.exists()) { showResult(resultEl,'error',`❌ 查無此群組代碼「${tripcode}」`); return; }
 
             const usersSnap=await get(ref(db,`users/${tripcode}`));
             const data=usersSnap.val();
             if (!data) {
-                showResult(resultEl,'info',`ℹ️ Tripcode「${tripcode}」目前尚無組員。`);
+                showResult(resultEl,'info',`ℹ️群組代碼「${tripcode}」目前尚無組員。`);
                 return;
             }
 
@@ -1233,7 +1233,7 @@
             ).join('');
 
             showResult(resultEl,'info',
-                `<b>Tripcode：${tripcode}</b>（共 ${Object.keys(data).length} 名組員）<br>` +
+                `<b>群組代碼：${tripcode}</b>（共 ${Object.keys(data).length} 名組員）<br>` +
                 `組長：${tripSnap.val().leader}<br>` +
                 `<table class="member-table" style="margin-top:10px">` +
                 `<tr><th>暱稱</th><th>最後登錄時間</th></tr>${rows}</table>`);
@@ -1264,7 +1264,7 @@
             await remove(ref(db,`locations/${tripcode}/${nk}`));
 
             showResult(resultEl,'success',
-                `✅ 已成功刪除成員「${snap.val().nickname}」<br>Tripcode：${tripcode}`);
+                `✅ 已成功刪除組員「${snap.val().nickname}」<br>Tripcode：${tripcode}`);
         } catch(err) { showResult(resultEl,'error',"❌ "+err.message); }
     };
 
