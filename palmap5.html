@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PAL MAP 2.0</title>
+    <title>PAL MAP</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
@@ -96,23 +96,26 @@
     input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(26,107,60,.1); }
     .input-note { font-size:11px; color:var(--muted); margin-top:4px; }
 
-    /* ── Buttons ── */
-    .btn {
-        display:block; width:100%; padding:13px; border:none; border-radius:10px;
-        font-size:14px; font-weight:700; font-family:inherit;
-        cursor:pointer; transition:all .18s; margin-top:8px;
-    }
-    .btn-primary { background:var(--primary); color:white; }
-    .btn-primary:hover:not(:disabled) { background:#145530; }
-    .btn-primary:disabled { background:#a8c8b5; cursor:not-allowed; }
-    .btn-danger  { background:var(--danger);  color:white; }
-    .btn-danger:hover:not(:disabled) { background:#992d22; }
-    .btn-admin   { background:var(--admin);   color:white; }
-    .btn-admin:hover:not(:disabled)  { background:#1a252f; }
-    .btn-outline { background:white; color:var(--primary); border:1.5px solid var(--primary); }
-    .btn-outline:hover { background:var(--primary-light); }
-    .btn-sm { display:inline-block; width:auto; padding:7px 14px; font-size:12px; margin-top:0; }
-
+           /* ── Buttons ── */
+        .btn {
+            display:block; width:100%; padding:13px; border:none; border-radius:10px;
+            font-size:14px; font-weight:700; font-family:inherit;
+            cursor:pointer; transition:all .18s; margin-top:8px;
+            -webkit-appearance: none;   /* 修正 iOS Safari 覆蓋背景色問題 */
+            appearance: none;
+            text-align: center;
+        }
+        .btn-primary { background:var(--primary) !important; color:#ffffff !important; }
+        .btn-primary:hover:not(:disabled) { background:#145530 !important; }
+        .btn-primary:disabled { background:#a8c8b5 !important; color:#ffffff !important; cursor:not-allowed; }
+        .btn-danger  { background:var(--danger) !important;  color:#ffffff !important; }
+        .btn-danger:hover:not(:disabled) { background:#992d22 !important; }
+        .btn-admin   { background:var(--admin) !important;   color:#ffffff !important; }
+        .btn-admin:hover:not(:disabled)  { background:#1a252f !important; }
+        .btn-outline { background:#ffffff !important; color:var(--primary) !important; border:2px solid var(--primary) !important; }
+        .btn-outline:hover { background:var(--primary-light) !important; }
+        .btn-sm { display:inline-block; width:auto; padding:7px 14px; font-size:12px; margin-top:0; }
+  
     /* ── Result Boxes ── */
     .result-box {
         padding:13px 15px; margin-top:12px;
@@ -247,7 +250,6 @@
     .modal-result.error   { background:var(--danger-light);  color:#6b1a14; }
     .modal-result.loading { background:#f5f5f5; color:#555; }
 </style>
-```
 
 </head>
 <body>
@@ -287,7 +289,6 @@
         <b>暱稱一旦使用即不能重複。通行碼請妥善記住，查看地圖時需要輸入。</b>
     </p>
 
-```
 <div class="form-group">
     <label>團隊編號 Tripcode</label>
     <input type="text" id="reg-tripcode" placeholder="例：TOUR2025">
@@ -328,7 +329,6 @@
     📱 更新為此裝置
 </button>
 <div id="chg-result" class="result-box"></div>
-```
 
 </div>
 
@@ -339,8 +339,6 @@
 
 <div id="report" class="page">
     <h2>打卡回報位置</h2>
-
-```
 <div id="leave-banner">
     🚪 您已離開本次行程，地圖上不再顯示您的位置。
     如需重新加入，請點擊下方「重新加入行程」。
@@ -382,7 +380,6 @@
 </div>
 
 <div id="rep-result" class="result-box"></div>
-```
 
 </div>
 
@@ -394,7 +391,6 @@
 <div id="mapPage" class="page">
     <h2>團員動態地圖</h2>
 
-```
 <div id="map-auth-form">
     <p class="hint">查看地圖需要驗證身份。請輸入您的資料。</p>
     <div class="form-group">
@@ -432,7 +428,6 @@
         <div id="distance-list"></div>
     </div>
 </div>
-```
 
 </div>
 
@@ -445,7 +440,6 @@
 <div id="adminPage" class="page">
     <h2>⚙️ 系統管理</h2>
 
-```
 <!-- 登入區 -->
 <div id="admin-login-section">
     <p class="hint">此頁面僅供授權管理員使用。請以管理員帳號登入。</p>
@@ -529,7 +523,6 @@
         <div id="del-group-result" class="result-box"></div>
     </div>
 </div>
-```
 
 </div>
 
@@ -1335,72 +1328,6 @@
     window.openModal           = window.openModal;
     window.closeModal          = window.closeModal;
 </script>
-
-<!--
-═══════════════════════════════════════════════════════
-  Firebase Security Rules（請貼入 Firebase Console）
-═══════════════════════════════════════════════════════
-
-{
-  "rules": {
-    "trips": {
-      "$tripcode": {
-        ".read":  "auth != null",
-        ".write": "auth != null && !auth.token.firebase.sign_in_provider.contains('anonymous')"
-      }
-    },
-    "users": {
-      "$tripcode": {
-        ".read":  "auth != null",
-        "$nickkey": {
-          ".write": "auth != null && (!data.exists() || data.child('uid').val() === auth.uid
-                     || !auth.token.firebase.sign_in_provider.contains('anonymous'))"
-        }
-      }
-    },
-    "locations": {
-      "$tripcode": {
-        ".read":  "auth != null && root.child('users').child($tripcode).child(auth.uid).exists()
-                   || !auth.token.firebase.sign_in_provider.contains('anonymous')",
-        "$nickkey": {
-          ".write": "auth != null && (root.child('users').child($tripcode).child($nickkey).child('uid').val() === auth.uid
-                     || !auth.token.firebase.sign_in_provider.contains('anonymous'))"
-        }
-      }
-    }
-  }
-}
-
-注意：locations 的 .read 規則使用 uid 為條件，
-但本程式改用 nickKey 為節點 key，建議使用以下簡化版：
-
-{
-  "rules": {
-    "trips": {
-      "$tripcode": {
-        ".read":  "auth != null",
-        ".write": "auth != null"
-      }
-    },
-    "users": {
-      "$tripcode": {
-        ".read":  "auth != null",
-        "$nickkey": {
-          ".write": "auth != null && (!data.exists() || data.child('uid').val() === auth.uid)"
-        }
-      }
-    },
-    "locations": {
-      "$tripcode": {
-        ".read":  "auth != null",
-        "$nickkey": {
-          ".write": "auth != null && root.child('users').child($tripcode).child($nickkey).child('uid').val() === auth.uid"
-        }
-      }
-    }
-  }
-}
--->
 
 </body>
 </html>
