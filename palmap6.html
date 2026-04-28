@@ -774,71 +774,62 @@
         const nk       = nickKey(nickname);
         const resultEl = 'chg-result';
 
-        if (!nickname||!passcode||!tripcode) { showResult(resultEl,'error',"⚠️ 請填寫所有欄位"); return; }
-        if (!/^\d{4}$/.test(passcode))       { showResult(resultEl,'error',"⚠️ 通行碼必須是 4 位數字"); return; }
-
-        showResult(resultEl,'loading',"⌛ 驗證身份中…");
+        if (!nickname || !passcode || !tripcode) { showResult(resultEl, 'error', "⚠️ 請填寫所有欄位"); return; }
+        
+        showResult(resultEl, 'loading', "⌛ 驗證身份中…");
         document.getElementById('btn-chg').disabled = true;
 
         try {
-            /* 查詢使用者是否存在 */
+            // 1. 抓取舊資料
             const snap = await get(ref(db, `users/${tripcode}/${nk}`));
             if (!snap.exists()) {
-                showResult(resultEl,'error',"❌ 查無此暱稱，請確認輸入是否正確。");
+                showResult(resultEl, 'error', "❌ 查無此暱稱。");
                 return;
             }
 
-            /* 比對通行碼 */
-            if (snap.val().passcode !== passcode) {
-                showResult(resultEl,'error',"❌ 通行碼錯誤，請重新確認。");
+            const oldData = snap.val();
+
+            // 2. 驗證通行碼
+            if (oldData.passcode !== passcode) {
+                showResult(resultEl, 'error', "❌ 通行碼錯誤。");
                 return;
             }
 
-            /* 若 UID 已相同，表示已在此裝置，不需更新 */
-            if (snap.val().uid === currentUID) {
-                showResult(resultEl,'warning',"ℹ️ 此裝置已是目前綁定裝置，無需重新更新。");
-                return;
-            }
-
-            /* 取 GPS */
-            showResult(resultEl,'loading',"⌛ 定位中…");
+            // 3. 定位並更新
+            showResult(resultEl, 'loading', "⌛ 定位中並更新綁定…");
             const pos = await getPosition();
             const { latitude, longitude } = pos.coords;
             const timeStr = fmtTime();
 
-            /* 更新 users 節點的 uid → 綁定新裝置 */
+            // 更新 User 節點 (覆蓋為新 UID)
             await set(ref(db, `users/${tripcode}/${nk}`), {
-                ...snap.val(),
-                uid:     currentUID,
-                chgTime: timeStr       // 記錄換裝置時間
+                ...oldData,
+                uid: currentUID,
+                chgTime: timeStr
             });
 
-            /* 更新 locations 節點 */
+            // 更新 Location 節點 (確保地圖權限同步)
             await set(ref(db, `locations/${tripcode}/${nk}`), {
-                nickname: snap.val().nickname,
-                uid:      currentUID,
-                lat:      latitude,
-                lng:      longitude,
-                time:     timeStr
+                nickname: oldData.nickname,
+                uid: currentUID,
+                lat: latitude,
+                lng: longitude,
+                time: timeStr
             });
 
-            /* 清空輸入欄 */
-            document.getElementById('chg-tripcode').value = '';
+            showResult(resultEl, 'success', `✅ 換裝置成功！<br>已綁定新裝置：<b>${oldData.nickname}</b>`);
+            
+            // 清空欄位
             document.getElementById('chg-nickname').value = '';
             document.getElementById('chg-passcode').value = '';
 
-            showResult(resultEl,'success',
-                `✅ 換裝置成功！<br>` +
-                `暱稱：<b>${snap.val().nickname}</b> ／ 群組：<b>${tripcode}</b><br>` +
-                `時間：${timeStr}<br><br>` +
-                `此手機已完成綁定，現在可以正常打卡及查看地圖。`);
-        } catch(err) {
-            showResult(resultEl,'error',"❌ "+(err.code?geoErr(err):err.message));
+        } catch (err) {
+            const msg = err.message.includes("Permission denied") ? "資料庫規則拒絕寫入，請檢查 Rules 設定。" : err.message;
+            showResult(resultEl, 'error', "❌ " + msg);
         } finally {
             document.getElementById('btn-chg').disabled = false;
         }
     };
-
     /* ════════════════════════════════════════════════
        驗證：users/$tripcode/$nickKey 的 uid === currentUID
        ════════════════════════════════════════════════ */
