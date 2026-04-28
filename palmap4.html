@@ -9,8 +9,6 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
-
-```
     :root {
         --primary:       #1a6b3c;
         --primary-light: #e8f5ee;
@@ -247,8 +245,6 @@
     .modal-result.error   { background:var(--danger-light);  color:#6b1a14; }
     .modal-result.loading { background:#f5f5f5; color:#555; }
 </style>
-```
-
 </head>
 <body>
 
@@ -283,24 +279,24 @@
 <div id="register" class="page active">
     <h2>組員首次註冊</h2>
     <p class="hint">
-        請輸入導遊提供的團隊編號，並填入您的暱稱與4位數通行碼。<br>
-        <b>暱稱一旦使用即不能重複。通行碼請妥善記住，查看地圖時需要輸入。</b>
+        輸入團隊編號，您的暱稱與4位數通行碼。<br>
+        <b>暱稱/通行碼請妥善記住，查看地圖時需要輸入。</b>
     </p>
 
 ```
 <div class="form-group">
-    <label>團隊編號 Tripcode</label>
+    <label>團隊編號</label>
     <input type="text" id="reg-tripcode" placeholder="例：TOUR2025">
 </div>
 <div class="form-group">
-    <label>暱稱 Nickname</label>
+    <label>你的暱稱</label>
     <input type="text" id="reg-nickname" placeholder="例：小明">
     <div class="input-note">⚠️ 不分大小寫，輸入後不可更改</div>
 </div>
 <div class="form-group">
-    <label>通行碼 Passcode（4位數字）</label>
+    <label>通行碼（4位數字）</label>
     <input type="password" id="reg-passcode" placeholder="例：7749" maxlength="4" inputmode="numeric">
-    <div class="input-note">⚠️ 請截圖或記錄通行碼，查看地圖時需要</div>
+    <div class="input-note">⚠️ 請截圖記錄通行碼，查看地圖時需要</div>
 </div>
 
 <button class="btn btn-primary" id="btn-reg" onclick="handleRegister()" disabled>
@@ -319,7 +315,6 @@
 <div id="report" class="page">
     <h2>打卡回報位置</h2>
 
-```
 <div id="leave-banner">
     🚪 您已離開本次行程，地圖上不再顯示您的位置。
     如需重新加入，請點擊下方「重新加入行程」。
@@ -334,11 +329,11 @@
 
 <div id="report-actions">
     <div class="form-group">
-        <label>暱稱 Nickname</label>
+        <label>暱稱</label>
         <input type="text" id="rep-nickname" placeholder="例：小明">
     </div>
     <div class="form-group">
-        <label>團隊編號 Tripcode</label>
+        <label>團隊編號</label>
         <input type="text" id="rep-tripcode" placeholder="例：TOUR2025">
     </div>
     <button class="btn btn-primary" onclick="handleReport()">📍 打卡：回報目前位置</button>
@@ -350,18 +345,17 @@
 
 <div id="rejoin-actions" style="display:none">
     <div class="form-group">
-        <label>暱稱 Nickname</label>
+        <label>暱稱</label>
         <input type="text" id="rej-nickname" placeholder="例：小明">
     </div>
     <div class="form-group">
-        <label>團隊編號 Tripcode</label>
+        <label>團隊編號</label>
         <input type="text" id="rej-tripcode" placeholder="例：TOUR2025">
     </div>
     <button class="btn btn-outline" onclick="handleRejoin()">🔄 重新加入行程</button>
 </div>
 
 <div id="rep-result" class="result-box"></div>
-```
 
 </div>
 
@@ -377,15 +371,15 @@
 <div id="map-auth-form">
     <p class="hint">查看地圖需要驗證身份。請輸入您的資料。</p>
     <div class="form-group">
-        <label>暱稱 Nickname</label>
+        <label>暱稱</label>
         <input type="text" id="map-nickname" placeholder="例：小明">
     </div>
     <div class="form-group">
-        <label>通行碼 Passcode</label>
+        <label>通行碼</label>
         <input type="password" id="map-passcode" placeholder="4位數字" maxlength="4" inputmode="numeric">
     </div>
     <div class="form-group">
-        <label>團隊編號 Tripcode</label>
+        <label>團隊編號</label>
         <input type="text" id="map-tripcode" placeholder="例：TOUR2025">
     </div>
     <button class="btn btn-primary" onclick="handleMapAuth()">🔐 驗證並開啟地圖</button>
@@ -393,7 +387,7 @@
 </div>
 
 <div id="map-content" style="display:none">
-    <p class="hint">每 60 秒自動更新。點擊「立即更新」可手動刷新，點擊成員可移動至其位置。</p>
+    <p class="hint">每60秒自動更新。點擊「立即更新」可手動刷新，點擊成員可移動至其位置。</p>
     <div class="map-toolbar">
         <button onclick="fetchMapData()">🔄 立即更新</button>
         <button onclick="fitAllMarkers()">⊞ 全員顯示</button>
@@ -402,7 +396,6 @@
     <div id="map"></div>
     <div class="member-list" id="member-list"></div>
 </div>
-```
 
 </div>
 
@@ -414,13 +407,11 @@
 
 <div id="adminPage" class="page">
     <h2>⚙️ 系統管理</h2>
-
-```
 <!-- 登入區 -->
 <div id="admin-login-section">
-    <p class="hint">此頁面僅供授權管理員使用。請以管理員帳號登入。</p>
+    <p class="hint">請以管理員帳號登入。</p>
     <div class="form-group">
-        <label>管理員 Email</label>
+        <label>Email</label>
         <input type="email" id="admin-email" placeholder="admin@example.com">
     </div>
     <div class="form-group">
@@ -440,24 +431,24 @@
 
     <!-- ── (1) 建立 Tripcode ── -->
     <div class="admin-card">
-        <div class="admin-card-title">🏕️ (1) 建立 Tripcode（群組）</div>
+        <div class="admin-card-title">🏕️ (1) 建立團隊編號</div>
         <div class="form-group">
-            <label>Tripcode</label>
+            <label>團隊編號</label>
             <input type="text" id="create-tripcode" placeholder="例：TOUR2025">
         </div>
         <div class="form-group">
             <label>組長暱稱</label>
             <input type="text" id="create-leader-nickname" placeholder="例：導遊王大明">
         </div>
-        <button class="btn btn-admin" onclick="handleCreateTripcode()">➕ 建立 Tripcode</button>
+        <button class="btn btn-admin" onclick="handleCreateTripcode()">➕ 建立 團隊編號</button>
         <div id="create-result" class="result-box"></div>
     </div>
 
     <!-- ── (2) 查詢成員 ── -->
     <div class="admin-card">
-        <div class="admin-card-title">🔍 (2) 查詢 Tripcode 成員</div>
+        <div class="admin-card-title">🔍 (2) 查詢團隊成員</div>
         <div class="form-group">
-            <label>Tripcode</label>
+            <label>團隊編號</label>
             <input type="text" id="query-tripcode" placeholder="例：TOUR2025">
         </div>
         <button class="btn btn-admin" onclick="handleQueryMembers()">🔍 查詢成員清單</button>
@@ -468,7 +459,7 @@
     <div class="admin-card">
         <div class="admin-card-title">🗑️ (3) 刪除指定成員</div>
         <div class="form-group">
-            <label>Tripcode</label>
+            <label>團隊編號</label>
             <input type="text" id="del-member-tripcode" placeholder="例：TOUR2025">
         </div>
         <div class="form-group">
@@ -483,7 +474,7 @@
     <div class="admin-card">
         <div class="admin-card-title">💣 (4) 刪除整個群組</div>
         <div class="form-group">
-            <label>Tripcode</label>
+            <label>團隊編號</label>
             <input type="text" id="del-group-tripcode" placeholder="例：TOUR2025">
         </div>
         <div class="form-group">
@@ -494,7 +485,6 @@
         <div id="del-group-result" class="result-box"></div>
     </div>
 </div>
-```
 
 </div>
 
