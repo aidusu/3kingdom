@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAL MAP 2.0</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+ 
+        :root {
+            --primary:       #1a6b3c;
+            --primary-light: #e8f5ee;
+            --accent:        #f0a500;
+            --danger:        #c0392b;
+            --danger-light:  #fdf0ee;
+            --warn:          #e67e22;
+            --warn-light:    #fef5ec;
+            --admin:         #2c3e50;
+            --admin-light:   #eaf0fb;
+            --bg:            #f2f4f2;
+            --card:          #ffffff;
+            --text:          #1a221a;
+            --muted:         #6b7c6b;
+            --border:        #d0e0d0;
+            --radius:        14px;
+            --shadow:        0 2px 12px rgba(0,0,0,.08);
+        }
+ 
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: var(--bg); color: var(--text);
+            min-height: 100vh; padding-bottom: 50px;
+        }
+ 
+        /* ── Header ── */
+        header {
+            background: linear-gradient(135deg,#1a6b3c,#145530);
+            color: white; padding: 16px 20px;
+            display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 2px 12px rgba(26,107,60,.4);
+        }
+        .logo { font-size: 20px; font-weight: 700; }
+        .sub  { font-size: 11px; opacity:.7; margin-top:2px; }
+        #auth-badge {
+            margin-left: auto; font-size: 11px;
+            background: rgba(255,255,255,.15);
+            padding: 4px 10px; border-radius: 20px; white-space: nowrap;
+        }
+ 
+        /* ── Nav ── */
+        nav {
+            display: flex; background: var(--card);
+            border-bottom: 2px solid var(--border);
+            position: sticky; top: 0; z-index: 900;
+            box-shadow: var(--shadow); overflow-x: auto;
+        }
+        nav button {
+            flex: 1; min-width: 60px; padding: 11px 4px;
+            border: none; background: none; cursor: pointer;
+            font-size: 11px; font-family: inherit; color: var(--muted);
+            border-bottom: 3px solid transparent; margin-bottom: -2px;
+            transition: all .2s;
+            display: flex; flex-direction: column; align-items: center; gap: 3px;
+        }
+        nav button .icon { font-size: 18px; }
+        nav button.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 700; }
+        nav button.admin-tab.active { color: var(--admin); border-bottom-color: var(--admin); }
+        nav button:disabled { opacity:.3; cursor:not-allowed; }
+ 
+        /* ── Pages ── */
+        .page { display:none; padding:20px; max-width:520px; margin:0 auto; }
+        .page.active { display:block; }
+        h2 { font-size:17px; font-weight:700; margin-bottom:5px; }
+        h3 { font-size:14px; font-weight:700; margin-bottom:10px; color:var(--admin); }
+        .hint { font-size:13px; color:var(--muted); margin-bottom:16px; line-height:1.65; }
+ 
+        /* ── Forms ── */
+        .form-group { margin-bottom:13px; }
+        label {
+            display:block; font-size:11px; font-weight:700;
+            margin-bottom:5px; color:var(--muted);
+            text-transform:uppercase; letter-spacing:.8px;
+        }
+        input[type=text], input[type=password], input[type=email] {
+            display:block; width:100%; padding:12px 14px;
+            border:1.5px solid var(--border); border-radius:10px;
+            font-size:15px; font-family:inherit;
+            background:white; color:var(--text);
+            transition:border .15s; outline:none;
+        }
+        input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(26,107,60,.1); }
+        .input-note { font-size:11px; color:var(--muted); margin-top:4px; }
+ 
+        /* ── Buttons ── */
+        .btn {
+            display:block; width:100%; padding:13px; border:none; border-radius:10px;
+            font-size:14px; font-weight:700; font-family:inherit;
+            cursor:pointer; transition:all .18s; margin-top:8px;
+            -webkit-appearance: none;   /* 修正 iOS Safari 覆蓋背景色問題 */
+            appearance: none;
+            text-align: center;
+        }
+        .btn-primary { background:var(--primary) !important; color:#ffffff !important; }
+        .btn-primary:hover:not(:disabled) { background:#145530 !important; }
+        .btn-primary:disabled { background:#a8c8b5 !important; color:#ffffff !important; cursor:not-allowed; }
+        .btn-danger  { background:var(--danger) !important;  color:#ffffff !important; }
+        .btn-danger:hover:not(:disabled) { background:#992d22 !important; }
+        .btn-admin   { background:var(--admin) !important;   color:#ffffff !important; }
+        .btn-admin:hover:not(:disabled)  { background:#1a252f !important; }
+        .btn-outline { background:#ffffff !important; color:var(--primary) !important; border:2px solid var(--primary) !important; }
+        .btn-outline:hover { background:var(--primary-light) !important; }
+        .btn-sm { display:inline-block; width:auto; padding:7px 14px; font-size:12px; margin-top:0; }
+ 
+        /* ── Result Boxes ── */
+        .result-box {
+            padding:13px 15px; margin-top:12px;
+            border-radius:10px; font-size:13px; line-height:1.7; display:none;
+        }
+        .result-box.show   { display:block; }
+        .result-box.success { background:var(--primary-light); border:1px solid #9ecfb0; color:#0c3d1e; }
+        .result-box.error   { background:var(--danger-light);  border:1px solid #e8b8b0; color:#6b1a14; }
+        .result-box.loading { background:#f5f5f5; border:1px solid #ddd; color:#555; }
+        .result-box.warning { background:var(--warn-light); border:1px solid #f0c080; color:#7a4a00; }
+        .result-box.info    { background:var(--admin-light); border:1px solid #b0c4de; color:#1a2a40; }
+ 
+        /* ── Info Card ── */
+        .info-card {
+            background:var(--card); border:1px solid var(--border);
+            border-radius:var(--radius); padding:13px 15px; margin-bottom:14px;
+        }
+        .info-card .row {
+            display:flex; justify-content:space-between; align-items:center;
+            font-size:13px; padding:6px 0; border-bottom:1px solid var(--border);
+        }
+        .info-card .row:last-child { border:none; }
+        .info-card .val { font-weight:700; color:var(--primary); }
+        .info-card .val.danger { color:var(--danger); }
+ 
+        /* ── Admin Card ── */
+        .admin-card {
+            background:var(--card); border:1.5px solid #b0c4de;
+            border-radius:var(--radius); padding:16px; margin-bottom:16px;
+            box-shadow:var(--shadow);
+        }
+        .admin-card-title {
+            font-size:13px; font-weight:700; color:var(--admin);
+            margin-bottom:12px; padding-bottom:8px;
+            border-bottom:1px solid #d0d8e8;
+            display:flex; align-items:center; gap:6px;
+        }
+ 
+        /* ── Member Table ── */
+        .member-table { width:100%; border-collapse:collapse; font-size:13px; margin-top:8px; }
+        .member-table th {
+            background:#f0f4f8; padding:8px 10px; text-align:left;
+            font-weight:700; font-size:11px; color:var(--muted);
+            text-transform:uppercase; letter-spacing:.5px;
+        }
+        .member-table td { padding:9px 10px; border-bottom:1px solid var(--border); }
+        .member-table tr:last-child td { border:none; }
+        .member-table tr:hover td { background:var(--admin-light); }
+ 
+        /* ── Leave Banner ── */
+        #leave-banner {
+            display:none; background:#fff8e1; border:1px solid #ffd54f;
+            border-radius:10px; padding:13px 15px; margin-bottom:14px;
+            font-size:13px; color:#7a5800; line-height:1.6; text-align:center;
+        }
+ 
+        /* ── Map ── */
+        #map {
+            height:400px; border-radius:12px;
+            border:1px solid var(--border); overflow:hidden; margin-top:14px;
+        }
+        .map-toolbar { display:flex; gap:7px; margin-top:12px; flex-wrap:wrap; }
+        .map-toolbar button {
+            flex:1; min-width:70px; padding:9px 6px;
+            border:1.5px solid var(--border); border-radius:8px; background:white;
+            font-size:12px; cursor:pointer; font-family:inherit; font-weight:500;
+            transition:background .15s;
+        }
+        .map-toolbar button:hover { background:var(--primary-light); }
+        .map-toolbar .tb-danger { border-color:#e8b8b0; color:var(--danger); }
+        .map-toolbar .tb-danger:hover { background:var(--danger-light); }
+ 
+        /* ── Member List ── */
+        .member-list { margin-top:14px; }
+        .member-item {
+            display:flex; align-items:center; gap:10px;
+            padding:9px 6px; border-bottom:1px solid var(--border);
+            font-size:13px; cursor:pointer; border-radius:6px; transition:background .15s;
+        }
+        .member-item:last-child { border:none; }
+        .member-item:hover { background:var(--primary-light); }
+        .member-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+        .member-time { margin-left:auto; font-size:11px; color:var(--muted); white-space:nowrap; }
+ 
+        .section-divider {
+            display:flex; align-items:center; gap:10px; margin:18px 0 14px;
+        }
+        .section-divider span {
+            font-size:11px; font-weight:700; color:var(--muted);
+            text-transform:uppercase; letter-spacing:.8px; white-space:nowrap;
+        }
+        .section-divider::before,.section-divider::after {
+            content:''; flex:1; height:1px; background:var(--border);
+        }
+ 
+        /* ── Modal ── */
+        .modal-overlay {
+            display:none; position:fixed; inset:0;
+            background:rgba(0,0,0,.6); z-index:9999;
+            align-items:center; justify-content:center; padding:20px;
+        }
+        .modal-overlay.show { display:flex; }
+        .modal-box {
+            background:white; border-radius:16px; padding:26px 22px;
+            max-width:340px; width:100%; text-align:center;
+            box-shadow:0 16px 48px rgba(0,0,0,.3);
+            animation:modalIn .2s ease;
+        }
+        @keyframes modalIn {
+            from { transform:scale(.92) translateY(10px); opacity:0; }
+            to   { transform:scale(1)   translateY(0);    opacity:1; }
+        }
+        .modal-icon  { font-size:40px; margin-bottom:10px; }
+        .modal-box h3 { font-size:17px; margin-bottom:8px; color:var(--text); }
+        .modal-box p  { font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:16px; }
+        .modal-body   { text-align:left; margin-bottom:14px; }
+        .modal-actions { display:flex; gap:10px; }
+        .modal-actions button {
+            flex:1; padding:12px; border-radius:10px; border:none;
+            font-size:13px; font-weight:700; font-family:inherit; cursor:pointer; transition:all .15s;
+        }
+        .modal-cancel  { background:#f0f0f0; color:var(--text); }
+        .modal-cancel:hover { background:#e0e0e0; }
+        .modal-confirm { background:var(--danger); color:white; }
+        .modal-confirm:hover { background:#992d22; }
+        .modal-result {
+            font-size:13px; margin-top:10px; padding:10px 12px;
+            border-radius:8px; display:none; text-align:left;
+        }
+        .modal-result.show    { display:block; }
+        .modal-result.success { background:var(--primary-light); color:#0c3d1e; }
+        .modal-result.error   { background:var(--danger-light);  color:#6b1a14; }
+        .modal-result.loading { background:#f5f5f5; color:#555; }
+    </style>
+</head>
+<body>
+ 
+<header>
+    <div>
+        <div class="logo">🗺️ PAL MAP 2.0</div>
+        <div class="sub">旅遊團隊定位系統</div>
+    </div>
+    <div id="auth-badge">⏳ 連線中</div>
+</header>
+ 
+<nav>
+    <button id="tab-register" class="active" onclick="showPage('register')">
+        <span class="icon">📋</span>註冊
+    </button>
+    <button id="tab-report" onclick="showPage('report')" disabled>
+        <span class="icon">📍</span>打卡
+    </button>
+    <button id="tab-map" onclick="showPage('mapPage')" disabled>
+        <span class="icon">🗺️</span>地圖
+    </button>
+    <button id="tab-admin" class="admin-tab" onclick="showPage('adminPage')">
+        <span class="icon">⚙️</span>管理
+    </button>
+</nav>
+ 
+<!-- ══════════════════════════════════════
+     PAGE 1：組員註冊
+     規則：tripcode 必須已存在；nickname 不分大小寫唯一
+     ══════════════════════════════════════ -->
+<div id="register" class="page active">
+    <h2>組員首次註冊</h2>
+    <p class="hint">
+        請輸入導遊提供的團隊編號，並填入您的暱稱與4位數通行碼。<br>
+        <b>暱稱一旦使用即不能重複。通行碼請妥善記住，查看地圖時需要輸入。</b>
+    </p>
+ 
+    <div class="form-group">
+        <label>團隊編號 Tripcode</label>
+        <input type="text" id="reg-tripcode" placeholder="例：TOUR2025">
+    </div>
+    <div class="form-group">
+        <label>暱稱 Nickname</label>
+        <input type="text" id="reg-nickname" placeholder="例：小明">
+        <div class="input-note">⚠️ 不分大小寫，輸入後不可更改</div>
+    </div>
+    <div class="form-group">
+        <label>通行碼 Passcode（4位數字）</label>
+        <input type="password" id="reg-passcode" placeholder="例：7749" maxlength="4" inputmode="numeric">
+        <div class="input-note">⚠️ 請截圖或記錄通行碼，查看地圖時需要</div>
+    </div>
+ 
+    <button class="btn btn-primary" id="btn-reg" onclick="handleRegister()" disabled>
+        ⏳ 安全連線中，請稍候…
+    </button>
+    <div id="reg-result" class="result-box"></div>
+ 
+    <div class="section-divider"><span>換手機 / 換裝置</span></div>
+    <p class="hint" style="margin-bottom:8px">
+        已在其他裝置註冊過？請在此更新裝置綁定，輸入通行碼即可將此手機綁定為新裝置。
+    </p>
+    <div class="form-group">
+        <label>團隊編號 Tripcode</label>
+        <input type="text" id="chg-tripcode" placeholder="例：TOUR2025">
+    </div>
+    <div class="form-group">
+        <label>暱稱 Nickname</label>
+        <input type="text" id="chg-nickname" placeholder="例：小明">
+    </div>
+    <div class="form-group">
+        <label>通行碼 Passcode（4位數字）</label>
+        <input type="password" id="chg-passcode" placeholder="例：7749" maxlength="4" inputmode="numeric">
+    </div>
+    <button class="btn btn-outline" id="btn-chg" onclick="handleChangeDevice()" disabled>
+        📱 更新為此裝置
+    </button>
+    <div id="chg-result" class="result-box"></div>
+</div>
+ 
+<!-- ══════════════════════════════════════
+     PAGE 2：打卡（回報位置）
+     驗證：nickname(不分大小寫) + tripcode → UID 比對
+     ══════════════════════════════════════ -->
+<div id="report" class="page">
+    <h2>打卡回報位置</h2>
+ 
+    <div id="leave-banner">
+        🚪 您已離開本次行程，地圖上不再顯示您的位置。
+        如需重新加入，請點擊下方「重新加入行程」。
+    </div>
+ 
+    <div class="info-card" id="saved-info-card" style="display:none">
+        <div class="row"><span>暱稱</span><span class="val" id="s-nickname">-</span></div>
+        <div class="row"><span>團隊</span><span class="val" id="s-tripcode">-</span></div>
+        <div class="row"><span>上次打卡</span><span class="val" id="s-last-time">尚未打卡</span></div>
+        <div class="row"><span>狀態</span><span class="val" id="s-status">✅ 行程中</span></div>
+    </div>
+ 
+    <div id="report-actions">
+        <div class="form-group">
+            <label>暱稱 Nickname</label>
+            <input type="text" id="rep-nickname" placeholder="例：小明">
+        </div>
+        <div class="form-group">
+            <label>團隊編號 Tripcode</label>
+            <input type="text" id="rep-tripcode" placeholder="例：TOUR2025">
+        </div>
+        <button class="btn btn-primary" onclick="handleReport()">📍 打卡：回報目前位置</button>
+ 
+        <div class="section-divider"><span>離開行程</span></div>
+        <p class="hint" style="margin-bottom:8px">離開後您的位置將從地圖移除。您可以隨時重新加入。</p>
+        <button class="btn btn-danger" onclick="confirmLeave()">🚪 我要離開行程</button>
+    </div>
+ 
+    <div id="rejoin-actions" style="display:none">
+        <div class="form-group">
+            <label>暱稱 Nickname</label>
+            <input type="text" id="rej-nickname" placeholder="例：小明">
+        </div>
+        <div class="form-group">
+            <label>團隊編號 Tripcode</label>
+            <input type="text" id="rej-tripcode" placeholder="例：TOUR2025">
+        </div>
+        <button class="btn btn-outline" onclick="handleRejoin()">🔄 重新加入行程</button>
+    </div>
+ 
+    <div id="rep-result" class="result-box"></div>
+</div>
+ 
+<!-- ══════════════════════════════════════
+     PAGE 3：地圖
+     三道驗證：程式端 + Firebase Rules + 輪詢重驗
+     ══════════════════════════════════════ -->
+<div id="mapPage" class="page">
+    <h2>團員動態地圖</h2>
+ 
+    <div id="map-auth-form">
+        <p class="hint">查看地圖需要驗證身份。請輸入您的資料。</p>
+        <div class="form-group">
+            <label>暱稱 Nickname</label>
+            <input type="text" id="map-nickname" placeholder="例：小明">
+        </div>
+        <div class="form-group">
+            <label>通行碼 Passcode</label>
+            <input type="password" id="map-passcode" placeholder="4位數字" maxlength="4" inputmode="numeric">
+        </div>
+        <div class="form-group">
+            <label>團隊編號 Tripcode</label>
+            <input type="text" id="map-tripcode" placeholder="例：TOUR2025">
+        </div>
+        <button class="btn btn-primary" onclick="handleMapAuth()">🔐 驗證並開啟地圖</button>
+        <div id="map-auth-result" class="result-box"></div>
+    </div>
+ 
+    <div id="map-content" style="display:none">
+        <p class="hint">點擊「立即更新」取得最新位置。點擊成員名稱可移動至其位置。</p>
+        <div class="map-toolbar">
+            <button onclick="fetchMapData()">🔄 立即更新</button>
+            <button onclick="fitAllMarkers()">⊞ 全員顯示</button>
+            <button class="tb-danger" onclick="confirmLeaveFromMap()">🚪 離開行程</button>
+        </div>
+        <div id="map"></div>
+ 
+        <!-- 成員列表 -->
+        <div class="member-list" id="member-list"></div>
+ 
+        <!-- 距離計算區 -->
+        <div id="distance-section" style="display:none">
+            <div class="section-divider" style="margin-top:18px"><span>📏 與其他成員的距離</span></div>
+            <p class="hint" style="margin-bottom:8px">以下距離以您最後打卡位置為基準計算（直線距離）。</p>
+            <div id="distance-list"></div>
+        </div>
+    </div>
+</div>
+ 
+<!-- ══════════════════════════════════════
+     PAGE 4：管理頁
+     Firebase Email/Password 登入
+     功能：建立/查詢/刪除成員/刪除群組
+     ══════════════════════════════════════ -->
+<div id="adminPage" class="page">
+    <h2>⚙️ 系統管理</h2>
+ 
+    <!-- 登入區 -->
+    <div id="admin-login-section">
+        <p class="hint">此頁面僅供授權管理員使用。請以管理員帳號登入。</p>
+        <div class="form-group">
+            <label>管理員 Email</label>
+            <input type="email" id="admin-email" placeholder="admin@example.com">
+        </div>
+        <div class="form-group">
+            <label>密碼</label>
+            <input type="password" id="admin-password" placeholder="••••••••">
+        </div>
+        <button class="btn btn-admin" onclick="handleAdminLogin()">🔐 管理員登入</button>
+        <div id="admin-login-result" class="result-box"></div>
+    </div>
+ 
+    <!-- 管理功能區（登入後顯示） -->
+    <div id="admin-panel" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <p style="font-size:13px;color:var(--muted)">已登入：<b id="admin-email-show"></b></p>
+            <button class="btn btn-outline btn-sm" onclick="handleAdminLogout()">登出</button>
+        </div>
+ 
+        <!-- ── (1) 建立 Tripcode ── -->
+        <div class="admin-card">
+            <div class="admin-card-title">🏕️ (1) 建立 Tripcode（群組）</div>
+            <div class="form-group">
+                <label>Tripcode</label>
+                <input type="text" id="create-tripcode" placeholder="例：TOUR2025">
+            </div>
+            <div class="form-group">
+                <label>組長暱稱</label>
+                <input type="text" id="create-leader-nickname" placeholder="例：導遊王大明">
+            </div>
+            <div class="form-group">
+                <label>組長通行碼（4位數字）</label>
+                <input type="password" id="create-leader-passcode" placeholder="例：1234" maxlength="4" inputmode="numeric">
+                <div class="input-note">⚠️ 組長日後打卡及查看地圖均需使用此通行碼，請妥善記錄</div>
+            </div>
+            <button class="btn btn-admin" onclick="handleCreateTripcode()">➕ 建立 Tripcode</button>
+            <div id="create-result" class="result-box"></div>
+        </div>
+ 
+        <!-- ── (2) 查詢成員 ── -->
+        <div class="admin-card">
+            <div class="admin-card-title">🔍 (2) 查詢 Tripcode 成員</div>
+            <div class="form-group">
+                <label>Tripcode</label>
+                <input type="text" id="query-tripcode" placeholder="例：TOUR2025">
+            </div>
+            <button class="btn btn-admin" onclick="handleQueryMembers()">🔍 查詢成員清單</button>
+            <div id="query-result" class="result-box"></div>
+        </div>
+ 
+        <!-- ── (3) 刪除成員 ── -->
+        <div class="admin-card">
+            <div class="admin-card-title">🗑️ (3) 刪除指定成員</div>
+            <div class="form-group">
+                <label>Tripcode</label>
+                <input type="text" id="del-member-tripcode" placeholder="例：TOUR2025">
+            </div>
+            <div class="form-group">
+                <label>要刪除的成員暱稱</label>
+                <input type="text" id="del-member-nickname" placeholder="例：小明">
+            </div>
+            <button class="btn btn-danger" onclick="handleDeleteMember()">🗑️ 刪除該成員</button>
+            <div id="del-member-result" class="result-box"></div>
+        </div>
+ 
+        <!-- ── (4) 刪除群組 ── -->
+        <div class="admin-card">
+            <div class="admin-card-title">💣 (4) 刪除整個群組</div>
+            <div class="form-group">
+                <label>Tripcode</label>
+                <input type="text" id="del-group-tripcode" placeholder="例：TOUR2025">
+            </div>
+            <div class="form-group">
+                <label>組長暱稱（確認用）</label>
+                <input type="text" id="del-group-leader" placeholder="組長暱稱">
+            </div>
+            <button class="btn btn-danger" onclick="confirmDeleteGroup()">💣 刪除整個群組</button>
+            <div id="del-group-result" class="result-box"></div>
+        </div>
+    </div>
+</div>
+ 
+<!-- ══ Modal：離開確認 ══ -->
+<div class="modal-overlay" id="modal-leave">
+    <div class="modal-box">
+        <div class="modal-icon">🚪</div>
+        <h3>確認離開行程？</h3>
+        <p>離開後您的位置將從地圖上移除，其他團員將無法看到您。<br>您可以隨時重新加入。</p>
+        <div class="modal-actions">
+            <button class="modal-cancel"  onclick="closeModal('modal-leave')">取消</button>
+            <button class="modal-confirm" onclick="executeLeave()">確認離開</button>
+        </div>
+    </div>
+</div>
+ 
+ 
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, get, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import {
+        getAuth, signInAnonymously, signInWithEmailAndPassword,
+        signOut, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+ 
+    /* ════════════════════════════════════════
+       🔧 請替換為您的 Firebase 設定
+       ════════════════════════════════════════ */
+    const firebaseConfig = {
+        apiKey:            "AIzaSyA58jfhZO7xVVDF8v54daa2i-YU2xUZEkQ",
+        authDomain:        "palmap-98faa.firebaseapp.com",
+        databaseURL:       "https://palmap-98faa-default-rtdb.asia-southeast1.firebasedatabase.app/",
+        projectId:         "palmap-98faa",
+        storageBucket:     "palmap-98faa.firebasestorage.app",
+        messagingSenderId: "647835530592",
+        appId:             "1:647835530592:web:c6fbb642b23c4a52a31a05"
+    };
+ 
+    const app  = initializeApp(firebaseConfig);
+    const db   = getDatabase(app);
+    const auth = getAuth(app);
+ 
+    /* ── 全域狀態 ── */
+    let currentUID      = null;   // 匿名 UID（組員用）
+    let isAdminLoggedIn = false;  // 管理員是否已登入
+    let adminEmail      = '';
+ 
+    let mapVerified  = false;
+    let mapNickname  = '';
+    let mapTripcode  = '';
+    let mapPollTimer = null;
+    let leafletMap   = null;
+    let markers      = {};
+    let currentBounds= null;
+ 
+    const MAP_POLL_SEC = 60;
+ 
+    /* ════════════════════════════════════
+       AUTH：匿名登入（組員用）
+       ════════════════════════════════════ */
+    signInAnonymously(auth).catch(() => {
+        document.getElementById('auth-badge').textContent = "❌ 連線失敗";
+    });
+ 
+    onAuthStateChanged(auth, (user) => {
+        if (!user) return;
+        // 若是匿名用戶
+        if (user.isAnonymous) {
+            currentUID = user.uid;
+            document.getElementById('auth-badge').textContent = "🔒 " + currentUID.slice(0,6) + "…";
+            document.getElementById('btn-reg').disabled    = false;
+            document.getElementById('btn-reg').textContent = "📋 送出註冊";
+            document.getElementById('btn-chg').disabled    = false;
+            document.getElementById('tab-report').disabled = false;
+            document.getElementById('tab-map').disabled    = false;
+        } else {
+            // Email 登入的管理員
+            isAdminLoggedIn = true;
+            adminEmail = user.email;
+            document.getElementById('auth-badge').textContent = "👑 " + adminEmail;
+            showAdminPanel();
+        }
+    });
+ 
+    /* ════════════════
+       PAGE SWITCH
+       ════════════════ */
+    window.showPage = (pageId) => {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        const tabMap = { register:'register', report:'report', mapPage:'map', adminPage:'admin' };
+        document.getElementById('tab-' + tabMap[pageId]).classList.add('active');
+ 
+        if (pageId === 'mapPage') {
+            setTimeout(() => {
+                if (leafletMap) leafletMap.invalidateSize();
+                else if (mapVerified) initMap();
+                // 切換至地圖頁時只做一次更新，不啟動自動輪詢
+                if (mapVerified) fetchMapData();
+            }, 150);
+        } else {
+            stopMapPoll();
+        }
+    };
+ 
+    /* ════════════════
+       HELPERS
+       ════════════════ */
+    // tripcode 去除非法字元
+    function sanitize(raw) {
+        return (raw||'').replace(/[.#$[\]/\s]/g,'_').substring(0,40).trim();
+    }
+    // nickname 統一小寫後做 key（不分大小寫視為同人）
+    function nickKey(nick) {
+        return nick.toLowerCase().replace(/[.#$[\]/\s]/g,'_').substring(0,40);
+    }
+    function fmtTime(d = new Date()) {
+        return `${d.getMonth()+1}/${d.getDate()} `+
+               `${d.getHours().toString().padStart(2,'0')}:`+
+               `${d.getMinutes().toString().padStart(2,'0')}`;
+    }
+    function showResult(id, type, html) {
+        const el = typeof id === 'string' ? document.getElementById(id) : id;
+        el.className = 'result-box show ' + type;
+        el.innerHTML = html;
+    }
+    function getPosition() {
+        return new Promise((res,rej) =>
+            navigator.geolocation.getCurrentPosition(res, rej, {
+                enableHighAccuracy:true, timeout:12000, maximumAge:0
+            })
+        );
+    }
+    function geoErr(err) {
+        return ({1:"請開啟 GPS 定位權限",2:"定位服務不可用",3:"定位請求逾時"})[err.code]||err.message;
+    }
+ 
+    /* ════════════════════════════════════════════════
+       PAGE 1：組員註冊
+       規則：
+       ① tripcode 必須已被管理員建立（trips/$tripcode 存在）
+       ② nickname 不分大小寫，key = nickKey(nickname)
+       ③ 若 nickKey 已存在 → 拒絕
+       ④ 通過 → 寫入 users/$tripcode/$nickKey，locations/$tripcode/$nickKey
+       ════════════════════════════════════════════════ */
+    window.handleRegister = async () => {
+        if (!currentUID) { alert("尚未完成連線"); return; }
+ 
+        const nickname  = document.getElementById('reg-nickname').value.trim();
+        const passcode  = document.getElementById('reg-passcode').value.trim();
+        const tripcode  = sanitize(document.getElementById('reg-tripcode').value.trim());
+        const resultEl  = 'reg-result';
+ 
+        if (!nickname||!passcode||!tripcode) { showResult(resultEl,'error',"⚠️ 請填寫所有欄位"); return; }
+        if (!/^\d{4}$/.test(passcode))       { showResult(resultEl,'error',"⚠️ 通行碼必須是 4 位數字"); return; }
+ 
+        const nk = nickKey(nickname);
+        showResult(resultEl,'loading',"⌛ 檢查 Tripcode 是否存在…");
+        document.getElementById('btn-reg').disabled = true;
+ 
+        try {
+            /* ① 確認 tripcode 由管理員建立 */
+            const tripSnap = await get(ref(db, `trips/${tripcode}`));
+            if (!tripSnap.exists()) {
+                showResult(resultEl,'error', `❌ 無此 Tripcode「${tripcode}」，請確認導遊提供的編號是否正確。`);
+                return;
+            }
+ 
+            /* ② 確認 nickname（不分大小寫）是否已被使用 */
+            showResult(resultEl,'loading',"⌛ 檢查暱稱是否可用…");
+            const nickSnap = await get(ref(db, `users/${tripcode}/${nk}`));
+            if (nickSnap.exists()) {
+                showResult(resultEl,'error', `❌ 暱稱「${nickname}」已被使用（不分大小寫）。請換一個不同的暱稱。`);
+                return;
+            }
+ 
+            /* ③ 取 GPS */
+            showResult(resultEl,'loading',"⌛ 定位中…");
+            const pos = await getPosition();
+            const { latitude, longitude } = pos.coords;
+            const timeStr = fmtTime();
+ 
+            /* ④ 寫入 */
+            await set(ref(db, `users/${tripcode}/${nk}`), {
+                nickname,           // 保留原始大小寫供顯示
+                uid:      currentUID,
+                passcode,
+                regTime:  timeStr
+            });
+            await set(ref(db, `locations/${tripcode}/${nk}`), {
+                nickname, uid:currentUID,
+                lat:latitude, lng:longitude, time:timeStr
+            });
+ 
+            showResult(resultEl,'success',
+                `✅ 註冊成功！<br>` +
+                `暱稱：<b>${nickname}</b> ／ 團隊：<b>${tripcode}</b><br>` +
+                `時間：${timeStr}<br><br>` +
+                `📸 <b>請截圖保存！</b>日後打卡及查看地圖需輸入相同暱稱、通行碼與團隊編號。`);
+        } catch(err) {
+            showResult(resultEl,'error',"❌ "+(err.code?geoErr(err):err.message));
+        } finally {
+            document.getElementById('btn-reg').disabled = false;
+        }
+    };
+ 
+    /* ════════════════════════════════════════════════
+       換裝置（更新 UID 綁定）
+       驗證：nickname + passcode + tripcode
+       通過後：將 users/$tripcode/$nk.uid 更新為當前 UID
+               並重新取 GPS 寫入 locations
+       ════════════════════════════════════════════════ */
+    window.handleChangeDevice = async () => {
+        if (!currentUID) { alert("尚未完成連線"); return; }
+ 
+        const nickname = document.getElementById('chg-nickname').value.trim();
+        const passcode = document.getElementById('chg-passcode').value.trim();
+        const tripcode = sanitize(document.getElementById('chg-tripcode').value.trim());
+        const nk       = nickKey(nickname);
+        const resultEl = 'chg-result';
+ 
+        if (!nickname||!passcode||!tripcode) { showResult(resultEl,'error',"⚠️ 請填寫所有欄位"); return; }
+        if (!/^\d{4}$/.test(passcode))       { showResult(resultEl,'error',"⚠️ 通行碼必須是 4 位數字"); return; }
+ 
+        showResult(resultEl,'loading',"⌛ 驗證身份中…");
+        document.getElementById('btn-chg').disabled = true;
+ 
+        try {
+            /* 查詢使用者是否存在 */
+            const snap = await get(ref(db, `users/${tripcode}/${nk}`));
+            if (!snap.exists()) {
+                showResult(resultEl,'error',"❌ 查無此暱稱，請確認輸入是否正確。");
+                return;
+            }
+ 
+            /* 比對通行碼 */
+            if (snap.val().passcode !== passcode) {
+                showResult(resultEl,'error',"❌ 通行碼錯誤，請重新確認。");
+                return;
+            }
+ 
+            /* 若 UID 已相同，表示已在此裝置，不需更新 */
+            if (snap.val().uid === currentUID) {
+                showResult(resultEl,'warning',"ℹ️ 此裝置已是目前綁定裝置，無需重新更新。");
+                return;
+            }
+ 
+            /* 取 GPS */
+            showResult(resultEl,'loading',"⌛ 定位中…");
+            const pos = await getPosition();
+            const { latitude, longitude } = pos.coords;
+            const timeStr = fmtTime();
+ 
+            /* 更新 users 節點的 uid → 綁定新裝置 */
+            await set(ref(db, `users/${tripcode}/${nk}`), {
+                ...snap.val(),
+                uid:     currentUID,
+                chgTime: timeStr       // 記錄換裝置時間
+            });
+ 
+            /* 更新 locations 節點 */
+            await set(ref(db, `locations/${tripcode}/${nk}`), {
+                nickname: snap.val().nickname,
+                uid:      currentUID,
+                lat:      latitude,
+                lng:      longitude,
+                time:     timeStr
+            });
+ 
+            /* 清空輸入欄 */
+            document.getElementById('chg-tripcode').value = '';
+            document.getElementById('chg-nickname').value = '';
+            document.getElementById('chg-passcode').value = '';
+ 
+            showResult(resultEl,'success',
+                `✅ 換裝置成功！<br>` +
+                `暱稱：<b>${snap.val().nickname}</b> ／ 團隊：<b>${tripcode}</b><br>` +
+                `時間：${timeStr}<br><br>` +
+                `此手機已完成綁定，現在可以正常打卡及查看地圖。`);
+        } catch(err) {
+            showResult(resultEl,'error',"❌ "+(err.code?geoErr(err):err.message));
+        } finally {
+            document.getElementById('btn-chg').disabled = false;
+        }
+    };
+ 
+    /* ════════════════════════════════════════════════
+       驗證：users/$tripcode/$nickKey 的 uid === currentUID
+       ════════════════════════════════════════════════ */
+    window.handleReport = async () => {
+        if (!currentUID) { alert("尚未完成連線"); return; }
+ 
+        const nickname = document.getElementById('rep-nickname').value.trim();
+        const tripcode = sanitize(document.getElementById('rep-tripcode').value.trim());
+        const nk       = nickKey(nickname);
+        const resultEl = 'rep-result';
+ 
+        if (!nickname||!tripcode) { showResult(resultEl,'error',"⚠️ 請填寫所有欄位"); return; }
+ 
+        showResult(resultEl,'loading',"⌛ 驗證身份中…");
+ 
+        try {
+            const snap = await get(ref(db, `users/${tripcode}/${nk}`));
+            if (!snap.exists() || snap.val().uid !== currentUID) {
+                showResult(resultEl,'error',
+                    "❌ 驗證失敗：暱稱或團隊編號不正確，或此裝置與當初註冊裝置不同。<br><br>" +
+                    "📱 <b>換手機了嗎？</b>請前往「註冊」頁下方的「換手機 / 換裝置」區塊，" +
+                    "輸入通行碼更新裝置綁定。");
+                return;
+            }
+ 
+            showResult(resultEl,'loading',"⌛ 定位中…");
+            const pos = await getPosition();
+            const { latitude, longitude } = pos.coords;
+            const timeStr = fmtTime();
+ 
+            await set(ref(db, `locations/${tripcode}/${nk}`), {
+                nickname: snap.val().nickname, uid:currentUID,
+                lat:latitude, lng:longitude, time:timeStr
+            });
+ 
+            // 更新資訊卡
+            document.getElementById('saved-info-card').style.display = 'block';
+            document.getElementById('s-nickname').textContent  = snap.val().nickname;
+            document.getElementById('s-tripcode').textContent  = tripcode;
+            document.getElementById('s-last-time').textContent = timeStr;
+            document.getElementById('s-status').textContent    = '✅ 行程中';
+            document.getElementById('s-status').className      = 'val';
+            document.getElementById('leave-banner').style.display   = 'none';
+            document.getElementById('report-actions').style.display  = 'block';
+            document.getElementById('rejoin-actions').style.display  = 'none';
+ 
+            showResult(resultEl,'success',
+                `✅ 打卡成功！<br>暱稱：<b>${snap.val().nickname}</b> ／ 團隊：<b>${tripcode}</b><br>時間：${timeStr}`);
+        } catch(err) {
+            showResult(resultEl,'error',"❌ "+(err.code?geoErr(err):err.message));
+        }
+    };
+ 
+    /* ════════════════════════════════════════════════
+       PAGE 3：地圖驗證（三道防線）
+       第一道（程式端）：nickname+passcode+tripcode → users 節點
+       第二道（Firebase Rules）：伺服器端 uid 驗證
+       第三道：每次 fetchMapData 前重驗身份
+       ════════════════════════════════════════════════ */
+    window.handleMapAuth = async () => {
+        if (!currentUID) { alert("尚未完成連線"); return; }
+ 
+        const nickname = document.getElementById('map-nickname').value.trim();
+        const passcode = document.getElementById('map-passcode').value.trim();
+        const tripcode = sanitize(document.getElementById('map-tripcode').value.trim());
+        const nk       = nickKey(nickname);
+        const resultEl = 'map-auth-result';
+ 
+        if (!nickname||!passcode||!tripcode) { showResult(resultEl,'error',"⚠️ 請填寫所有欄位"); return; }
+ 
+        showResult(resultEl,'loading',"⌛ 驗證中…");
+ 
+        try {
+            /* 第一道 */
+            const snap = await get(ref(db, `users/${tripcode}/${nk}`));
+            if (!snap.exists())                       { showResult(resultEl,'error',"❌ 查無此暱稱"); return; }
+            if (snap.val().uid      !== currentUID)   { showResult(resultEl,'error',"❌ 此裝置與當初註冊裝置不符"); return; }
+            if (snap.val().passcode !== passcode)     { showResult(resultEl,'error',"❌ 通行碼錯誤"); return; }
+ 
+            mapVerified  = true;
+            mapNickname  = nk;
+            mapTripcode  = tripcode;
+ 
+            document.getElementById('map-auth-form').style.display = 'none';
+            document.getElementById('map-content').style.display   = 'block';
+ 
+            if (!leafletMap) initMap();
+            else leafletMap.invalidateSize();
+            fetchMapData();  // 驗證後取一次資料，之後由用戶手動更新
+        } catch(err) {
+            showResult(resultEl,'error',"❌ "+err.message);
+        }
+    };
+ 
+    /* ── Map（手動更新，無自動輪詢）── */
+    function initMap() {
+        if (leafletMap) return;
+        leafletMap = L.map('map').setView([23.5,121],7);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+            attribution:'© OpenStreetMap', maxZoom:18
+        }).addTo(leafletMap);
+    }
+    function stopMapPoll() { clearInterval(mapPollTimer); mapPollTimer=null; }
+ 
+    /* 計算兩點之間的直線距離（Haversine 公式），回傳公尺數 */
+    function calcDistance(lat1, lng1, lat2, lng2) {
+        const R  = 6371000; // 地球半徑（公尺）
+        const φ1 = lat1 * Math.PI / 180;
+        const φ2 = lat2 * Math.PI / 180;
+        const Δφ = (lat2 - lat1) * Math.PI / 180;
+        const Δλ = (lng2 - lng1) * Math.PI / 180;
+        const a  = Math.sin(Δφ/2)**2 + Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+ 
+    /* 格式化距離顯示 */
+    function fmtDist(m) {
+        if (m < 1000) return `${Math.round(m)} 公尺`;
+        return `${(m/1000).toFixed(1)} 公里`;
+    }
+ 
+    window.fetchMapData = async () => {
+        if (!currentUID||!mapTripcode||!mapVerified) return;
+        if (!leafletMap) initMap();
+        try {
+            /* 第三道：每次 fetch 前重驗身份仍存在 DB */
+            const authSnap = await get(ref(db, `users/${mapTripcode}/${mapNickname}`));
+            if (!authSnap.exists()||authSnap.val().uid!==currentUID) {
+                mapVerified=false; stopMapPoll();
+                document.getElementById('map-content').style.display   = 'none';
+                document.getElementById('map-auth-form').style.display = 'block';
+                showResult('map-auth-result','error',"⚠️ 地圖存取權限已失效，請重新驗證。");
+                return;
+            }
+ 
+            const snap = await get(ref(db, `locations/${mapTripcode}`));
+            const data = snap.val();
+            const memberList = document.getElementById('member-list');
+ 
+            if (!data) {
+                memberList.innerHTML='<p style="font-size:13px;color:#888;padding:14px 0;text-align:center">📭 目前無成員資料</p>';
+                document.getElementById('distance-section').style.display='none';
+                return;
+            }
+ 
+            const bounds=[]; memberList.innerHTML='';
+            let myLat=null, myLng=null;
+ 
+            // 先找自己的座標
+            if (data[mapNickname]) {
+                myLat = data[mapNickname].lat;
+                myLng = data[mapNickname].lng;
+            }
+ 
+            for (const nk in data) {
+                const item=data[nk], latlng=[item.lat,item.lng], isMe=(nk===mapNickname);
+                if (markers[nk]) {
+                    markers[nk].setLatLng(latlng);
+                    markers[nk].getPopup().setContent(popupHtml(item,isMe));
+                } else {
+                    const icon=isMe?makeIcon('#f0a500','★'):makeIcon('#1a6b3c','●');
+                    markers[nk]=L.marker(latlng,{icon}).bindPopup(popupHtml(item,isMe)).addTo(leafletMap);
+                }
+                bounds.push(latlng);
+ 
+                // 計算距離（若自己有位置且不是自己）
+                let distHtml = '';
+                if (myLat!==null && !isMe) {
+                    const d = calcDistance(myLat, myLng, item.lat, item.lng);
+                    distHtml = `<span class="member-dist">📏 ${fmtDist(d)}</span>`;
+                }
+ 
+                const row=document.createElement('div');
+                row.className='member-item';
+                row.innerHTML=`
+                    <div class="member-dot" style="background:${isMe?'#f0a500':'#1a6b3c'}"></div>
+                    <span>${item.nickname}${isMe?' <b>（我）</b>':''}</span>
+                    ${distHtml}
+                    <span class="member-time">⏱ ${item.time}</span>`;
+                row.onclick=()=>leafletMap.setView([item.lat,item.lng],15);
+                memberList.appendChild(row);
+            }
+ 
+            for (const nk in markers) {
+                if (!data[nk]) { leafletMap.removeLayer(markers[nk]); delete markers[nk]; }
+            }
+            if (bounds.length>0) {
+                currentBounds=L.latLngBounds(bounds);
+                leafletMap.fitBounds(currentBounds,{padding:[50,50]});
+            }
+ 
+            // ── 距離排行列表 ──
+            const distSection = document.getElementById('distance-section');
+            const distList    = document.getElementById('distance-list');
+ 
+            if (myLat===null) {
+                distSection.style.display='none';
+            } else {
+                // 計算所有人距離並排序（由近到遠）
+                const others = Object.entries(data)
+                    .filter(([nk]) => nk !== mapNickname)
+                    .map(([nk, item]) => ({
+                        nickname: item.nickname,
+                        dist:     calcDistance(myLat, myLng, item.lat, item.lng),
+                        time:     item.time
+                    }))
+                    .sort((a,b) => a.dist - b.dist);
+ 
+                if (others.length === 0) {
+                    distSection.style.display='none';
+                } else {
+                    distSection.style.display='block';
+                    distList.innerHTML = others.map((o, i) => `
+                        <div class="dist-item">
+                            <span class="dist-rank">${i+1}</span>
+                            <span class="dist-name">${o.nickname}</span>
+                            <span class="dist-value">${fmtDist(o.dist)}</span>
+                            <span class="dist-time">⏱ ${o.time}</span>
+                        </div>`).join('');
+                }
+            }
+ 
+        } catch(err) { console.error('地圖更新失敗',err); }
+    };
+ 
+    window.fitAllMarkers=()=>{ if(leafletMap&&currentBounds) leafletMap.fitBounds(currentBounds,{padding:[40,40]}); };
+ 
+    function popupHtml(item,isMe) { return `<b>${item.nickname}${isMe?' ⭐':''}</b><br>🕐 ${item.time}`; }
+    function makeIcon(color,symbol) {
+        return L.divIcon({className:'',
+            html:`<div style="width:30px;height:30px;border-radius:50%;background:${color};color:white;
+                  display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:bold;
+                  box-shadow:0 2px 8px rgba(0,0,0,.35);">${symbol}</div>`,
+            iconSize:[30,30],iconAnchor:[15,15],popupAnchor:[0,-18]});
+    }
+ 
+    /* ── 離開行程 ── */
+    window.confirmLeave        = () => openModal('modal-leave');
+    window.confirmLeaveFromMap = () => openModal('modal-leave');
+ 
+    window.executeLeave = async () => {
+        closeModal('modal-leave');
+        const nickname = document.getElementById('rep-nickname').value.trim() || '';
+        const tripcode = sanitize(document.getElementById('rep-tripcode').value.trim()) || mapTripcode;
+        const nk       = nickKey(nickname) || mapNickname;
+        if (!nk||!tripcode||!currentUID) return;
+        try {
+            const snap=await get(ref(db,`users/${tripcode}/${nk}`));
+            if (!snap.exists()||snap.val().uid!==currentUID) { alert("驗證失敗，無法執行離開操作。"); return; }
+            await remove(ref(db,`locations/${tripcode}/${nk}`));
+            if (markers[nk]&&leafletMap) { leafletMap.removeLayer(markers[nk]); delete markers[nk]; }
+            document.getElementById('saved-info-card').style.display = 'block';
+            document.getElementById('s-status').textContent = '🚪 已離開行程';
+            document.getElementById('s-status').className   = 'val danger';
+            document.getElementById('leave-banner').style.display   = 'block';
+            document.getElementById('report-actions').style.display = 'none';
+            document.getElementById('rejoin-actions').style.display = 'block';
+            document.getElementById('rej-nickname').value=snap.val().nickname;
+            document.getElementById('rej-tripcode').value=tripcode;
+            showPage('report');
+            setTimeout(()=>showResult('rep-result','success',"🚪 已成功離開行程，地圖上已移除您的位置。"),100);
+        } catch(err) { alert("離開失敗："+err.message); }
+    };
+ 
+    window.handleRejoin = async () => {
+        const nickname=document.getElementById('rej-nickname').value.trim();
+        const tripcode=sanitize(document.getElementById('rej-tripcode').value.trim());
+        const nk=nickKey(nickname);
+        if (!nickname||!tripcode) { showResult('rep-result','error',"⚠️ 請填寫所有欄位"); return; }
+        showResult('rep-result','loading',"⌛ 重新加入中…");
+        try {
+            const snap=await get(ref(db,`users/${tripcode}/${nk}`));
+            if (!snap.exists()||snap.val().uid!==currentUID) { showResult('rep-result','error',"❌ 驗證失敗"); return; }
+            const pos=await getPosition();
+            const {latitude,longitude}=pos.coords, timeStr=fmtTime();
+            await set(ref(db,`locations/${tripcode}/${nk}`),{
+                nickname:snap.val().nickname, uid:currentUID, lat:latitude, lng:longitude, time:timeStr
+            });
+            document.getElementById('s-last-time').textContent    = timeStr;
+            document.getElementById('s-status').textContent       = '✅ 行程中';
+            document.getElementById('s-status').className         = 'val';
+            document.getElementById('leave-banner').style.display  = 'none';
+            document.getElementById('report-actions').style.display= 'block';
+            document.getElementById('rejoin-actions').style.display= 'none';
+            showResult('rep-result','success',`✅ 已重新加入！時間：${timeStr}`);
+        } catch(err) { showResult('rep-result','error',"❌ "+(err.code?geoErr(err):err.message)); }
+    };
+ 
+    /* ════════════════════════════════════════════════
+       PAGE 4：管理頁 - Email/Password 登入
+       ════════════════════════════════════════════════ */
+    window.handleAdminLogin = async () => {
+        const email    = document.getElementById('admin-email').value.trim();
+        const password = document.getElementById('admin-password').value;
+        if (!email||!password) { showResult('admin-login-result','error',"⚠️ 請填寫帳號與密碼"); return; }
+ 
+        showResult('admin-login-result','loading',"⌛ 登入中…");
+        try {
+            // 先登出匿名帳號，再用 Email 登入
+            await signInWithEmailAndPassword(auth, email, password);
+            // onAuthStateChanged 會自動觸發 showAdminPanel()
+        } catch(err) {
+            const msg = err.code==='auth/wrong-password'||err.code==='auth/user-not-found'
+                ? "帳號或密碼錯誤"
+                : err.code==='auth/invalid-email' ? "Email 格式不正確" : err.message;
+            showResult('admin-login-result','error',"❌ "+msg);
+        }
+    };
+ 
+    window.handleAdminLogout = async () => {
+        await signOut(auth);
+        isAdminLoggedIn=false; adminEmail='';
+        document.getElementById('admin-panel').style.display        = 'none';
+        document.getElementById('admin-login-section').style.display= 'block';
+        document.getElementById('auth-badge').textContent = "🔒 已登出";
+        // 重新匿名登入給組員用
+        await signInAnonymously(auth);
+    };
+ 
+    function showAdminPanel() {
+        document.getElementById('admin-login-section').style.display = 'none';
+        document.getElementById('admin-panel').style.display         = 'block';
+        document.getElementById('admin-email-show').textContent      = adminEmail;
+        isAdminLoggedIn = true;
+    }
+ 
+    /* ── (1) 建立 Tripcode ── */
+    window.handleCreateTripcode = async () => {
+        if (!isAdminLoggedIn) { alert("請先登入管理員帳號"); return; }
+ 
+        const tripcode = sanitize(document.getElementById('create-tripcode').value.trim());
+        const leader   = document.getElementById('create-leader-nickname').value.trim();
+        const passcode = document.getElementById('create-leader-passcode').value.trim();
+        const resultEl = 'create-result';
+ 
+        if (!tripcode||!leader||!passcode) { showResult(resultEl,'error',"⚠️ 請填寫所有欄位"); return; }
+        if (!/^\d{4}$/.test(passcode))     { showResult(resultEl,'error',"⚠️ 通行碼必須是 4 位數字"); return; }
+ 
+        const nk = nickKey(leader);
+        showResult(resultEl,'loading',"⌛ 檢查 Tripcode 是否已存在…");
+ 
+        try {
+            // 確認 tripcode 尚未被建立
+            const snap = await get(ref(db, `trips/${tripcode}`));
+            if (snap.exists()) {
+                showResult(resultEl,'error',`❌ 建立失敗：Tripcode「${tripcode}」已存在。`);
+                return;
+            }
+ 
+            // 取 GPS
+            showResult(resultEl,'loading',"⌛ 取得 GPS 中…");
+            const pos = await getPosition();
+            const { latitude, longitude } = pos.coords;
+            const timeStr = fmtTime();
+            const leaderUID = auth.currentUser.uid;
+ 
+            // 寫入 trips 節點
+            await set(ref(db, `trips/${tripcode}`), {
+                leader, leaderNickKey: nk,
+                createdBy: leaderUID, createdAt: timeStr
+            });
+ 
+            // 同時將組長寫入 users 節點（等同完成組長的註冊）
+            await set(ref(db, `users/${tripcode}/${nk}`), {
+                nickname: leader,
+                uid:      leaderUID,
+                passcode,
+                regTime:  timeStr,
+                isLeader: true
+            });
+ 
+            // 將組長的初始位置寫入 locations 節點
+            await set(ref(db, `locations/${tripcode}/${nk}`), {
+                nickname: leader,
+                uid:      leaderUID,
+                lat:      latitude,
+                lng:      longitude,
+                time:     timeStr
+            });
+ 
+            // 清空輸入欄
+            document.getElementById('create-tripcode').value         = '';
+            document.getElementById('create-leader-nickname').value  = '';
+            document.getElementById('create-leader-passcode').value  = '';
+ 
+            showResult(resultEl,'success',
+                `✅ 建立成功！<br>` +
+                `Tripcode：<b>${tripcode}</b><br>` +
+                `組長暱稱：<b>${leader}</b><br>` +
+                `時間：${timeStr}<br><br>` +
+                `📸 <b>請截圖保存通行碼！</b>組長日後打卡及查看地圖均需使用此通行碼。<br>` +
+                `請將 Tripcode「${tripcode}」提供給所有團員。`);
+        } catch(err) {
+            showResult(resultEl,'error',"❌ "+(err.code?geoErr(err):err.message));
+        }
+    };
+ 
+    /* ── (2) 查詢成員 ── */
+    window.handleQueryMembers = async () => {
+        if (!isAdminLoggedIn) { alert("請先登入管理員帳號"); return; }
+ 
+        const tripcode = sanitize(document.getElementById('query-tripcode').value.trim());
+        const resultEl = 'query-result';
+        if (!tripcode) { showResult(resultEl,'error',"⚠️ 請輸入 Tripcode"); return; }
+ 
+        showResult(resultEl,'loading',"⌛ 查詢中…");
+ 
+        try {
+            // 確認群組存在
+            const tripSnap=await get(ref(db,`trips/${tripcode}`));
+            if (!tripSnap.exists()) { showResult(resultEl,'error',`❌ 查無此 Tripcode「${tripcode}」`); return; }
+ 
+            const usersSnap=await get(ref(db,`users/${tripcode}`));
+            const data=usersSnap.val();
+            if (!data) {
+                showResult(resultEl,'info',`ℹ️ Tripcode「${tripcode}」目前尚無組員。`);
+                return;
+            }
+ 
+            const rows=Object.entries(data).map(([nk,v])=>
+                `<tr><td><b>${v.nickname}</b></td><td style="color:var(--muted)">${v.regTime||'-'}</td></tr>`
+            ).join('');
+ 
+            showResult(resultEl,'info',
+                `<b>Tripcode：${tripcode}</b>（共 ${Object.keys(data).length} 名組員）<br>` +
+                `組長：${tripSnap.val().leader}<br>` +
+                `<table class="member-table" style="margin-top:10px">` +
+                `<tr><th>暱稱</th><th>最後登錄時間</th></tr>${rows}</table>`);
+        } catch(err) { showResult(resultEl,'error',"❌ "+err.message); }
+    };
+ 
+    /* ── (3) 刪除成員 ── */
+    window.handleDeleteMember = async () => {
+        if (!isAdminLoggedIn) { alert("請先登入管理員帳號"); return; }
+ 
+        const tripcode = sanitize(document.getElementById('del-member-tripcode').value.trim());
+        const nickname = document.getElementById('del-member-nickname').value.trim();
+        const nk       = nickKey(nickname);
+        const resultEl = 'del-member-result';
+ 
+        if (!tripcode||!nickname) { showResult(resultEl,'error',"⚠️ 請填寫所有欄位"); return; }
+ 
+        showResult(resultEl,'loading',"⌛ 處理中…");
+ 
+        try {
+            const snap=await get(ref(db,`users/${tripcode}/${nk}`));
+            if (!snap.exists()) {
+                showResult(resultEl,'error',`❌ 在「${tripcode}」中查無成員「${nickname}」`);
+                return;
+            }
+            // 同時刪除 users 和 locations
+            await remove(ref(db,`users/${tripcode}/${nk}`));
+            await remove(ref(db,`locations/${tripcode}/${nk}`));
+ 
+            showResult(resultEl,'success',
+                `✅ 已成功刪除成員「${snap.val().nickname}」<br>Tripcode：${tripcode}`);
+        } catch(err) { showResult(resultEl,'error',"❌ "+err.message); }
+    };
+ 
+    /* ── (4) 刪除群組（二次確認）── */
+    window.confirmDeleteGroup = async () => {
+        if (!isAdminLoggedIn) { alert("請先登入管理員帳號"); return; }
+ 
+        const tripcode = sanitize(document.getElementById('del-group-tripcode').value.trim());
+        const leader   = document.getElementById('del-group-leader').value.trim();
+        const resultEl = 'del-group-result';
+ 
+        if (!tripcode||!leader) { showResult(resultEl,'error',"⚠️ 請填寫所有欄位"); return; }
+ 
+        showResult(resultEl,'loading',"⌛ 驗證中…");
+ 
+        try {
+            const snap=await get(ref(db,`trips/${tripcode}`));
+            if (!snap.exists()) { showResult(resultEl,'error',`❌ 查無此 Tripcode「${tripcode}」`); return; }
+            if (snap.val().leader.toLowerCase()!==leader.toLowerCase()) {
+                showResult(resultEl,'error',"❌ 組長暱稱不符，請確認後重試"); return;
+            }
+ 
+            // 驗證通過，直接刪除
+            showResult(resultEl,'loading',"⌛ 刪除中…");
+            await remove(ref(db,`trips/${tripcode}`));
+            await remove(ref(db,`users/${tripcode}`));
+            await remove(ref(db,`locations/${tripcode}`));
+ 
+            // 清空輸入欄
+            document.getElementById('del-group-tripcode').value = '';
+            document.getElementById('del-group-leader').value   = '';
+ 
+            showResult(resultEl,'success',
+                `✅ 群組「${tripcode}」已完全刪除。<br>所有成員資料與位置資料已清除。`);
+        } catch(err) { showResult(resultEl,'error',"❌ "+err.message); }
+    };
+ 
+    /* ── Modal ── */
+    window.openModal  = (id) => document.getElementById(id).classList.add('show');
+    window.closeModal = (id) => document.getElementById(id).classList.remove('show');
+ 
+    /* ── 公開 window ── */
+    window.showPage           = window.showPage;
+    window.handleRegister     = window.handleRegister;
+    window.handleChangeDevice = window.handleChangeDevice;
+    window.handleReport       = window.handleReport;
+    window.handleMapAuth      = window.handleMapAuth;
+    window.fetchMapData       = window.fetchMapData;
+    window.fitAllMarkers      = window.fitAllMarkers;
+    window.confirmLeave       = window.confirmLeave;
+    window.confirmLeaveFromMap= window.confirmLeaveFromMap;
+    window.executeLeave       = window.executeLeave;
+    window.handleRejoin       = window.handleRejoin;
+    window.handleAdminLogin   = window.handleAdminLogin;
+    window.handleAdminLogout  = window.handleAdminLogout;
+    window.handleCreateTripcode= window.handleCreateTripcode;
+    window.handleQueryMembers  = window.handleQueryMembers;
+    window.handleDeleteMember  = window.handleDeleteMember;
+    window.confirmDeleteGroup  = window.confirmDeleteGroup;
+    window.openModal           = window.openModal;
+    window.closeModal          = window.closeModal;
+</script>
+</body>
+</html>
