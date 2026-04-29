@@ -230,8 +230,69 @@ textarea::placeholder { color:#b5afa5; }
 }
 .toast.show { opacity:1; transform:translateX(-50%) translateY(4px); }
 .toast.err { background:var(--danger); }
-
-
+ 
+/* ════════════════════════════════
+   PAGE 3 · MAP
+════════════════════════════════ */
+#page-map { background:var(--paper); overflow:hidden; }
+.map-topbar {
+  background:rgba(245,240,232,0.97); border-bottom:1px solid rgba(58,90,64,0.2);
+  padding:10px 14px 12px; flex-shrink:0; z-index:500; position:relative;
+}
+.map-logo-row { display:flex; align-items:center; gap:8px; margin-bottom:9px; }
+.map-logo-text { font-family:'Syne',sans-serif; font-weight:800; font-size:0.95rem; color:var(--ink); letter-spacing:-0.3px; }
+.map-logo-text span { color:#6aaa75; }
+ 
+.query-row { display:flex; gap:7px; flex-wrap:wrap; }
+.query-fields { display:flex; gap:5px; flex:1; min-width:0; }
+.q-input {
+  flex:1; min-width:0; background:var(--mist); border:1px solid rgba(58,90,64,0.2);
+  border-radius:3px; color:var(--ink); font-family:'DM Sans',sans-serif; font-size:0.85rem;
+  padding:8px 11px; outline:none; transition:border-color 0.2s;
+}
+.q-input:focus { border-color:rgba(106,170,117,0.55); }
+.q-input::placeholder { color:#b5afa5; }
+.query-btns { display:flex; gap:5px; }
+.btn-q {
+  padding:8px 12px; border:none; border-radius:3px;
+  font-family:'Syne',sans-serif; font-weight:700; font-size:0.78rem;
+  cursor:pointer; white-space:nowrap; letter-spacing:0.04em;
+  transition:transform 0.15s,opacity 0.15s;
+}
+.btn-q:disabled { opacity:0.45; cursor:not-allowed; }
+.btn-q-last { background:var(--moss); color:#fff; }
+.btn-q-last:hover { transform:translateY(-1px); }
+.btn-q-all  { background:rgba(212,119,10,0.85); color:#fff; }
+.btn-q-all:hover  { transform:translateY(-1px); }
+ 
+.map-status { margin-top:8px; font-size:0.74rem; color:var(--stone); min-height:15px; }
+.map-status.loading { color:var(--amber); }
+.map-status.ok  { color:var(--moss); }
+.map-status.err { color:var(--danger); }
+ 
+#map { flex:1; min-height:0; }
+ 
+/* Leaflet popup dark theme */
+.custom-popup .leaflet-popup-content-wrapper {
+  background:rgba(245,240,232,0.97); color:var(--ink);
+  border:1px solid rgba(58,90,64,0.25); border-radius:4px;
+  font-family:'DM Sans',sans-serif; box-shadow:0 8px 24px rgba(0,0,0,0.15);
+}
+.custom-popup .leaflet-popup-tip { background:rgba(245,240,232,0.97); }
+.popup-name { font-family:'Syne',sans-serif; font-weight:700; font-size:0.875rem; color:var(--moss); margin-bottom:3px; }
+.popup-time { font-size:0.72rem; color:var(--stone); margin-bottom:5px; }
+.popup-note { font-size:0.85rem; color:var(--ink); }
+.popup-coord { font-size:0.68rem; color:var(--moss-light); margin-top:5px; }
+ 
+.info-pill {
+  position:absolute; bottom:80px; left:50%; transform:translateX(-50%);
+  z-index:400; background:rgba(245,240,232,0.95); border:1px solid rgba(58,90,64,0.25);
+  border-radius:40px; padding:7px 18px; font-size:0.78rem; color:var(--stone);
+  pointer-events:none; opacity:0; transition:opacity 0.3s; white-space:nowrap;
+  box-shadow:0 2px 12px rgba(15,17,23,0.1);
+}
+.info-pill.show { opacity:1; }
+.info-pill strong { color:#6aaa75; }
  
 /* ── Shared spinner ── */
 .spinner {
@@ -295,7 +356,7 @@ textarea::placeholder { color:#b5afa5; }
 <!-- ══════════════════════════════════════
      PAGE 2 · 打卡
 ══════════════════════════════════════ -->
-<div class="page active" id="page-checkin">
+<div class="page" id="page-checkin">
   <div class="page-header">
     <div class="page-header-title">打卡</div>
     <div class="page-header-sub" id="checkinHeaderSub">載入中…</div>
@@ -343,6 +404,32 @@ textarea::placeholder { color:#b5afa5; }
   </div>
 </div>
  
+<!-- ══════════════════════════════════════
+     PAGE 3 · 地圖查詢
+══════════════════════════════════════ -->
+<div class="page active" id="page-map">
+  <div class="map-topbar">
+    <div class="map-logo-row">
+      <div class="logo-icon" style="width:26px;height:26px;">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5" fill="white" stroke="none"/></svg>
+      </div>
+      <div class="map-logo-text">My<span>Track</span>In <span style="color:var(--stone);font-size:0.8rem;font-weight:400">· 行程地圖</span></div>
+    </div>
+    <div class="query-row">
+      <div class="query-fields">
+        <input class="q-input" id="qNickname" placeholder="暱稱" type="text">
+        <input class="q-input" id="qTripcode" placeholder="行程代碼" type="text">
+      </div>
+      <div class="query-btns">
+        <button class="btn-q btn-q-last" id="btnLast">最新點</button>
+        <button class="btn-q btn-q-all"  id="btnAll">全程線</button>
+      </div>
+    </div>
+    <div class="map-status" id="mapStatus">輸入暱稱與代碼後查詢</div>
+  </div>
+  <div id="map"></div>
+  <div class="info-pill" id="infoPill"></div>
+</div>
  
 <!-- ══ Bottom Nav ══ -->
 <nav class="bottom-nav">
@@ -701,7 +788,131 @@ document.getElementById('updateTripBtn').addEventListener('click', function() {
 });
  
 if (isOnline) tryFlushQueue();
-
+ 
+// ─────────────────────────────────────
+// PAGE 3 · MAP
+// ─────────────────────────────────────
+var mapObj = L.map('map', { center:[23.8,121.0], zoom:7, zoomControl:true });
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  attribution:'&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+  maxZoom:19
+}).addTo(mapObj);
+ 
+var markersLayer = L.layerGroup().addTo(mapObj);
+var polyLayer = null;
+ 
+function clearMapLayers() {
+  markersLayer.clearLayers();
+  if (polyLayer) { mapObj.removeLayer(polyLayer); polyLayer=null; }
+  document.getElementById('infoPill').classList.remove('show');
+}
+ 
+function setMapStatus(msg, type) {
+  var el = document.getElementById('mapStatus');
+  el.className = 'map-status' + (type ? ' '+type : '');
+  el.innerHTML = msg;
+}
+ 
+function setMapBtns(disabled) {
+  document.getElementById('btnLast').disabled = disabled;
+  document.getElementById('btnAll').disabled  = disabled;
+}
+ 
+function makeMarkerIcon(color) {
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38">' +
+    '<path d="M15 0C9.48 0 5 4.48 5 10c0 9.75 10 28 10 28S25 19.75 25 10C25 4.48 20.52 0 15 0z" fill="' + color + '" stroke="rgba(0,0,0,0.25)" stroke-width="1"/>' +
+    '<circle cx="15" cy="10" r="5" fill="rgba(255,255,255,0.85)"/></svg>';
+  return L.divIcon({ html:svg, className:'', iconSize:[30,38], iconAnchor:[15,38], popupAnchor:[0,-38] });
+}
+ 
+function fetchCheckins(nickname, tripcode, callback) {
+  db.ref('checkins').orderByChild('tripcode').equalTo(tripcode).once('value')
+    .then(function(snap) {
+      var items = [];
+      snap.forEach(function(child) {
+        var d = child.val();
+        if (d.nickname === nickname && d.lat != null) items.push(d);
+      });
+      items.sort(function(a,b) {
+        return (a.clientTime||a.timestamp||'').localeCompare(b.clientTime||b.timestamp||'');
+      });
+      callback(null, items);
+    })
+    .catch(function(e) { callback(e, []); });
+}
+ 
+document.getElementById('btnLast').addEventListener('click', function() {
+  var nickname = document.getElementById('qNickname').value.trim();
+  var tripcode  = document.getElementById('qTripcode').value.trim();
+  if (!nickname || !tripcode) { setMapStatus('請填寫暱稱與行程代碼','err'); return; }
+ 
+  clearMapLayers(); setMapBtns(true);
+  setMapStatus('<span class="spinner-sm"></span>查詢中…','loading');
+ 
+  fetchCheckins(nickname, tripcode, function(err, items) {
+    setMapBtns(false);
+    if (err) { setMapStatus('查詢失敗：'+err.message,'err'); return; }
+    if (!items.length) { setMapStatus('找不到「'+nickname+'」在「'+tripcode+'」的紀錄','err'); return; }
+ 
+    var last = items[items.length-1];
+    var m = L.marker([last.lat,last.lng], { icon:makeMarkerIcon('#3a5a40') });
+    m.bindPopup(
+      '<div class="popup-name">'+last.nickname+'</div>' +
+      '<div class="popup-time">🕐 '+(last.timestamp||'')+'</div>' +
+      (last.note ? '<div class="popup-note">📝 '+last.note+'</div>' : '') +
+      '<div class="popup-coord">'+last.lat.toFixed(5)+', '+last.lng.toFixed(5)+'</div>',
+      { className:'custom-popup', maxWidth:240 }
+    );
+    markersLayer.addLayer(m);
+    mapObj.setView([last.lat,last.lng], 15);
+    m.openPopup();
+    setMapStatus('✓ 顯示「'+nickname+'」最新打卡位置','ok');
+    var pill = document.getElementById('infoPill');
+    pill.innerHTML = '<strong>'+nickname+'</strong> · '+(last.timestamp||'時間不詳');
+    pill.classList.add('show');
+  });
+});
+ 
+document.getElementById('btnAll').addEventListener('click', function() {
+  var nickname = document.getElementById('qNickname').value.trim();
+  var tripcode  = document.getElementById('qTripcode').value.trim();
+  if (!nickname || !tripcode) { setMapStatus('請填寫暱稱與行程代碼','err'); return; }
+ 
+  clearMapLayers(); setMapBtns(true);
+  setMapStatus('<span class="spinner-sm"></span>查詢中…','loading');
+ 
+  fetchCheckins(nickname, tripcode, function(err, items) {
+    setMapBtns(false);
+    if (err) { setMapStatus('查詢失敗：'+err.message,'err'); return; }
+    if (!items.length) { setMapStatus('找不到「'+nickname+'」在「'+tripcode+'」的紀錄','err'); return; }
+ 
+    var coords = items.map(function(d) { return [d.lat,d.lng]; });
+    polyLayer = L.polyline(coords, { color:'#3a5a40', weight:4, opacity:0.75, dashArray:'8 5' }).addTo(mapObj);
+ 
+    var startSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="34" viewBox="0 0 26 34"><path d="M13 0C8.03 0 4 4.03 4 9c0 8.75 9 25 9 25S22 17.75 22 9C22 4.03 17.97 0 13 0z" fill="#d4770a" stroke="rgba(0,0,0,0.25)" stroke-width="1"/><circle cx="13" cy="9" r="4" fill="rgba(255,255,255,0.85)"/></svg>';
+    markersLayer.addLayer(L.marker(coords[0], { icon:L.divIcon({ html:startSvg, className:'', iconSize:[26,34], iconAnchor:[13,34] }) }).bindTooltip('起點'));
+    markersLayer.addLayer(L.marker(coords[coords.length-1], { icon:makeMarkerIcon('#3a5a40') }).bindTooltip('最新'));
+    items.slice(1,-1).forEach(function(d) {
+      markersLayer.addLayer(L.circleMarker([d.lat,d.lng], { radius:5, color:'#3a5a40', fillColor:'#588157', fillOpacity:0.7, weight:2 }));
+    });
+ 
+    mapObj.fitBounds(L.latLngBounds(coords), { padding:[36,36] });
+    setMapStatus('✓ 共 '+items.length+' 個打卡點，顯示完整路線','ok');
+    var pill = document.getElementById('infoPill');
+    pill.innerHTML = '<strong>'+nickname+'</strong> · 共 <strong>'+items.length+'</strong> 點 · '+tripcode;
+    pill.classList.add('show');
+  });
+});
+ 
+['qNickname','qTripcode'].forEach(function(id) {
+  document.getElementById(id).addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('btnLast').click();
+  });
+});
+ 
+// 自動帶入 localStorage 的暱稱和代碼到地圖查詢欄
+document.getElementById('qNickname').value = localStorage.getItem('mytracking_nickname') || '';
+document.getElementById('qTripcode').value  = localStorage.getItem('mytracking_tripcode')  || '';
  
 </script>
 </body>
