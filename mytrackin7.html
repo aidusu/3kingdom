@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>MyTrackIn</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+/* ── ROOT ── */
+:root {
+  --moss:    #3a5a40;
+  --moss-lt: #52796f;
+  --leaf:    #74c69d;
+  --ink:     #1a1f1c;
+  --stone:   #6b7280;
+  --sand:    #f4f1eb;
+  --card:    #ffffff;
+  --border:  rgba(58,90,64,0.14);
+  --red:     #c0392b;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--sand);color:var(--ink);min-height:100vh;display:flex;flex-direction:column;}
+ 
+/* ── TOAST ── */
+.toast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--moss);color:#fff;padding:10px 20px;border-radius:6px;font-size:0.85rem;opacity:0;transition:all .3s;z-index:9999;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.err{background:var(--red);}
+ 
+/* ── PAGES ── */
+.page{display:none;flex:1;flex-direction:column;overflow-y:auto;padding-bottom:70px;}
+.page.active{display:flex;}
+ 
+/* ── NAV ── */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:64px;background:#fff;border-top:1px solid var(--border);display:flex;z-index:100;}
+.nav-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:none;font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:600;color:var(--stone);cursor:pointer;transition:color .2s;}
+.nav-tab svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.nav-tab.active{color:var(--moss);}
+ 
+/* ── PAGE HEADER ── */
+.page-header{background:var(--moss);color:#fff;padding:20px 20px 14px;position:sticky;top:0;z-index:10;}
+.page-header-title{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;letter-spacing:.04em;}
+.page-header-sub{font-size:0.75rem;opacity:.8;margin-top:3px;}
+ 
+/* ── LOGIN PAGE ── */
+#page-login{align-items:center;justify-content:flex-start;padding:24px 16px 80px;}
+.login-card{background:var(--card);border-radius:12px;padding:28px 24px;width:100%;max-width:420px;box-shadow:0 2px 20px rgba(0,0,0,.08);}
+.logo-row{display:flex;align-items:center;gap:10px;margin-bottom:24px;}
+.logo-icon{width:36px;height:36px;background:var(--moss);border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.logo-icon svg{width:20px;height:20px;fill:#fff;stroke:none;}
+.logo-text{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:var(--ink);}
+.logo-text span{color:var(--moss);}
+.login-step{display:none;}
+.login-step.active{display:block;}
+.step-dots{display:flex;gap:6px;margin-bottom:16px;}
+.step-dot{width:8px;height:8px;border-radius:50%;background:var(--border);}
+.step-dot.on{background:var(--moss);}
+h2{font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:700;margin-bottom:6px;}
+.subtitle{font-size:0.82rem;color:var(--stone);margin-bottom:18px;line-height:1.5;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:0.78rem;font-weight:700;color:var(--moss);margin-bottom:5px;letter-spacing:.04em;}
+.field input,.field select{width:100%;border:1.5px solid var(--border);border-radius:6px;padding:10px 12px;font-family:'Noto Sans TC',sans-serif;font-size:0.9rem;background:#fafafa;transition:border-color .2s;outline:none;}
+.field input:focus,.field select:focus{border-color:var(--moss);}
+.btn{width:100%;padding:11px;border-radius:6px;border:none;font-family:'Syne',sans-serif;font-weight:700;font-size:0.92rem;cursor:pointer;margin-top:8px;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-moss{background:var(--moss);color:#fff;}
+.btn-moss:hover{background:#2d4a33;}
+.btn-moss:disabled{opacity:.5;cursor:not-allowed;}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--stone);}
+.btn-outline:hover{border-color:var(--moss);color:var(--moss);}
+.msg{font-size:0.8rem;margin-top:8px;min-height:18px;line-height:1.4;}
+.msg.error{color:var(--red);}
+.msg.success{color:var(--moss);}
+.msg.info{color:var(--stone);}
+.existing-banner{display:none;background:rgba(74,196,157,.12);border:1px solid rgba(74,196,157,.35);border-radius:6px;padding:10px 12px;font-size:0.8rem;color:var(--moss-lt);margin-bottom:14px;line-height:1.5;}
+.existing-banner.show{display:block;}
+.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+ 
+/* ── New user badge ── */
+.new-user-badge{background:rgba(116,198,157,.15);border:1px solid rgba(116,198,157,.4);border-radius:6px;padding:10px 12px;font-size:0.8rem;color:#2d6a4f;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.new-user-badge svg{width:16px;height:16px;flex-shrink:0;fill:none;stroke:#52796f;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+ 
+/* ── Auto-login loader ── */
+.auto-login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:16px;}
+.auto-login-screen .big-spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--moss);border-radius:50%;animation:spin .8s linear infinite;}
+.auto-login-screen p{font-size:0.85rem;color:var(--stone);}
+ 
+/* ── CHECK-IN PAGE ── */
+.checkin-body{padding:16px;display:flex;flex-direction:column;gap:12px;}
+.offline-badge{display:none;background:rgba(192,57,43,.1);border:1px solid rgba(192,57,43,.25);border-radius:6px;padding:10px 12px;font-size:0.78rem;color:var(--red);align-items:center;gap:8px;}
+.offline-badge.show{display:flex;}
+.offline-badge svg{width:16px;height:16px;flex-shrink:0;fill:none;stroke:var(--red);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.user-card{background:var(--card);border-radius:10px;padding:16px;display:flex;align-items:center;gap:14px;box-shadow:0 1px 6px rgba(0,0,0,.06);}
+.avatar{width:44px;height:44px;border-radius:50%;background:var(--moss);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.avatar svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.user-name{font-family:'Syne',sans-serif;font-weight:700;font-size:1.05rem;}
+.user-trip{font-size:0.78rem;color:var(--stone);margin-top:2px;}
+.dark-card{background:var(--card);border-radius:10px;padding:16px;box-shadow:0 1px 6px rgba(0,0,0,.06);}
+.section-label{font-family:'Syne',sans-serif;font-size:0.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--stone);margin-bottom:12px;}
+textarea{width:100%;border:1.5px solid var(--border);border-radius:6px;padding:10px 12px;font-family:'Noto Sans TC',sans-serif;font-size:0.88rem;resize:none;background:#fafafa;outline:none;transition:border-color .2s;}
+textarea:focus{border-color:var(--moss);}
+.gps-status{display:flex;align-items:center;gap:8px;font-size:0.75rem;color:var(--stone);margin:10px 0;}
+.gps-dot{width:8px;height:8px;border-radius:50%;background:var(--stone);flex-shrink:0;}
+.gps-dot.waiting{background:#f59e0b;animation:pulse 1s infinite;}
+.gps-dot.ready{background:#10b981;}
+.gps-dot.error{background:var(--red);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.btn-checkin{width:100%;padding:13px;background:var(--moss);color:#fff;border:none;border-radius:8px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .2s;}
+.btn-checkin:hover{background:#2d4a33;}
+.btn-checkin:disabled{opacity:.5;cursor:not-allowed;}
+.btn-checkin svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.btn-update{width:100%;padding:10px;background:transparent;border:1.5px solid var(--border);border-radius:8px;font-family:'Syne',sans-serif;font-weight:600;font-size:0.82rem;color:var(--stone);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .2s;}
+.btn-update:hover{border-color:var(--moss);color:var(--moss);}
+.btn-update svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.history-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+.history-item:last-child{border-bottom:none;}
+.h-time{font-family:'Syne',sans-serif;font-size:0.7rem;color:var(--stone);white-space:nowrap;margin-top:2px;}
+.h-note{font-size:0.82rem;font-weight:500;}
+.h-coord{font-size:0.72rem;color:var(--stone);margin-top:2px;font-variant-numeric:tabular-nums;}
+.empty-text{font-size:0.82rem;color:var(--stone);text-align:center;padding:16px 0;}
+ 
+/* ── MAP PAGE ── */
+#page-map{flex-direction:column;}
+#map{flex:1;min-height:300px;}
+.map-toolbar{padding:12px 16px;background:var(--card);border-top:1px solid var(--border);display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.map-trip-tag{font-size:0.75rem;background:rgba(58,90,64,.1);color:var(--moss);padding:4px 10px;border-radius:20px;font-family:'Syne',sans-serif;font-weight:600;}
+.map-info{font-size:0.75rem;color:var(--stone);}
+.map-empty{padding:20px;font-size:0.85rem;color:var(--stone);text-align:center;}
+.leaflet-popup-content-wrapper{border-radius:8px!important;}
+.leaflet-popup-content{font-family:'Noto Sans TC',sans-serif;font-size:0.82rem;line-height:1.5;}
+</style>
+</head>
+<body>
+ 
+<!-- ══ TOAST ══ -->
+<div class="toast" id="toast"></div>
+ 
+<!-- ══════════════════════════════════════
+     PAGE 1 · 登入 / 設定
+══════════════════════════════════════ -->
+<div class="page active" id="page-login">
+  <div class="page-header">
+    <div class="page-header-title">身份 / 設定</div>
+    <div class="page-header-sub" id="loginHeaderSub">請先完成登入</div>
+  </div>
+  <div style="display:flex;align-items:flex-start;justify-content:center;padding:24px 16px 80px;">
+  <div class="login-card">
+    <div class="logo-row">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5" fill="white" stroke="none"/></svg>
+      </div>
+      <div class="logo-text">My<span>Track</span>In</div>
+    </div>
+ 
+    <!-- Auto-login loading -->
+    <div class="login-step active" id="lstepLoading">
+      <div class="auto-login-screen">
+        <div class="big-spinner"></div>
+        <p>正在驗證身份…</p>
+      </div>
+    </div>
+ 
+    <!-- Step A: Login -->
+    <div class="login-step" id="lstepA">
+      <div class="step-dots"><div class="step-dot on"></div><div class="step-dot"></div></div>
+      <h2>身份確認</h2>
+      <p class="subtitle">請輸入管理員提供的 Email 與密碼。</p>
+      <div class="field"><label>電子郵件</label><input type="email" id="inEmail" placeholder="your@email.com" autocomplete="email"></div>
+      <div class="field"><label>密碼</label><input type="password" id="inPassword" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="btn btn-moss" id="loginBtn">登入驗證</button>
+      <div class="msg" id="loginMsg"></div>
+    </div>
+ 
+    <!-- Step B: NEW user — set profile -->
+    <div class="login-step" id="lstepNew">
+      <div class="step-dots"><div class="step-dot on"></div><div class="step-dot on"></div></div>
+      <h2>歡迎首次使用</h2>
+      <div class="new-user-badge">
+        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        首次登入，請設定您的打卡身份資料
+      </div>
+      <div class="field"><label>暱稱 Nickname</label><input type="text" id="inNicknameNew" placeholder="例如：小明" maxlength="20"></div>
+      <div class="field"><label>行程代碼 Trip Code</label><input type="text" id="inTripcodeNew" placeholder="例如：TRIP2025" maxlength="30"></div>
+      <button class="btn btn-moss" id="saveBtnNew">完成設定，開始打卡</button>
+      <div class="msg" id="saveMsgNew"></div>
+    </div>
+ 
+    <!-- Step B2: RETURNING user — confirm/edit profile -->
+    <div class="login-step" id="lstepReturn">
+      <div class="step-dots"><div class="step-dot on"></div><div class="step-dot on"></div></div>
+      <h2>歡迎回來</h2>
+      <div class="existing-banner show" id="existingBanner"></div>
+      <div class="field"><label>暱稱 Nickname</label><input type="text" id="inNickname" placeholder="例如：小明" maxlength="20"></div>
+      <div class="field"><label>行程代碼 Trip Code</label><input type="text" id="inTripcode" placeholder="例如：TRIP2025" maxlength="30"></div>
+      <button class="btn btn-moss" id="saveBtn">更新並前往打卡</button>
+      <button class="btn btn-outline" id="skipBtn" style="margin-top:6px;">保留現有設定，直接打卡</button>
+      <button class="btn btn-outline" id="queryTripsBtn" style="margin-top:6px;">查詢此暱稱的所有行程代碼</button>
+      <div id="tripsResult" style="margin-top:12px;"></div>
+      <div class="msg" id="saveMsg"></div>
+    </div>
+  </div>
+  </div>
+</div>
+ 
+<!-- ══════════════════════════════════════
+     PAGE 2 · 打卡
+══════════════════════════════════════ -->
+<div class="page" id="page-checkin">
+  <div class="page-header">
+    <div class="page-header-title">打卡</div>
+    <div class="page-header-sub" id="checkinHeaderSub">載入中…</div>
+  </div>
+  <div class="checkin-body">
+    <!-- Offline notice -->
+    <div class="offline-badge" id="offlineBadge">
+      <svg viewBox="0 0 24 24"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0119 12.55M5 12.55a10.94 10.94 0 015.17-2.39M10.71 5.05A16 16 0 0122.56 9M1.42 9a15.91 15.91 0 014.7-2.88M8.53 16.11a6 6 0 016.95 0M12 20h.01" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      離線模式：打卡資料將在恢復網路後自動送出
+    </div>
+ 
+    <!-- User card -->
+    <div class="user-card">
+      <div class="avatar">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div>
+        <div class="user-name" id="ci-name">—</div>
+        <div class="user-trip">行程代碼：<strong id="ci-trip">—</strong></div>
+      </div>
+    </div>
+ 
+    <!-- Note & submit -->
+    <div class="dark-card">
+      <div class="section-label">新增打卡紀錄</div>
+      <textarea id="noteInput" placeholder="備註（選填）：目前在哪裡？做什麼？…" rows="3"></textarea>
+      <div class="gps-status"><div class="gps-dot" id="gpsDot"></div><span id="gpsText">按下送出後自動取得 GPS 位置</span></div>
+      <button class="btn-checkin" id="checkinBtn">
+        <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        送出打卡
+      </button>
+    </div>
+ 
+    <!-- Update tripcode -->
+    <button class="btn-update" id="updateTripBtn">
+      <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      更新暱稱 / 行程代碼
+    </button>
+ 
+    <!-- Local history -->
+    <div class="dark-card" style="margin-top:4px;">
+      <div class="section-label">本次行程打卡紀錄</div>
+      <div id="historyList"><div class="empty-text">尚無本地紀錄</div></div>
+    </div>
+  </div>
+</div>
+ 
+<!-- ══════════════════════════════════════
+     PAGE 3 · 地圖查詢
+══════════════════════════════════════ -->
+<div class="page" id="page-map">
+  <div class="page-header">
+    <div class="page-header-title">地圖查詢</div>
+    <div class="page-header-sub" id="mapHeaderSub">顯示您的打卡位置</div>
+  </div>
+  <div id="map"></div>
+  <div class="map-toolbar" id="mapToolbar">
+    <span class="map-info" id="mapInfo">請先完成登入</span>
+  </div>
+</div>
+ 
+<!-- ── Bottom Nav ── -->
+<nav class="bottom-nav">
+  <button class="nav-tab active" id="tab-login" data-page="login">
+    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    身份 / 設定
+  </button>
+  <button class="nav-tab" id="tab-checkin" data-page="checkin">
+    <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    打卡
+  </button>
+  <button class="nav-tab" id="tab-map" data-page="map">
+    <svg viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+    地圖查詢
+  </button>
+</nav>
+ 
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Firebase Compat -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+ 
+<script>
+// ══════════════════════════════════════
+//   Firebase 設定
+// ══════════════════════════════════════
+const firebaseConfig = {
+  apiKey:            "AIzaSyCsI9fZHO8uaaahUmYJKh7yjgvp3fCVLhc",
+  authDomain:        "trackin-ae66d.firebaseapp.com",
+  databaseURL:       "https://trackin-ae66d-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:         "trackin-ae66d",
+  storageBucket:     "trackin-ae66d.firebasestorage.app",
+  messagingSenderId: "693858252787",
+  appId:             "1:693858252787:web:918b7e05b08d94c0ae4486",
+  measurementId:     "G-P5FSVMY594"
+};
+ 
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.database();
+ 
+let currentUser  = null;
+let mapObj       = null;
+let mapMarkers   = [];
+ 
+// ══════════════════════════════════════
+//   NAVIGATION
+// ══════════════════════════════════════
+function showPage(name) {
+  ['login','checkin','map'].forEach(function(p) {
+    document.getElementById('page-'+p).classList.remove('active');
+    document.getElementById('tab-'+p).classList.remove('active');
+  });
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+  if (name === 'checkin') refreshCheckinUI();
+  if (name === 'map')     { initMap(); setTimeout(function(){ mapObj && mapObj.invalidateSize(); }, 150); loadMapCheckins(); }
+}
+ 
+document.querySelectorAll('.nav-tab').forEach(function(tab) {
+  tab.addEventListener('click', function() { showPage(tab.dataset.page); });
+});
+ 
+// ══════════════════════════════════════
+//   HELPERS
+// ══════════════════════════════════════
+function showToast(msg, isErr) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isErr ? ' err' : '') + ' show';
+  setTimeout(function(){ t.classList.remove('show'); }, 3000);
+}
+ 
+function showMsg(id, text, type) {
+  var el = document.getElementById(id);
+  el.className = 'msg' + (type ? ' '+type : '');
+  el.textContent = text;
+}
+ 
+function getTaipeiTimeStr() {
+  return new Date().toLocaleString('zh-TW', {
+    timeZone:'Asia/Taipei', year:'numeric', month:'2-digit', day:'2-digit',
+    hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false
+  });
+}
+ 
+function showLoginStep(stepId) {
+  ['lstepLoading','lstepA','lstepNew','lstepReturn'].forEach(function(id){
+    document.getElementById(id).classList.remove('active');
+  });
+  document.getElementById(stepId).classList.add('active');
+}
+ 
+// ══════════════════════════════════════
+//   AUTH STATE — auto-login
+// ══════════════════════════════════════
+auth.onAuthStateChanged(function(user) {
+  if (user) {
+    // User is signed in — check if they have profile data
+    currentUser = user;
+    localStorage.setItem('mytracking_uid', user.uid);
+    db.ref('users/' + user.uid).once('value').then(function(snap) {
+      if (snap.exists()) {
+        var data = snap.val();
+        // RETURNING user — fill data and go straight to check-in
+        localStorage.setItem('mytracking_nickname', data.nickname || '');
+        localStorage.setItem('mytracking_tripcode',  data.tripcode  || '');
+        // Pre-fill the return step fields too (for if they navigate back)
+        document.getElementById('inNickname').value = data.nickname || '';
+        document.getElementById('inTripcode').value  = data.tripcode  || '';
+        document.getElementById('existingBanner').textContent =
+          '目前設定：暱稱「' + data.nickname + '」，代碼「' + data.tripcode + '」';
+        updateLoginHeader();
+        showPage('checkin');
+      } else {
+        // NEW user — no profile yet
+        showLoginStep('lstepNew');
+        showPage('login');
+      }
+    }).catch(function(){
+      // Can't read DB — go to login form
+      showLoginStep('lstepA');
+    });
+  } else {
+    // Not signed in — show login form
+    currentUser = null;
+    showLoginStep('lstepA');
+    showPage('login');
+  }
+});
+ 
+function updateLoginHeader() {
+  var nn = localStorage.getItem('mytracking_nickname') || '';
+  var tc = localStorage.getItem('mytracking_tripcode')  || '';
+  document.getElementById('loginHeaderSub').textContent = nn && tc ? nn + ' · ' + tc : '請先完成登入';
+}
+ 
+// ══════════════════════════════════════
+//   PAGE 1 · LOGIN (Step A)
+// ══════════════════════════════════════
+document.getElementById('loginBtn').addEventListener('click', doLogin);
+document.getElementById('inPassword').addEventListener('keydown', function(e){
+  if (e.key==='Enter') doLogin();
+});
+ 
+function doLogin() {
+  var email    = document.getElementById('inEmail').value.trim();
+  var password = document.getElementById('inPassword').value;
+  if (!email || !password) { showMsg('loginMsg','請填寫 Email 與密碼','error'); return; }
+ 
+  document.getElementById('loginBtn').disabled = true;
+  showMsg('loginMsg','正在驗證…','info');
+ 
+  auth.signInWithEmailAndPassword(email, password)
+    .then(function(cred) {
+      currentUser = cred.user;
+      // onAuthStateChanged will fire and handle routing automatically
+      showMsg('loginMsg','','');
+      document.getElementById('loginBtn').disabled = false;
+    })
+    .catch(function(err) {
+      var msg = '登入失敗：' + err.message;
+      if (err.code==='auth/invalid-credential'||err.code==='auth/wrong-password'||err.code==='auth/user-not-found') {
+        msg = '電子郵件或密碼錯誤，請重新輸入。';
+      } else if (err.code==='auth/too-many-requests') {
+        msg = '嘗試次數過多，請稍後再試。';
+      }
+      showMsg('loginMsg', msg, 'error');
+      document.getElementById('loginBtn').disabled = false;
+    });
+}
+ 
+// ══════════════════════════════════════
+//   PAGE 1 · NEW USER SETUP (Step New)
+// ══════════════════════════════════════
+document.getElementById('saveBtnNew').addEventListener('click', function() {
+  var nickname = document.getElementById('inNicknameNew').value.trim();
+  var tripcode  = document.getElementById('inTripcodeNew').value.trim();
+  if (!nickname) { showMsg('saveMsgNew','請輸入暱稱','error'); return; }
+  if (!tripcode)  { showMsg('saveMsgNew','請輸入行程代碼','error'); return; }
+  saveProfile(nickname, tripcode, 'saveMsgNew', 'saveBtnNew');
+});
+ 
+// ══════════════════════════════════════
+//   PAGE 1 · RETURNING USER (Step Return)
+// ══════════════════════════════════════
+document.getElementById('saveBtn').addEventListener('click', function() {
+  var nickname = document.getElementById('inNickname').value.trim();
+  var tripcode  = document.getElementById('inTripcode').value.trim();
+  if (!nickname) { showMsg('saveMsg','請輸入暱稱','error'); return; }
+  if (!tripcode)  { showMsg('saveMsg','請輸入行程代碼','error'); return; }
+  saveProfile(nickname, tripcode, 'saveMsg', 'saveBtn');
+});
+ 
+document.getElementById('skipBtn').addEventListener('click', function() { showPage('checkin'); });
+ 
+function saveProfile(nickname, tripcode, msgId, btnId) {
+  var uid = currentUser ? currentUser.uid : localStorage.getItem('mytracking_uid');
+  if (!uid) { showMsg(msgId,'尚未登入，請重新整理','error'); return; }
+ 
+  var btn = document.getElementById(btnId);
+  btn.disabled = true;
+ 
+  db.ref('users/' + uid).set({
+    nickname:  nickname,
+    tripcode:  tripcode,
+    email:     currentUser ? currentUser.email : '',
+    updatedAt: new Date().toISOString()
+  })
+  .then(function() {
+    localStorage.setItem('mytracking_nickname', nickname);
+    localStorage.setItem('mytracking_tripcode',  tripcode);
+    // Update return banner too
+    document.getElementById('inNickname').value = nickname;
+    document.getElementById('inTripcode').value  = tripcode;
+    document.getElementById('existingBanner').textContent =
+      '目前設定：暱稱「' + nickname + '」，代碼「' + tripcode + '」';
+    updateLoginHeader();
+    showMsg(msgId,'✓ 設定成功！','success');
+    setTimeout(function(){ showPage('checkin'); }, 800);
+  })
+  .catch(function(e) {
+    showMsg(msgId,'儲存失敗：' + e.message, 'error');
+  })
+  .finally(function() {
+    btn.disabled = false;
+  });
+}
+ 
+// ── Query trips by nickname (returning user step) ──
+document.getElementById('queryTripsBtn').addEventListener('click', function() {
+  var nickname = document.getElementById('inNickname').value.trim();
+  if (!nickname) { document.getElementById('tripsResult').innerHTML='<div class="msg error">請先輸入暱稱</div>'; return; }
+  queryTripsByNickname(nickname, 'tripsResult', 'inTripcode');
+});
+ 
+function queryTripsByNickname(nickname, resultElId, fillElId) {
+  var el = document.getElementById(resultElId);
+  el.innerHTML = '<div class="msg info">查詢中…</div>';
+ 
+  db.ref('checkins').orderByChild('nickname').equalTo(nickname).once('value')
+    .then(function(snap) {
+      if (!snap.exists()) { el.innerHTML='<div class="msg error">找不到此暱稱的任何打卡紀錄</div>'; return; }
+      var trips = {};
+      snap.forEach(function(child) {
+        var d = child.val();
+        if (d.tripcode) { trips[d.tripcode] = (trips[d.tripcode]||0) + 1; }
+      });
+      var codes = Object.keys(trips);
+      if (!codes.length) { el.innerHTML='<div class="msg error">找不到任何行程代碼</div>'; return; }
+ 
+      el.innerHTML = '<div style="background:rgba(58,90,64,0.07);border:1px solid rgba(58,90,64,0.18);border-radius:6px;padding:12px 14px;">'
+        + '<div style="font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--stone);margin-bottom:10px;">「'+nickname+'」的行程代碼</div>'
+        + codes.map(function(code){
+            return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(58,90,64,0.1);">'
+              +'<span style="font-family:Syne,sans-serif;font-weight:600;flex:1;">'+code+'</span>'
+              +'<span style="font-size:0.75rem;color:var(--stone);">'+trips[code]+' 筆</span>'
+              +'<button onclick="fillTripcode(\''+code+'\',\''+fillElId+'\')" style="font-size:0.75rem;padding:4px 10px;background:var(--moss);color:#fff;border:none;border-radius:4px;cursor:pointer;font-family:Syne,sans-serif;font-weight:600;">使用</button>'
+              +'</div>';
+          }).join('')
+        + '</div>';
+    })
+    .catch(function(e){ el.innerHTML='<div class="msg error">查詢失敗：'+e.message+'</div>'; });
+}
+ 
+function fillTripcode(code, inputId) {
+  document.getElementById(inputId || 'inTripcode').value = code;
+  document.getElementById('tripsResult').innerHTML = '';
+}
+ 
+// ══════════════════════════════════════
+//   PAGE 2 · CHECK-IN
+// ══════════════════════════════════════
+var offlineQueue = JSON.parse(localStorage.getItem('mytracking_queue')   || '[]');
+var localHistory = JSON.parse(localStorage.getItem('mytracking_history') || '[]');
+var isOnline     = navigator.onLine;
+ 
+window.addEventListener('online',  function(){ isOnline=true;  updateOfflineBadge(); tryFlushQueue(); });
+window.addEventListener('offline', function(){ isOnline=false; updateOfflineBadge(); });
+ 
+function updateOfflineBadge() {
+  document.getElementById('offlineBadge').classList.toggle('show', !isOnline);
+}
+updateOfflineBadge();
+ 
+function refreshCheckinUI() {
+  var nn = localStorage.getItem('mytracking_nickname') || '（未設定）';
+  var tc = localStorage.getItem('mytracking_tripcode')  || '（未設定）';
+  document.getElementById('ci-name').textContent  = nn;
+  document.getElementById('ci-trip').textContent  = tc;
+  document.getElementById('checkinHeaderSub').textContent = nn + '  ·  ' + tc;
+  renderHistory();
+}
+ 
+function renderHistory() {
+  var el = document.getElementById('historyList');
+  if (!localHistory.length) { el.innerHTML='<div class="empty-text">尚無本地紀錄</div>'; return; }
+  el.innerHTML = localHistory.slice().reverse().slice(0,8).map(function(h){
+    return '<div class="history-item">'
+      +'<div class="h-time">'+h.timeStr+'</div>'
+      +'<div><div class="h-note">'+(h.note||'（無備註）')+'</div>'
+      +'<div class="h-coord">'+(h.lat ? h.lat.toFixed(5)+', '+h.lng.toFixed(5) : '位置未取得')+'</div></div>'
+      +'</div>';
+  }).join('');
+}
+ 
+function setGps(state, text) {
+  document.getElementById('gpsDot').className = 'gps-dot ' + state;
+  document.getElementById('gpsText').textContent = text;
+}
+ 
+function getPosition() {
+  return new Promise(function(res, rej){
+    if (!navigator.geolocation) { rej(new Error('裝置不支援 GPS')); return; }
+    navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy:true, timeout:15000, maximumAge:0 });
+  });
+}
+ 
+function tryFlushQueue() {
+  if (!offlineQueue.length || !isOnline) return;
+  var toSend = offlineQueue.slice();
+  offlineQueue = [];
+  localStorage.setItem('mytracking_queue','[]');
+  toSend.forEach(function(item){
+    db.ref('checkins').push(item).catch(function(){ offlineQueue.push(item); });
+  });
+  setTimeout(function(){
+    localStorage.setItem('mytracking_queue', JSON.stringify(offlineQueue));
+    if (!offlineQueue.length) showToast('✓ 離線打卡已同步');
+  }, 2000);
+}
+ 
+document.getElementById('checkinBtn').addEventListener('click', function() {
+  var nickname = localStorage.getItem('mytracking_nickname');
+  var tripcode  = localStorage.getItem('mytracking_tripcode');
+  if (!nickname || !tripcode) { showToast('請先完成身份設定', true); showPage('login'); return; }
+ 
+  var note = document.getElementById('noteInput').value.trim();
+  var btn  = document.getElementById('checkinBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>取得位置中…';
+  setGps('waiting','正在取得 GPS 位置…');
+ 
+  getPosition()
+    .then(function(pos){
+      setGps('ready','已取得位置（精度 ±'+Math.round(pos.coords.accuracy)+'m）');
+      sendCheckin(nickname, tripcode, note, pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+    })
+    .catch(function(e){
+      setGps('error','GPS 失敗：'+(e.message||'未知'));
+      sendCheckin(nickname, tripcode, note, null, null, null);
+    })
+    .finally(function(){
+      btn.disabled = false;
+      btn.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>送出打卡';
+    });
+});
+ 
+function sendCheckin(nickname, tripcode, note, lat, lng, accuracy) {
+  var timeStr = getTaipeiTimeStr();
+  var data = { nickname:nickname, tripcode:tripcode, note:note||'', lat:lat, lng:lng, accuracy:accuracy, timestamp:timeStr, clientTime:new Date().toISOString() };
+ 
+  localHistory.push({ timeStr:timeStr, note:note, lat:lat, lng:lng });
+  if (localHistory.length > 60) localHistory = localHistory.slice(-60);
+  localStorage.setItem('mytracking_history', JSON.stringify(localHistory));
+  renderHistory();
+ 
+  if (isOnline) {
+    db.ref('checkins').push(data)
+      .then(function(){
+        showToast('✓ 打卡成功！');
+        document.getElementById('noteInput').value = '';
+      })
+      .catch(function(){
+        offlineQueue.push(data);
+        localStorage.setItem('mytracking_queue', JSON.stringify(offlineQueue));
+        showToast('網路異常，已暫存將自動重傳', true);
+      });
+  } else {
+    offlineQueue.push(data);
+    localStorage.setItem('mytracking_queue', JSON.stringify(offlineQueue));
+    showToast('離線已暫存，連線後自動送出', true);
+    document.getElementById('noteInput').value = '';
+  }
+}
+ 
+document.getElementById('updateTripBtn').addEventListener('click', function() {
+  // Go to login page, show return step (if logged in) or login step
+  showPage('login');
+  if (currentUser && localStorage.getItem('mytracking_nickname')) {
+    showLoginStep('lstepReturn');
+  } else if (currentUser) {
+    showLoginStep('lstepNew');
+  } else {
+    showLoginStep('lstepA');
+  }
+});
+ 
+if (isOnline) tryFlushQueue();
+ 
+// ══════════════════════════════════════
+//   PAGE 3 · MAP — filtered by NICKNAME+TRIPCODE
+// ══════════════════════════════════════
+function initMap() {
+  if (mapObj) return; // already initialized
+  mapObj = L.map('map').setView([25.0330, 121.5654], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom:19
+  }).addTo(mapObj);
+}
+ 
+function clearMapMarkers() {
+  mapMarkers.forEach(function(m){ mapObj.removeLayer(m); });
+  mapMarkers = [];
+}
+ 
+function loadMapCheckins() {
+  var nickname = localStorage.getItem('mytracking_nickname');
+  var tripcode  = localStorage.getItem('mytracking_tripcode');
+  var mapInfo  = document.getElementById('mapInfo');
+  var mapHeader = document.getElementById('mapHeaderSub');
+ 
+  if (!nickname || !tripcode) {
+    mapInfo.textContent = '請先完成登入與設定';
+    mapHeader.textContent = '尚未登入';
+    return;
+  }
+ 
+  mapInfo.textContent = '載入中…';
+  mapHeader.textContent = nickname + ' · ' + tripcode;
+ 
+  // ★ KEY: filter by BOTH nickname AND tripcode — no cross-user data leakage
+  db.ref('checkins')
+    .orderByChild('tripcode')
+    .equalTo(tripcode)
+    .once('value')
+    .then(function(snap) {
+      clearMapMarkers();
+ 
+      if (!snap.exists()) {
+        mapInfo.textContent = '此行程代碼尚無打卡紀錄';
+        return;
+      }
+ 
+      var points = [];
+      snap.forEach(function(child) {
+        var d = child.val();
+        // ★ Secondary filter: must also match nickname (same tripcode could be shared under different nicknames in theory)
+        if (d.nickname !== nickname) return;
+        if (!d.lat || !d.lng) return;
+ 
+        points.push([d.lat, d.lng]);
+ 
+        var marker = L.circleMarker([d.lat, d.lng], {
+          radius:8, fillColor:'#3a5a40', color:'#fff', weight:2,
+          opacity:1, fillOpacity:0.9
+        }).addTo(mapObj);
+ 
+        marker.bindPopup(
+          '<div style="min-width:160px;">'
+          + '<div style="font-family:Syne,sans-serif;font-weight:700;margin-bottom:4px;color:#3a5a40;">'+nickname+'</div>'
+          + '<div style="font-size:0.78rem;color:#6b7280;margin-bottom:6px;">'+d.timestamp+'</div>'
+          + (d.note ? '<div style="font-size:0.82rem;margin-bottom:4px;">'+d.note+'</div>' : '')
+          + '<div style="font-size:0.72rem;color:#9ca3af;">'+d.lat.toFixed(5)+', '+d.lng.toFixed(5)+'</div>'
+          + (d.accuracy ? '<div style="font-size:0.72rem;color:#9ca3af;">精度 ±'+Math.round(d.accuracy)+'m</div>' : '')
+          + '</div>'
+        );
+ 
+        mapMarkers.push(marker);
+      });
+ 
+      if (points.length === 0) {
+        mapInfo.textContent = '此行程尚無含 GPS 的打卡紀錄';
+        return;
+      }
+ 
+      // Fit map to all markers
+      var bounds = L.latLngBounds(points);
+      mapObj.fitBounds(bounds, { padding:[40,40], maxZoom:16 });
+ 
+      var toolbar = document.getElementById('mapToolbar');
+      toolbar.innerHTML = '<span class="map-trip-tag">'+nickname+' · '+tripcode+'</span>'
+        + '<span class="map-info">共 '+points.length+' 個位置</span>'
+        + '<button onclick="loadMapCheckins()" style="margin-left:auto;font-size:0.75rem;padding:4px 10px;background:var(--moss);color:#fff;border:none;border-radius:4px;cursor:pointer;font-family:Syne,sans-serif;font-weight:600;">重新整理</button>';
+    })
+    .catch(function(e) {
+      mapInfo.textContent = '載入失敗：' + e.message;
+    });
+}
+</script>
+</body>
+</html>
