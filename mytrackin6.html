@@ -316,7 +316,12 @@ textarea::placeholder { color:#b5afa5; }
 <!-- ══════════════════════════════════════
      PAGE 1 · 登入 / 設定
 ══════════════════════════════════════ -->
-<div class="page" id="page-login">
+<div class="page active" id="page-login">
+  <div class="page-header">
+    <div class="page-header-title">身份 / 設定</div>
+    <div class="page-header-sub" id="loginHeaderSub">請先完成登入</div>
+  </div>
+  <div style="display:flex;align-items:flex-start;justify-content:center;padding:24px 16px 80px;">
   <div class="login-card">
     <div class="logo-row">
       <div class="logo-icon">
@@ -325,8 +330,16 @@ textarea::placeholder { color:#b5afa5; }
       <div class="logo-text">My<span>Track</span>In</div>
     </div>
  
+    <!-- Auto-login loading -->
+    <div class="login-step active" id="lstepLoading">
+      <div class="auto-login-screen">
+        <div class="big-spinner"></div>
+        <p>正在驗證身份…</p>
+      </div>
+    </div>
+ 
     <!-- Step A: Login -->
-    <div class="login-step active" id="lstepA">
+    <div class="login-step" id="lstepA">
       <div class="step-dots"><div class="step-dot on"></div><div class="step-dot"></div></div>
       <h2>身份確認</h2>
       <p class="subtitle">請輸入管理員提供的 Email 與密碼。</p>
@@ -336,20 +349,34 @@ textarea::placeholder { color:#b5afa5; }
       <div class="msg" id="loginMsg"></div>
     </div>
  
-    <!-- Step B: Set profile -->
-    <div class="login-step" id="lstepB">
+    <!-- Step B: NEW user — set profile -->
+    <div class="login-step" id="lstepNew">
       <div class="step-dots"><div class="step-dot on"></div><div class="step-dot on"></div></div>
-      <h2>設定資料</h2>
-      <p class="subtitle">設定暱稱與行程代碼，用於打卡與查詢。</p>
-      <div class="existing-banner" id="existingBanner"></div>
+      <h2>歡迎首次使用</h2>
+      <div class="new-user-badge">
+        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        首次登入，請設定您的打卡身份資料
+      </div>
+      <div class="field"><label>暱稱 Nickname</label><input type="text" id="inNicknameNew" placeholder="例如：小明" maxlength="20"></div>
+      <div class="field"><label>行程代碼 Trip Code</label><input type="text" id="inTripcodeNew" placeholder="例如：TRIP2025" maxlength="30"></div>
+      <button class="btn btn-moss" id="saveBtnNew">完成設定，開始打卡</button>
+      <div class="msg" id="saveMsgNew"></div>
+    </div>
+ 
+    <!-- Step B2: RETURNING user — confirm/edit profile -->
+    <div class="login-step" id="lstepReturn">
+      <div class="step-dots"><div class="step-dot on"></div><div class="step-dot on"></div></div>
+      <h2>歡迎回來</h2>
+      <div class="existing-banner show" id="existingBanner"></div>
       <div class="field"><label>暱稱 Nickname</label><input type="text" id="inNickname" placeholder="例如：小明" maxlength="20"></div>
       <div class="field"><label>行程代碼 Trip Code</label><input type="text" id="inTripcode" placeholder="例如：TRIP2025" maxlength="30"></div>
-      <button class="btn btn-moss" id="saveBtn">確認並儲存</button>
-      <button class="btn btn-outline" id="skipBtn">保留現有設定，前往打卡</button>
-      <button class="btn btn-outline" id="queryTripsBtn">查詢此暱稱的所有行程代碼</button>
+      <button class="btn btn-moss" id="saveBtn">更新並前往打卡</button>
+      <button class="btn btn-outline" id="skipBtn" style="margin-top:6px;">保留現有設定，直接打卡</button>
+      <button class="btn btn-outline" id="queryTripsBtn" style="margin-top:6px;">查詢此暱稱的所有行程代碼</button>
       <div id="tripsResult" style="margin-top:12px;"></div>
       <div class="msg" id="saveMsg"></div>
     </div>
+  </div>
   </div>
 </div>
  
@@ -393,16 +420,17 @@ textarea::placeholder { color:#b5afa5; }
     <!-- Update tripcode -->
     <button class="btn-update" id="updateTripBtn">
       <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-      更新行程代碼
+      更新暱稱 / 行程代碼
     </button>
  
     <!-- Local history -->
-    <div class="dark-card" style="margin-top:12px;">
+    <div class="dark-card" style="margin-top:4px;">
       <div class="section-label">本次行程打卡紀錄</div>
       <div id="historyList"><div class="empty-text">尚無本地紀錄</div></div>
     </div>
   </div>
 </div>
+    
  
 <!-- ══════════════════════════════════════
      PAGE 3 · 地圖查詢
