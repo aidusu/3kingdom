@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>個人閱讀紀錄系統</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 20px auto; padding: 0 20px; }
+        nav { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
+        .page { display: none; }
+        .active { display: block; }
+        .form-group { margin-bottom: 10px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input, select, textarea { width: 100%; padding: 8px; box-sizing: border-box; }
+        #results { margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px; }
+        .book-item { padding: 10px; border-bottom: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <button onclick="showPage('auth')">會員中心</button>
+        <button onclick="showPage('edit')">編輯書籍</button>
+        <button onclick="showPage('search')">查詢與統計</button>
+    </nav>
+
+    <section id="page-auth" class="page active">
+        <h2>會員認證</h2>
+        <div id="login-box">
+            <input type="email" id="email" placeholder="Email"><br><br>
+            <input type="password" id="password" placeholder="密碼"><br><br>
+            <button onclick="login()">登入</button>
+        </div>
+        <div id="user-box" style="display:none;">
+            <h3 id="nickname-display"></h3>
+            <button onclick="logout()">登出</button>
+        </div>
+    </section>
+
+    <section id="page-edit" class="page">
+        <h2>編輯書籍資料</h2>
+        <form id="book-form">
+            <div class="form-group"><input type="text" id="isbn" placeholder="ISBN" required></div>
+            <div class="form-group"><input type="text" id="title" placeholder="書名" required></div>
+            <div class="form-group"><input type="text" id="en_title" placeholder="英文書名"></div>
+            <div class="form-group"><input type="text" id="author" placeholder="作者"></div>
+            <div class="form-group"><input type="text" id="publisher" placeholder="出版社"></div>
+            <div class="form-group"><label>出版年月</label><input type="date" id="pub_date"></div>
+            <div class="form-group"><input type="text" id="category" placeholder="分類 (逗號分隔)"></div>
+            <div class="form-group"><input type="text" id="tags" placeholder="系列標籤 (逗號分隔)"></div>
+            <div class="form-group"><input type="text" id="progress" placeholder="閱讀進度"></div>
+            <div class="form-group"><label>完成日期</label><input type="date" id="finish_date"></div>
+            <div class="form-group">
+                <label>評分</label>
+                <select id="rating">
+                    <option value="5">⭐⭐⭐⭐⭐</option>
+                    <option value="4">⭐⭐⭐⭐</option>
+                    <option value="3">⭐⭐⭐</option>
+                    <option value="2">⭐⭐</option>
+                    <option value="1">⭐</option>
+                </select>
+            </div>
+            <div class="form-group"><textarea id="recommend" placeholder="名人推薦"></textarea></div>
+            <div class="form-group"><input type="url" id="url" placeholder="相關 URL"></div>
+            <button type="submit">儲存書籍</button>
+        </form>
+    </section>
+
+    <section id="page-search" class="page">
+        <h2>查詢書單</h2>
+        <input type="text" id="search-input" placeholder="搜尋：書名/作者/ISBN" oninput="searchBooks()">
+        <div id="stats-area"><h3>📊 今年已讀: <span id="count">0</span> 本</h3></div>
+        <div id="results"></div>
+    </section>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        // 1. 初始化 (請填入您的 Firebase Config)
+        const firebaseConfig = { apiKey: "...", authDomain: "...", projectId: "...", storageBucket: "...", messagingSenderId: "...", appId: "..." };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth();
+        const db = getFirestore();
+
+        let uid = null;
+
+        // 頁面切換邏輯
+        window.showPage = (id) => {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(`page-${id}`).classList.add('active');
+        };
+
+        // 認證狀態
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                uid = user.uid;
+                const userDoc = await getDoc(doc(db, "users", uid));
+                document.getElementById("nickname-display").innerText = `你好，${userDoc.data()?.nickname || "使用者"}`;
+                document.getElementById("login-box").style.display = 'none';
+                document.getElementById("user-box").style.display = 'block';
+            }
+        });
+
+        // 儲存書籍
+        document.getElementById('book-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const data = {
+                uid,
+                isbn: document.getElementById('isbn').value,
+                title: document.getElementById('title').value,
+                en_title: document.getElementById('en_title').value,
+                author: document.getElementById('author').value,
+                publisher: document.getElementById('publisher').value,
+                pub_date: document.getElementById('pub_date').value,
+                category: document.getElementById('category').value.split(','),
+                tags: document.getElementById('tags').value.split(','),
+                progress: document.getElementById('progress').value,
+                finish_date: document.getElementById('finish_date').value,
+                rating: parseInt(document.getElementById('rating').value),
+                recommend: document.getElementById('recommend').value,
+                url: document.getElementById('url').value
+            };
+            await addDoc(collection(db, "books"), data);
+            alert("儲存成功");
+            document.getElementById('book-form').reset();
+        };
+
+        // 查詢與統計
+        window.searchBooks = async () => {
+            const keyword = document.getElementById('search-input').value.toLowerCase();
+            const q = query(collection(db, "books"), where("uid", "==", uid));
+            const snapshot = await getDocs(q);
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = "";
+            let count = 0;
+            const currentYear = new Date().getFullYear().toString();
+
+            snapshot.forEach(doc => {
+                const b = doc.data();
+                // 年度統計
+                if (b.finish_date?.startsWith(currentYear)) count++;
+                
+                // 搜尋匹配
+                if (b.title.toLowerCase().includes(keyword) || 
+                    b.author.toLowerCase().includes(keyword) || 
+                    b.isbn.includes(keyword)) {
+                    resultsDiv.innerHTML += `<div class="book-item"><strong>${b.title}</strong> (${b.author}) - ${b.isbn}</div>`;
+                }
+            });
+            document.getElementById('count').innerText = count;
+        };
+
+        window.login = () => signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value).catch(alert);
+        window.logout = () => signOut(auth).then(() => location.reload());
+    </script>
+</body>
+</html>
