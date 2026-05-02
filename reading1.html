@@ -77,7 +77,14 @@
         import { getFirestore, doc, getDoc, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
         // !!! 請務必填入您的 Firebase Config !!!
-        const firebaseConfig = { apiKey: "...", authDomain: "...", projectId: "...", storageBucket: "...", messagingSenderId: "...", appId: "..." };
+        const firebaseConfig = { const firebaseConfig = {
+  apiKey: "AIzaSyBCmv8R5t-9sZ9knKT-ewS1IOaeFD035j4",
+  authDomain: "hhbooks-23c93.firebaseapp.com",
+  projectId: "hhbooks-23c93",
+  storageBucket: "hhbooks-23c93.firebasestorage.app",
+  messagingSenderId: "676890019080",
+  appId: "1:676890019080:web:f8bb06893e2136d09a18bd"
+};
         const app = initializeApp(firebaseConfig);
         const auth = getAuth();
         const db = getFirestore();
