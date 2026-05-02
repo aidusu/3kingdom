@@ -1,105 +1,118 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>元保宮遶境地圖（精緻固定版）</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-    <style>
-        body { margin:0; font-family:sans-serif; }
-        #map { height:100vh; }
-        
-        #title {
-            position:absolute;
-            top:10px;
-            left:50%;
-            transform:translateX(-50%);
-            background:rgba(255,255,255,0.9);
-            padding:6px 12px;
-            border-radius:8px;
-            font-size: 14px;
-            font-weight:bold;
-            box-shadow:0 2px 8px rgba(0,0,0,0.15);
-            z-index: 1000;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>元保宮遶境地圖（完整版）</title>
 
-        /* 下方置中控制面板 */
-        #controls {
-            position: absolute;
-            bottom: 20px;       /* 距離底部 20px */
-            left: 50%;          /* 左邊緣移到 50% */
-            transform: translateX(-50%); /* 往左平移自身寬度的一半，達成完美置中 */
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(8px); /* 磨砂玻璃效果 */
-            padding: 10px 20px;
-            border-radius: 30px; /* 膠囊圓角 */
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            white-space: nowrap; /* 確保內容在同一行 */
-        }
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
-        #controls h4 { 
-            margin: 0; 
-            font-size: 13px; 
-            border-right: 1px solid #ddd; 
-            padding-right: 10px;
-        }
+<style>
+body {
+    margin:0;
+    font-family:sans-serif;
+    display:flex;
+    flex-direction: column;
+    height:100vh;
+}
 
-        #routeList {
-            display: flex;
-            gap: 12px;
-        }
+#map {
+    flex:1;
+}
 
-        .route-item { 
-            margin-bottom: 0; 
-            display: flex; 
-            align-items: center; 
-        }
+#title {
+    position:absolute;
+    top:10px;
+    left:50%;
+    transform:translateX(-50%);
+    background:rgba(255,255,255,0.9);
+    padding:6px 10px;
+    border-radius:8px;
+    font-size:13px;
+    font-weight:bold;
+    box-shadow:0 2px 6px rgba(0,0,0,0.15);
+    z-index:1000;
+}
 
-        .route-item input { 
-            margin-right: 5px; 
-            cursor: pointer; 
-        }
-    </style>
+#controls {
+    background: rgba(255,255,255,0.95);
+    padding: 6px 10px;
+    border-top: 1px solid #ddd;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+
+    display:flex;
+    flex-direction: column;
+    gap:5px;
+    font-size:12px;
+}
+
+#controls-top {
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+#routeList {
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+}
+
+.route-item {
+    display:flex;
+    align-items:center;
+}
+
+.route-item input {
+    margin-right:3px;
+}
+</style>
 </head>
+
 <body>
 
 <div id="map"></div>
 <div id="title">準備開始...</div>
 
 <div id="controls">
-    <h4>播放路線</h4>
+    <div id="controls-top">
+        <strong>播放路線</strong>
+        <span style="color:#666;">* 未勾選則全選</span>
+    </div>
     <div id="routeList"></div>
-    <div id="hint">* 未勾選則預設全選</div>
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
-const allRoutesData = [
+
+const allRoutesData = [ /* 👉 這裡已放入你全部資料（原封不動） */
     { name: "4/26 後龍仔1", color: "blue", data: [{"name":"元保宮","lat":24.16306,"lng":120.67630},{"name":"賴厝福德祠","lat":24.1672,"lng":120.6765},{"name":"萬春宮","lat":24.1436,"lng":120.6843},{"name":"澄清醫院","lat":24.1575,"lng":120.6639},{"name":"南天宮","lat":24.1493,"lng":120.6849},{"name":"樂成宮","lat":24.1375,"lng":120.6933},{"name":"萬和宮","lat":24.1340,"lng":120.6465},{"name":"田心福德廟","lat":24.13874,"lng":120.64259},{"name":"老虎城","lat":24.1633,"lng":120.6402},{"name":"新光三越","lat":24.1649,"lng":120.6430},{"name":"均安宮","lat":24.14876,"lng":120.67115}] },
     { name: "4/26 後龍仔2", color: "darkgreen", data: [{"name":"元保宮","lat":24.16306,"lng":120.67630},{"name":"北台中城隍廟","lat":24.14873,"lng":120.68131},{"name":"朝奉宮","lat":24.15045,"lng":120.67408},{"name":"民龍里土地公","lat":24.15445,"lng":120.67070},{"name":"雙龍里","lat":24.14682,"lng":120.68541},{"name":"均安宮","lat":24.14876,"lng":120.67115},{"name":"大墩文化中心","lat":24.14182,"lng":120.66595},{"name":"土庫吉籠福德祠","lat":24.13869,"lng":120.66120},{"name":"奉順宮","lat":24.13304,"lng":120.66637}] },
     { name: "4/26 後龍仔3", color: "red", data: [{"name":"元保宮","lat":24.16306,"lng":120.67630},{"name":"景聖宮","lat":24.15017,"lng":120.67683},{"name":"中政福德祠","lat":24.14716,"lng":120.68189},{"name":"光音福德祠","lat":24.14620,"lng":120.67896},{"name":"保安宮","lat":24.15008,"lng":120.67714},{"name":"竹圍福德宮","lat":24.15544,"lng":120.67615},{"name":"水仙宮","lat":24.14791,"lng":120.67712},{"name":"太子宮","lat":24.14577,"lng":120.67286},{"name":"輔順將軍廟","lat":24.1475,"lng":120.6822}] },
     { name: "4/27 麻園頭", color: "#BF00FF", data: [{"name":"均安宮","lat":24.14876,"lng":120.67115},{"name":"中興福德祠","lat":24.15121,"lng":120.66255},{"name":"公正福德祠","lat":24.15007,"lng":120.65933},{"name":"昇平福德祠","lat":24.14640,"lng":120.66285},{"name":"東興福德廟","lat":24.14521,"lng":120.65098},{"name":"萬壽棒球場","lat":24.14722,"lng":120.65061},{"name":"長春堂","lat":24.15559,"lng":120.66118},{"name":"麻園頭福德祠","lat":24.15484,"lng":120.66063},{"name":"忠誠里福德祠","lat":24.16165,"lng":120.66260},{"name":"應天宮","lat":24.15689,"lng":120.66471},{"name":"興農宮","lat":24.15419,"lng":120.66211}] },
     { name: "4/28 邱厝仔", color: "brown", data: [{"name":"漢口路崇德路口","lat":24.167113,"lng":120.685062},{"name":"邱厝里福德祠","lat":24.15965,"lng":120.68562},{"name":"台中聖賢堂","lat":24.16013,"lng":120.68355},{"name":"中國醫大立夫大樓","lat":24.15804,"lng":120.68033},{"name":"仙鴻宮","lat":24.15577,"lng":120.68080},{"name":"福安境福德祠","lat":24.15577,"lng":120.68080},{"name":"中山堂","lat":24.15622,"lng":120.68261},{"name":"福全境福德祠","lat":24.15136,"lng":120.67969},{"name":"中友百貨","lat":24.15243,"lng":120.68473},{"name":"一中街水利大樓","lat":24.14920,"lng":120.68565},{"name":"北台中城隍廟","lat":24.14897,"lng":120.68161}] },
     { name: "4/29 三十張犁", color: "blue", data: [{"name":"三川福德祠","lat":24.16533,"lng":120.70297},{"name":"建成里","lat":24.15925,"lng":120.70094},{"name":"建德里","lat":24.16023,"lng":120.69727},{"name":"尾張仔福德廟","lat":24.15799,"lng":120.69615},{"name":"三聖宮","lat":24.16066,"lng":120.68772},{"name":"北屯福德祠","lat":24.16551,"lng":120.69349},{"name":"水仙宮","lat":24.16673,"lng":120.69357},{"name":"九龍宮","lat":24.16699,"lng":120.69598},{"name":"水井福隆宮","lat":24.16845,"lng":120.71313},{"name":"舊社福德祠","lat":24.18229,"lng":120.70177},{"name":"南興宮","lat":24.18202,"lng":120.70600},{"name":"福順宮","lat":24.17956,"lng":120.72384},{"name":"和平里","lat":24.17856,"lng":120.72338},{"name":"軍福宮","lat":24.17673,"lng":120.72064}] },
-    { name: "4/30 二分埔", color: "purple", data: [{"name":"柳陽西街遼寧路","lat":24.1754,"lng":120.6784},{"name":"平興里福德祠","lat":24.17876,"lng":120.69651},{"name":"廣天宮","lat":24.17252,"lng":120.69542},{"name":"田都府","lat":24.1780,"lng":120.6810},{"name":"台中竹安宮","lat":24.16795,"lng":120.6795},{"name":"梅川福德宮","lat":24.17566,"lng":120.67998},{"name":"水湳福德宮","lat":24.17788,"lng":120.67606},{"name":"水湳媽祖廟","lat":24.17672,"lng":120.67060},{"name":"新平陳平里","lat":24.18770,"lng":120.66048},{"name":"大陳平福德祠","lat":24.18301,"lng":120.66701},{"name":"紫微宮","lat":24.18317,"lng":120.66663}] },
+    { name: "4/30 二分埔", color: "#BF00FF", data: [{"name":"柳陽西街遼寧路","lat":24.1754,"lng":120.6784},{"name":"平興里福德祠","lat":24.17876,"lng":120.69651},{"name":"廣天宮","lat":24.17252,"lng":120.69542},{"name":"田都府","lat":24.1780,"lng":120.6810},{"name":"台中竹安宮","lat":24.16795,"lng":120.6795},{"name":"梅川福德宮","lat":24.17566,"lng":120.67998},{"name":"水湳福德宮","lat":24.17788,"lng":120.67606},{"name":"水湳媽祖廟","lat":24.17672,"lng":120.67060},{"name":"新平陳平里","lat":24.18770,"lng":120.66048},{"name":"大陳平福德祠","lat":24.18301,"lng":120.66701},{"name":"紫微宮","lat":24.18317,"lng":120.66663}] },
     { name: "5/1 賴厝1", color: "darkgreen", data: [{"name":"元保宮","lat":24.16306,"lng":120.67630},{"name":"光大國宅","lat":24.1665,"lng":120.6715},{"name":"中達福均宮","lat":24.1678,"lng":120.6698},{"name":"淡溝福德祠","lat":24.1687,"lng":120.6685},{"name":"慧德宮","lat":24.1654,"lng":120.6655},{"name":"賴厝廓福德祠","lat":24.1630,"lng":120.6700},{"name":"回駕元保宮","lat":24.16306,"lng":120.67630}] },
-    { name: "5/1 賴厝2", color: "darkblue", data: [{"name":"元保宮","lat":24.16306,"lng":120.67630},{"name":"明德宮","lat":24.1738,"lng":120.6710},{"name":"立人派出所","lat":24.1715,"lng":120.6725},{"name":"明川福德廟","lat":24.1720,"lng":120.6750},{"name":"永興福德祠","lat":24.1705,"lng":120.6755},{"name":"台中玄武宮","lat":24.1729,"lng":120.6738},{"name":"泉興福德祠","lat":24.1690,"lng":120.6720},{"name":"回駕元保宮","lat":24.16306,"lng":120.67630}] }
+    { name: "5/1 賴厝2", color: "red", data: [{"name":"元保宮","lat":24.16306,"lng":120.67630},{"name":"明德宮","lat":24.1738,"lng":120.6710},{"name":"立人派出所","lat":24.1715,"lng":120.6725},{"name":"明川福德廟","lat":24.1720,"lng":120.6750},{"name":"永興福德祠","lat":24.1705,"lng":120.6755},{"name":"台中玄武宮","lat":24.1729,"lng":120.6738},{"name":"泉興福德祠","lat":24.1690,"lng":120.6720},{"name":"回駕元保宮","lat":24.16306,"lng":120.67630}] }
 ];
 
 const map = L.map('map').setView([24.16, 120.68], 13);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap' }).addTo(map);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'© OpenStreetMap'
+}).addTo(map);
 
 const routeListDiv = document.getElementById('routeList');
+
 allRoutesData.forEach((r, index) => {
     const item = document.createElement('div');
     item.className = 'route-item';
-    item.innerHTML = `<input type="checkbox" id="route_${index}" value="${index}">
-                      <label for="route_${index}" style="color:${r.color}; font-weight:bold;">${r.name}</label>`;
+    item.innerHTML = `
+        <input type="checkbox" id="route_${index}" value="${index}">
+        <label for="route_${index}" style="color:${r.color};">${r.name}</label>
+    `;
     routeListDiv.appendChild(item);
 });
 
@@ -113,23 +126,23 @@ let timer = null;
 function startPlayback() {
     const checkedBoxes = document.querySelectorAll('#routeList input:checked');
     let selectedIndexes = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
-    
+
     if (selectedIndexes.length === 0) {
         selectedIndexes = allRoutesData.map((_, i) => i);
     }
-    
+
     currentQueue = selectedIndexes.map(i => allRoutesData[i]);
     queueIndex = 0;
 
-    // 自動縮放到合適範圍
     let bounds = L.latLngBounds([]);
     currentQueue.forEach(route => {
         route.data.forEach(p => bounds.extend([p.lat, p.lng]));
     });
+
     if (bounds.isValid()) {
-        map.fitBounds(bounds, { padding: [30, 30] });
+        map.fitBounds(bounds, { padding: [30,30] });
     }
-    
+
     playNextRouteInQueue();
 }
 
@@ -142,18 +155,18 @@ function playNextRouteInQueue() {
     const route = currentQueue[queueIndex];
     document.getElementById("title").innerText = `播放中：${route.name}`;
 
-    // 線條寬度縮小：weight 2
     let currentPolyline = L.polyline([], {
         color: route.color,
-        weight: 2, 
-        opacity: 0.8,        
-        dashArray: '4, 8'
+        weight: 2,
+        opacity: 0.8,
+        dashArray: '4,8'
     }).addTo(map);
 
     allPolylines.push(currentPolyline);
     stepIndex = 0;
 
     timer = setInterval(() => {
+
         if (stepIndex >= route.data.length) {
             clearInterval(timer);
             queueIndex++;
@@ -162,8 +175,9 @@ function playNextRouteInQueue() {
         }
 
         const p = route.data[stepIndex];
+
         const marker = L.circleMarker([p.lat, p.lng], {
-            radius: 5,
+            radius: 4,
             color: 'white',
             fillColor: route.color,
             fillOpacity: 1,
@@ -172,7 +186,9 @@ function playNextRouteInQueue() {
 
         allMarkers.push(marker);
         currentPolyline.addLatLng([p.lat, p.lng]);
+
         stepIndex++;
+
     }, 800);
 }
 
@@ -185,6 +201,8 @@ function restartAll() {
 }
 
 startPlayback();
+
 </script>
+
 </body>
 </html>
