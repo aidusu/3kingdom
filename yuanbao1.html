@@ -1,30 +1,27 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>元保宮遶境地圖（完整版）</title>
-
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-
-<style>
-body { margin:0; font-family:sans-serif; }
-#map { height:100vh; }
-
-#title {
-    position:absolute;
-    top:10px;
-    left:50%;
-    transform:translateX(-50%);
-    background:white;
-    padding:8px 16px;
-    border-radius:10px;
-    font-weight:bold;
-    box-shadow:0 4px 10px rgba(0,0,0,0.2);
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>元保宮遶境地圖（完整版）</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <style>
+        body { margin:0; font-family:sans-serif; }
+        #map { height:100vh; }
+        #title {
+            position:absolute;
+            top:10px;
+            left:50%;
+            transform:translateX(-50%);
+            background:white;
+            padding:8px 16px;
+            border-radius:10px;
+            font-weight:bold;
+            box-shadow:0 4px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+    </style>
 </head>
-
 <body>
 
 <div id="map"></div>
@@ -33,82 +30,70 @@ body { margin:0; font-family:sans-serif; }
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
-
-// 🔥 三條完整路線
 const routes = [
-
-{
-name: "路線一",
-color: "blue",
-data: [
-{"name":"元保宮","lat":24.162809,"lng":120.675797},
-{"name":"萬春宮","lat":24.1436,"lng":120.6843},
-{"name":"澄清醫院中港分院","lat":24.1575,"lng":120.6639},
-{"name":"南天宮","lat":24.1493,"lng":120.6849},
-{"name":"樂成宮","lat":24.1375,"lng":120.6933},
-{"name":"萬和宮","lat":24.1340,"lng":120.6465},
-{"name":"田心福德廟","lat":24.13874,"lng":120.64259},
-{"name":"老虎城購物中心","lat":24.1633,"lng":120.6402},
-{"name":"新光三越台中中港店","lat":24.1649,"lng":120.6430},
-{"name":"均安宮","lat":24.14876,"lng":120.67115}
-]
-},
-
-{
-name: "路線二",
-color: "green",
-data: [
-{"name":"元保宮","lat":24.162809,"lng":120.675797},
-{"name":"北台中城隍廟","lat":24.14873,"lng":120.68131},
-{"name":"朝奉宮","lat":24.15045,"lng":120.67408},
-{"name":"民龍里土地公","lat":24.15045,"lng":120.67070},
-{"name":"雙龍里","lat":24.14682,"lng":120.68541},
-{"name":"均安宮","lat":24.14876,"lng":120.67115},
-{"name":"安龍里中心","lat":24.14283,"lng":120.60544},
-{"name":"土庫吉龍福德祠","lat":24.13869,"lng":120.66120},
-{"name":"奉順宮","lat":24.13304,"lng":120.66637},
-{"name":"均安宮","lat":24.14876,"lng":120.67115}
-]
-},
-
-{
-name: "路線三",
-color: "red",
-data: [
-{"name":"元保宮","lat":24.162809,"lng":120.675797},
-{"name":"景聖宮","lat":24.15017,"lng":120.67683},
-{"name":"中政福德祠","lat":24.14716,"lng":120.68189},
-{"name":"光音福德祠","lat":24.14620,"lng":120.67896},
-{"name":"中區保安宮","lat":24.15008,"lng":120.67714},
-{"name":"竹圍福德宮","lat":24.15544","lng":120.67615},
-{"name":"水仙宮","lat":24.14791,"lng":120.67712},
-{"name":"太子宮","lat":24.14577,"lng":120.67286},
-{"name":"順天宮輔順將軍廟","lat":24.1475,"lng":120.6822}
-]
-}
-
+    {
+        name: "路線一",
+        color: "blue",
+        data: [
+            {"name":"元保宮","lat":24.162809,"lng":120.675797},
+            {"name":"賴厝福德祠（北區）","lat":24.1672,"lng":120.6765},
+            {"name":"萬春宮","lat":24.1436,"lng":120.6843},
+            {"name":"澄清醫院中港分院","lat":24.1575,"lng":120.6639},
+            {"name":"南天宮","lat":24.1493,"lng":120.6849},
+            {"name":"樂成宮","lat":24.1375,"lng":120.6933},
+            {"name":"萬和宮","lat":24.1340,"lng":120.6465},
+            {"name":"田心福德廟","lat":24.13874,"lng":120.64259},
+            {"name":"老虎城購物中心","lat":24.1633,"lng":120.6402},
+            {"name":"新光三越台中中港店","lat":24.1649,"lng":120.6430},
+            {"name":"均安宮","lat":24.14876,"lng":120.67115}
+        ]
+    },
+    {
+        name: "路線二",
+        color: "green",
+        data: [
+            {"name":"元保宮","lat":24.162809,"lng":120.675797},
+            {"name":"北台中城隍廟","lat":24.14873,"lng":120.68131},
+            {"name":"朝奉宮","lat":24.15045,"lng":120.67408},
+            {"name":"民龍里土地公","lat":24.15445,"lng":120.67070},
+            {"name":"雙龍里","lat":24.14682,"lng":120.68541},
+            {"name":"均安宮","lat":24.14876,"lng":120.67115},
+            {"name":"安龍里中心","lat":24.14283,"lng":120.60544},
+            {"name":"土庫吉籠福德祠","lat":24.13869,"lng":120.66120},
+            {"name":"奉順宮","lat":24.13304,"lng":120.66637},
+            {"name":"均安宮","lat":24.14876,"lng":120.67115}
+        ]
+    },
+    {
+        name: "路線三",
+        color: "red",
+        data: [
+            {"name":"元保宮","lat":24.162809,"lng":120.675797},
+            {"name":"景聖宮","lat":24.15017,"lng":120.67683},
+            {"name":"中政福德祠","lat":24.14716,"lng":120.68189},
+            {"name":"光音福德祠","lat":24.14620,"lng":120.67896},
+            {"name":"中區保安宮","lat":24.15008,"lng":120.67714},
+            {"name":"竹圍福德宮","lat":24.15544, "lng":120.67615},
+            {"name":"水仙宮","lat":24.14791,"lng":120.67712},
+            {"name":"太子宮","lat":24.14577,"lng":120.67286},
+            {"name":"順天宮輔順將軍廟","lat":24.1475,"lng":120.6822}
+        ]
+    }
 ];
 
-// 地圖初始化
 const map = L.map('map').setView([24.15, 120.67], 13);
-
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution:'© OpenStreetMap'
 }).addTo(map);
 
-// 狀態
 let routeIndex = 0;
 let stepIndex = 0;
-
 let allMarkers = [];
 let allPolylines = [];
-
 let currentPolyline = null;
 let timer = null;
 
-// 播放單一路線
 function playRoute() {
-
     const route = routes[routeIndex];
     document.getElementById("title").innerText = route.name;
 
@@ -118,63 +103,43 @@ function playRoute() {
     }).addTo(map);
 
     allPolylines.push(currentPolyline);
-
     stepIndex = 0;
 
     timer = setInterval(() => {
-
         if (stepIndex >= route.data.length) {
             clearInterval(timer);
-
             routeIndex++;
-
             if (routeIndex >= routes.length) {
                 setTimeout(restartAll, 2000);
             } else {
                 setTimeout(playRoute, 1000);
             }
-
             return;
         }
 
         const p = route.data[stepIndex];
-
         const marker = L.circleMarker([p.lat, p.lng], {
             radius:5,
             color: route.color
         }).addTo(map).bindPopup(p.name);
 
         allMarkers.push(marker);
-
-        const latlngs = currentPolyline.getLatLngs();
-        latlngs.push([p.lat, p.lng]);
-        currentPolyline.setLatLngs(latlngs);
-
+        currentPolyline.addLatLng([p.lat, p.lng]);
         map.panTo([p.lat, p.lng]);
-
         stepIndex++;
-
     }, 700);
 }
 
-// 全部重播
 function restartAll() {
-
     allMarkers.forEach(m => map.removeLayer(m));
     allMarkers = [];
-
     allPolylines.forEach(l => map.removeLayer(l));
     allPolylines = [];
-
     routeIndex = 0;
-
     setTimeout(playRoute, 800);
 }
 
-// 啟動
 playRoute();
-
 </script>
-
 </body>
 </html>
