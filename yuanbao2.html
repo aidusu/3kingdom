@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>元保宮遶境地圖（完整版）</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <style>
+        body { margin:0; font-family:sans-serif; }
+        #map { height:100vh; }
+        
+        /* 標題與控制器面板 */
+        #control-panel {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+            z-index: 1000;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        #title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        #checkboxes {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            background: #f1f1f1;
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .checkbox-item:hover {
+            background: #e2e2e2;
+        }
+
+        .checkbox-item input {
+            margin-right: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="control-panel">
+    <div id="title">遶境載入中...</div>
+    <div id="checkboxes"></div>
+</div>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+// 所有 9 條完整路線資料
+const routes = [
+    {
+        name: "路線一",
+        color: "blue",
+        data: [
+            {"name":"元保宮","lat":24.162809,"lng":120.675797},
+            {"name":"賴厝福德祠（北區）","lat":24.1672,"lng":120.6765},
+            {"name":"萬春宮","lat":24.1436,"lng":120.6843},
+            {"name":"澄清醫院中港分院","lat":24.1575,"lng":120.6639},
+            {"name":"南天宮","lat":24.1493,"lng":120.6849},
+            {"name":"樂成宮","lat":24.1375,"lng":120.6933},
+            {"name":"萬和宮","lat":24.1340,"lng":120.6465},
+            {"name":"田心福德廟","lat":24.13874,"lng":120.64259},
+            {"name":"老虎城購物中心","lat":24.1633,"lng":120.6402},
+            {"name":"新光三越台中中港店","lat":24.1649,"lng":120.6430},
+            {"name":"均安宮","lat":24.14876,"lng":120.67115}
+        ]
+    },
+    {
+        name: "路線二",
+        color: "green",
+        data: [
+            {"name":"元保宮","lat":24.162809,"lng":120.675797},
+            {"name":"北台中城隍廟","lat":24.14873,"lng":120.68131},
+            {"name":"朝奉宮","lat":24.15045,"lng":120.67408},
+            {"name":"民龍里土地公","lat":24.15445,"lng":120.67070},
+            {"name":"雙龍里","lat":24.14682,"lng":120.68541},
+            {"name":"均安宮","lat":24.14876,"lng":120.67115},
+            {"name":"安龍里大墩文化中心","lat":24.14182,"lng":120.66595},
+            {"name":"土庫吉籠福德祠","lat":24.13869,"lng":120.66120},
+            {"name":"奉順宮","lat":24.13304,"lng":120.66637},
+            {"name":"均安宮","lat":24.14876,"lng":120.67115}
+        ]
+    },
+    {
+        name: "路線三",
+        color: "red",
+        data: [
+            {"name":"元保宮","lat":24.162809,"lng":120.675797},
+            {"name":"景聖宮","lat":24.15017,"lng":120.67683},
+            {"name":"中政福德祠","lat":24.14716,"lng":120.68189},
+            {"name":"光音福德祠","lat":24.14620,"lng":120.67896},
+            {"name":"中區保安宮","lat":24.15008,"lng":120.67714},
+            {"name":"竹圍福德宮","lat":24.15544,"lng":120.67615},
+            {"name":"水仙宮","lat":24.14791,"lng":120.67712},
+            {"name":"太子宮","lat":24.14577,"lng":120.67286},
+            {"name":"順天宮輔順將軍廟","lat":24.1475,"lng":120.6822}
+        ]
+    },
+    {
+        name: "4/27 麻園頭",
+        color: "purple",
+        data: [
+            {"name": "均安宮", "lat": 24.14876, "lng": 120.67115},
+            {"name": "中興福德祠", "lat": 24.15049, "lng": 120.66258},
+            {"name": "公正福德祠", "lat": 24.14828, "lng": 120.66085},
+            {"name": "昇平福德祠", "lat": 24.14587, "lng": 120.65991},
+            {"name": "東興福德廟", "lat": 24.14917, "lng": 120.65345},
+            {"name": "萬壽棒球場", "lat": 24.14578, "lng": 120.65171},
+            {"name": "長春堂", "lat": 24.15228, "lng": 120.65961},
+            {"name": "麻園頭福德祠", "lat": 24.15546, "lng": 120.65863},
+            {"name": "忠誠里福德祠", "lat": 24.15694, "lng": 120.66228},
+            {"name": "應天宮", "lat": 24.15418, "lng": 120.66567},
+            {"name": "興農宮", "lat": 24.15668, "lng": 120.67161}
+        ]
+    },
+    {
+        name: "4/28 邱厝仔",
+        color: "orange",
+        data: [
+            {"name": "漢口路與崇德路口", "lat": 24.16641, "lng": 120.68453},
+            {"name": "三官大帝廟/邱厝里福德祠", "lat": 24.16104, "lng": 120.68532},
+            {"name": "台中聖賢堂", "lat": 24.15878, "lng": 120.68545},
+            {"name": "中國醫藥大學立夫大樓", "lat": 24.15784, "lng": 120.68172},
+            {"name": "仙鴻宮", "lat": 24.15492, "lng": 120.68065},
+            {"name": "福安境福德祠", "lat": 24.15243, "lng": 120.68112},
+            {"name": "中山堂", "lat": 24.15315, "lng": 120.68233},
+            {"name": "福全境福德祠", "lat": 24.15177, "lng": 120.68481},
+            {"name": "中友百貨", "lat": 24.15273, "lng": 120.68551},
+            {"name": "一中街水利大樓", "lat": 24.14925, "lng": 120.68494},
+            {"name": "北台中城隍廟", "lat": 24.14873, "lng": 120.68131}
+        ]
+    },
+    {
+        name: "4/29 三十張犁",
+        color: "brown",
+        data: [
+            {"name": "三川福德祠", "lat": 24.1818, "lng": 120.7011},
+            {"name": "尾張仔福德廟", "lat": 24.1825, "lng": 120.7085},
+            {"name": "三聖宮聖福德堂", "lat": 24.1852, "lng": 120.7095},
+            {"name": "水仙宮", "lat": 24.1865, "lng": 120.7121},
+            {"name": "九龍宮", "lat": 24.1824, "lng": 120.7130},
+            {"name": "水泵福隆宮", "lat": 24.1845, "lng": 120.7155},
+            {"name": "南興宮", "lat": 24.1802, "lng": 120.7139},
+            {"name": "福順宮", "lat": 24.1785, "lng": 120.7170},
+            {"name": "軍福宮", "lat": 24.1805, "lng": 120.7208}
+        ]
+    },
+    {
+        name: "4/30 二分埔",
+        color: "teal",
+        data: [
+            {"name": "柳陽西街與遼寧路", "lat": 24.1754, "lng": 120.6784},
+            {"name": "平興里遼寧福德祠", "lat": 24.1740, "lng": 120.6780},
+            {"name": "廣天宮", "lat": 24.1764, "lng": 120.6865},
+            {"name": "田都府", "lat": 24.1780, "lng": 120.6810},
+            {"name": "台中竹安宮", "lat": 24.1795, "lng": 120.6795},
+            {"name": "梅川福德宮", "lat": 24.1810, "lng": 120.6765},
+            {"name": "水湳福德宮", "lat": 24.1800, "lng": 120.6720},
+            {"name": "順平一街", "lat": 24.1825, "lng": 120.6695},
+            {"name": "新平福德祠", "lat": 24.1855, "lng": 120.6680},
+            {"name": "案微宮", "lat": 24.1950, "lng": 120.6690}
+        ]
+    },
+    {
+        name: "5/1 賴厝廓(一)",
+        color: "navy",
+        data: [
+            {"name": "元保宮", "lat": 24.1628, "lng": 120.6758},
+            {"name": "光大國宅", "lat": 24.1665, "lng": 120.6715},
+            {"name": "中達福均宮", "lat": 24.1678, "lng": 120.6698},
+            {"name": "淡溝福德祠", "lat": 24.1687, "lng": 120.6685},
+            {"name": "慧德宮", "lat": 24.1654, "lng": 120.6655},
+            {"name": "賴厝廓福德祠", "lat": 24.1630, "lng": 120.6700}
+        ]
+    },
+    {
+        name: "5/1 賴厝廓(二)",
+        color: "darkred",
+        data: [
+            {"name": "元保宮", "lat": 24.1628, "lng": 120.6758},
+            {"name": "明德宮", "lat": 24.1738, "lng": 120.6710},
+            {"name": "立人派出所", "lat": 24.1715, "lng": 120.6725},
+            {"name": "明川福德廟", "lat": 24.1720, "lng": 120.6750},
+            {"name": "永興福德祠", "lat": 24.1705, "lng": 120.6755},
+            {"name": "台中玄武宮", "lat": 24.1729, "lng": 120.6738},
+            {"name": "文心中清廣場", "lat": 24.1700, "lng": 120.6680},
+            {"name": "泉興福德祠", "lat": 24.1690, "lng": 120.6720}
+        ]
+    }
+];
+
+// 地圖初始化
+const map = L.map('map').setView([24.16, 120.68], 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'© OpenStreetMap'
+}).addTo(map);
+
+let currentRoutes = []; // 目前輪播的路線陣列
+let routeIndex = 0;
+let stepIndex = 0;
+let allMarkers = [];
+let allPolylines = [];
+let currentPolyline = null;
+let timer = null;
+
+// 生成勾選選單
+const checkboxesContainer = document.getElementById("checkboxes");
+routes.forEach((route, index) => {
+    const label = document.createElement("label");
+    label.className = "checkbox-item";
+    label.style.borderLeft = `5px solid ${route.color}`;
+    label.innerHTML = `
+        <input type="checkbox" value="${index}" onchange="updateSelectedRoutes()">
+        ${route.name}
+    `;
+    checkboxesContainer.appendChild(label);
+});
+
+// 依據勾選狀態決定輪播路線
+function updateSelectedRoutes() {
+    const checkedBoxes = document.querySelectorAll("#checkboxes input:checked");
+    
+    if (checkedBoxes.length > 0) {
+        // 如果有勾選，僅播放勾選的路線
+        currentRoutes = Array.from(checkedBoxes).map(box => routes[parseInt(box.value)]);
+    } else {
+        // 沒有勾選，播放全部
+        currentRoutes = [...routes];
+    }
+    
+    // 重置並從頭播放
+    restartAll();
+}
+
+function playRoute() {
+    if (currentRoutes.length === 0) return;
+
+    // 確保 routeIndex 不會溢出
+    if (routeIndex >= currentRoutes.length) {
+        routeIndex = 0;
+    }
+
+    const route = currentRoutes[routeIndex];
+    document.getElementById("title").innerText = `播放中：${route.name}`;
+
+    currentPolyline = L.polyline([], {
+        color: route.color,
+        weight: 4,
+        dashArray: '5, 10'
+    }).addTo(map);
+
+    allPolylines.push(currentPolyline);
+    stepIndex = 0;
+
+    timer = setInterval(() => {
+        if (stepIndex >= route.data.length) {
+            clearInterval(timer);
+            routeIndex++;
+            
+            if (routeIndex >= currentRoutes.length) {
+                setTimeout(restartAll, 2000);
+            } else {
+                setTimeout(playRoute, 1000);
+            }
+            return;
+        }
+
+        const p = route.data[stepIndex];
+        const marker = L.circleMarker([p.lat, p.lng], {
+            radius: 6,
+            color: route.color,
+            fillColor: "#fff",
+            fillOpacity: 0.8,
+            weight: 2
+        }).addTo(map).bindPopup(`<b>${route.name}</b><br>${p.name}`);
+
+        allMarkers.push(marker);
+        currentPolyline.addLatLng([p.lat, p.lng]);
+        map.panTo([p.lat, p.lng]);
+        stepIndex++;
+    }, 700);
+}
+
+function restartAll() {
+    // 清除定時器
+    if (timer) clearInterval(timer);
+
+    // 移除地圖上的元素
+    allMarkers.forEach(m => map.removeLayer(m));
+    allMarkers = [];
+    allPolylines.forEach(l => map.removeLayer(l));
+    allPolylines = [];
+    
+    // 重置索引
+    routeIndex = 0;
+    
+    setTimeout(playRoute, 500);
+}
+
+// 首次載入：預設播放全部路線
+currentRoutes = [...routes];
+playRoute();
+</script>
+
+</body>
+</html>
