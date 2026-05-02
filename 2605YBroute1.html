@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>元保宮遶境地圖（完整版）</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+<style>
+body { margin:0; font-family:sans-serif; }
+#map { height:100vh; }
+
+#title {
+    position:absolute;
+    top:10px;
+    left:50%;
+    transform:translateX(-50%);
+    background:white;
+    padding:8px 16px;
+    border-radius:10px;
+    font-weight:bold;
+    box-shadow:0 4px 10px rgba(0,0,0,0.2);
+}
+</style>
+</head>
+
+<body>
+
+<div id="map"></div>
+<div id="title">遶境載入中...</div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+
+// 🔥 三條完整路線
+const routes = [
+
+{
+name: "路線一",
+color: "blue",
+data: [
+{"name":"元保宮","lat":24.162809,"lng":120.675797},
+{"name":"賴厝福德祠（北區）","lat":24.1672,"lng":120.6765},
+{"name":"萬春宮","lat":24.1436,"lng":120.6843},
+{"name":"澄清醫院中港分院","lat":24.1575,"lng":120.6639},
+{"name":"南天宮","lat":24.1493,"lng":120.6849},
+{"name":"樂成宮","lat":24.1375,"lng":120.6933},
+{"name":"萬和宮","lat":24.1340,"lng":120.6465},
+{"name":"台中文心公園","lat":24.1510,"lng":120.6460},
+{"name":"老虎城購物中心","lat":24.1633,"lng":120.6402},
+{"name":"新光三越台中中港店","lat":24.1649,"lng":120.6430},
+{"name":"庄瀨均安宮","lat":24.1705,"lng":120.6702}
+]
+},
+
+{
+name: "路線二",
+color: "green",
+data: [
+{"name":"元保宮","lat":24.162809,"lng":120.675797},
+{"name":"賴厝里範圍","lat":24.1665,"lng":120.6768},
+{"name":"賴厝福德祠","lat":24.1672,"lng":120.6765},
+{"name":"城隍廟（北台中）","lat":24.1489,"lng":120.6837},
+{"name":"朝華宮","lat":24.1495,"lng":120.6752},
+{"name":"民龍里中心","lat":24.1508,"lng":120.6690},
+{"name":"均安宮","lat":24.1705,"lng":120.6702},
+{"name":"安龍里中心","lat":24.1580,"lng":120.6712},
+{"name":"土庫福德祠","lat":24.1753,"lng":120.6695},
+{"name":"奉順宮","lat":24.1688,"lng":120.6772}
+]
+},
+
+{
+name: "路線三",
+color: "red",
+data: [
+{"name":"元保宮","lat":24.162809,"lng":120.675797},
+{"name":"賴厝庄","lat":24.1665,"lng":120.6768},
+{"name":"邱厝仔","lat":24.1520,"lng":120.6900},
+{"name":"三十張犁","lat":24.1650,"lng":120.6905},
+{"name":"二分埔","lat":24.1702,"lng":120.6820},
+{"name":"中政福德祠","lat":24.1555,"lng":120.6785},
+{"name":"光音福德祠","lat":24.1582,"lng":120.6792},
+{"name":"保安宮（北屯）","lat":24.1760,"lng":120.6902},
+{"name":"水仙宮","lat":24.1462,"lng":120.6830},
+{"name":"太子宮","lat":24.1501,"lng":120.6863},
+{"name":"順天宮輔順將軍廟","lat":24.1475,"lng":120.6822}
+]
+}
+
+];
+
+// 地圖初始化
+const map = L.map('map').setView([24.15, 120.67], 13);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'© OpenStreetMap'
+}).addTo(map);
+
+// 狀態
+let routeIndex = 0;
+let stepIndex = 0;
+
+let allMarkers = [];
+let allPolylines = [];
+
+let currentPolyline = null;
+let timer = null;
+
+// 播放單一路線
+function playRoute() {
+
+    const route = routes[routeIndex];
+    document.getElementById("title").innerText = route.name;
+
+    currentPolyline = L.polyline([], {
+        color: route.color,
+        dashArray:'5,10'
+    }).addTo(map);
+
+    allPolylines.push(currentPolyline);
+
+    stepIndex = 0;
+
+    timer = setInterval(() => {
+
+        if (stepIndex >= route.data.length) {
+            clearInterval(timer);
+
+            routeIndex++;
+
+            if (routeIndex >= routes.length) {
+                setTimeout(restartAll, 2000);
+            } else {
+                setTimeout(playRoute, 1000);
+            }
+
+            return;
+        }
+
+        const p = route.data[stepIndex];
+
+        const marker = L.circleMarker([p.lat, p.lng], {
+            radius:5,
+            color: route.color
+        }).addTo(map).bindPopup(p.name);
+
+        allMarkers.push(marker);
+
+        const latlngs = currentPolyline.getLatLngs();
+        latlngs.push([p.lat, p.lng]);
+        currentPolyline.setLatLngs(latlngs);
+
+        map.panTo([p.lat, p.lng]);
+
+        stepIndex++;
+
+    }, 700);
+}
+
+// 全部重播
+function restartAll() {
+
+    allMarkers.forEach(m => map.removeLayer(m));
+    allMarkers = [];
+
+    allPolylines.forEach(l => map.removeLayer(l));
+    allPolylines = [];
+
+    routeIndex = 0;
+
+    setTimeout(playRoute, 800);
+}
+
+// 啟動
+playRoute();
+
+</script>
+
+</body>
+</html>
