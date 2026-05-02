@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>個人閱讀紀錄系統</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #1a1a2e;
+            --paper: #faf8f3;
+            --cream: #f0ebe0;
+            --accent: #8b4513;
+            --accent-light: #c4733a;
+            --gold: #c9a84c;
+            --muted: #7a7060;
+            --border: #d4c9b0;
+            --success: #3a7d44;
+            --shadow: 0 4px 20px rgba(26,26,46,0.1);
+        }
+
+```
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        font-family: 'Noto Sans TC', sans-serif;
+        background-color: var(--paper);
+        background-image:
+            radial-gradient(ellipse at 20% 50%, rgba(201,168,76,0.05) 0%, transparent 60%),
+            radial-gradient(ellipse at 80% 20%, rgba(139,69,19,0.05) 0%, transparent 50%);
+        min-height: 100vh;
+        color: var(--ink);
+    }
+
+    /* Header */
+    header {
+        background: var(--ink);
+        padding: 20px 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.3);
+    }
+
+    .logo {
+        font-family: 'Noto Serif TC', serif;
+        font-size: 22px;
+        color: var(--gold);
+        letter-spacing: 4px;
+        font-weight: 700;
+    }
+
+    .logo span { color: white; font-weight: 400; }
+
+    #user-status {
+        font-size: 13px;
+        color: #aaa;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    #user-status strong { color: var(--gold); }
+
+    #logout-btn {
+        background: transparent;
+        border: 1px solid #555;
+        color: #ccc;
+        padding: 5px 12px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 12px;
+        font-family: 'Noto Sans TC', sans-serif;
+        transition: all 0.2s;
+    }
+
+    #logout-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* Nav */
+    nav {
+        background: var(--cream);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        padding: 0 30px;
+    }
+
+    nav button {
+        padding: 16px 24px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        font-family: 'Noto Sans TC', sans-serif;
+        font-size: 14px;
+        color: var(--muted);
+        border-bottom: 3px solid transparent;
+        transition: all 0.2s;
+        letter-spacing: 1px;
+    }
+
+    nav button:hover { color: var(--accent); }
+    nav button.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+
+    /* Main */
+    main {
+        max-width: 720px;
+        margin: 40px auto;
+        padding: 0 20px 60px;
+    }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .card {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 32px;
+        box-shadow: var(--shadow);
+        margin-bottom: 20px;
+    }
+
+    h2 {
+        font-family: 'Noto Serif TC', serif;
+        font-size: 20px;
+        color: var(--ink);
+        margin-bottom: 24px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid var(--gold);
+        letter-spacing: 2px;
+    }
+
+    /* Form */
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+
+    label {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--muted);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+    input, select, textarea {
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        font-family: 'Noto Sans TC', sans-serif;
+        font-size: 14px;
+        color: var(--ink);
+        background: var(--paper);
+        transition: border-color 0.2s;
+        width: 100%;
+    }
+
+    input:focus, select:focus, textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+        background: white;
+    }
+
+    textarea { resize: vertical; min-height: 80px; }
+
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        font-family: 'Noto Sans TC', sans-serif;
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: 1px;
+        transition: all 0.2s;
+    }
+
+    .btn-primary {
+        background: var(--accent);
+        color: white;
+        width: 100%;
+        margin-top: 8px;
+    }
+
+    .btn-primary:hover { background: var(--accent-light); }
+
+    .btn-secondary {
+        background: var(--ink);
+        color: white;
+        width: 100%;
+    }
+
+    .btn-secondary:hover { opacity: 0.85; }
+
+    /* Login */
+    .login-wrapper {
+        max-width: 360px;
+        margin: 0 auto;
+    }
+
+    .login-fields { display: flex; flex-direction: column; gap: 12px; }
+
+    /* Stats */
+    .stats-bar {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .stat-box {
+        flex: 1;
+        background: var(--ink);
+        color: white;
+        border-radius: 4px;
+        padding: 20px;
+        text-align: center;
+    }
+
+    .stat-box .num {
+        font-family: 'Noto Serif TC', serif;
+        font-size: 36px;
+        color: var(--gold);
+        display: block;
+    }
+
+    .stat-box .label {
+        font-size: 12px;
+        color: #aaa;
+        letter-spacing: 1px;
+    }
+
+    /* Search */
+    .search-wrap { position: relative; margin-bottom: 20px; }
+    .search-wrap input { padding-left: 38px; }
+    .search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--muted);
+        font-size: 16px;
+    }
+
+    /* Book items */
+    .book-item {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 18px 20px;
+        margin-bottom: 10px;
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        transition: box-shadow 0.2s;
+    }
+
+    .book-item:hover { box-shadow: var(--shadow); }
+
+    .book-rating {
+        font-size: 13px;
+        color: var(--gold);
+        white-space: nowrap;
+    }
+
+    .book-info { flex: 1; min-width: 0; }
+
+    .book-title {
+        font-family: 'Noto Serif TC', serif;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--ink);
+        margin-bottom: 4px;
+    }
+
+    .book-meta {
+        font-size: 12px;
+        color: var(--muted);
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .book-tags {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+    }
+
+    .tag {
+        background: var(--cream);
+        border: 1px solid var(--border);
+        padding: 2px 8px;
+        border-radius: 2px;
+        font-size: 11px;
+        color: var(--muted);
+    }
+
+    /* Alert */
+    .alert {
+        padding: 12px 16px;
+        border-radius: 3px;
+        font-size: 14px;
+        margin-bottom: 16px;
+        display: none;
+    }
+
+    .alert.show { display: block; }
+    .alert-success { background: #e8f5e9; color: var(--success); border-left: 3px solid var(--success); }
+    .alert-error { background: #fce8e8; color: #c0392b; border-left: 3px solid #c0392b; }
+
+    .empty-msg {
+        text-align: center;
+        color: var(--muted);
+        padding: 40px;
+        font-size: 14px;
+    }
+
+    .login-note {
+        text-align: center;
+        color: var(--muted);
+        font-size: 13px;
+        padding: 30px;
+    }
+
+    @media (max-width: 500px) {
+        .form-grid { grid-template-columns: 1fr; }
+        .stats-bar { flex-direction: column; }
+        nav button { padding: 14px 14px; font-size: 13px; }
+    }
+</style>
+```
+
+</head>
+<body>
+
+<header>
+    <div class="logo">書 <span>紀錄</span></div>
+    <div id="user-status">
+        <span id="user-name-display" style="display:none">您好，<strong id="nickname-label"></strong></span>
+        <button id="logout-btn" style="display:none" onclick="logout()">登出</button>
+    </div>
+</header>
+
+<nav>
+    <button class="active" onclick="showPage('auth', this)">🔐 會員中心</button>
+    <button onclick="showPage('edit', this)">📖 新增書籍</button>
+    <button onclick="showPage('search', this)">🔍 查詢書單</button>
+</nav>
+
+<main>
+    <!-- 會員中心 -->
+    <section id="page-auth" class="page active">
+        <div class="card">
+            <h2>會員認證</h2>
+            <div id="login-box" class="login-wrapper">
+                <div id="auth-alert" class="alert"></div>
+                <div class="login-fields">
+                    <div class="form-group">
+                        <label>電子郵件</label>
+                        <input type="email" id="email" placeholder="your@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label>密碼</label>
+                        <input type="password" id="password" placeholder="••••••••" onkeydown="if(event.key==='Enter') login()">
+                    </div>
+                    <button class="btn btn-secondary" onclick="login()">登入</button>
+                </div>
+            </div>
+            <div id="user-box" style="display:none; text-align:center; padding: 20px 0;">
+                <p style="font-family:'Noto Serif TC',serif; font-size:18px; color:var(--accent); margin-bottom:16px;">
+                    歡迎回來，<strong id="nickname-display2"></strong>！
+                </p>
+                <p style="font-size:13px; color:var(--muted);">您可以切換到「新增書籍」或「查詢書單」開始使用。</p>
+            </div>
+        </div>
+    </section>
+
+```
+<!-- 新增書籍 -->
+<section id="page-edit" class="page">
+    <div class="card">
+        <h2>新增書籍資料</h2>
+        <div id="edit-alert" class="alert"></div>
+        <div id="edit-login-note" class="login-note" style="display:none">請先登入會員才能新增書籍。</div>
+        <form id="book-form" style="display:none">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>ISBN</label>
+                    <input type="text" id="isbn" placeholder="9789XXXXXXXXX">
+                </div>
+                <div class="form-group">
+                    <label>評分</label>
+                    <select id="rating">
+                        <option value="5">⭐⭐⭐⭐⭐ 5 星</option>
+                        <option value="4">⭐⭐⭐⭐ 4 星</option>
+                        <option value="3">⭐⭐⭐ 3 星</option>
+                        <option value="2">⭐⭐ 2 星</option>
+                        <option value="1">⭐ 1 星</option>
+                    </select>
+                </div>
+                <div class="form-group full">
+                    <label>書名 *</label>
+                    <input type="text" id="title" placeholder="書名" required>
+                </div>
+                <div class="form-group full">
+                    <label>英文書名</label>
+                    <input type="text" id="en_title" placeholder="English Title">
+                </div>
+                <div class="form-group">
+                    <label>作者</label>
+                    <input type="text" id="author" placeholder="作者姓名">
+                </div>
+                <div class="form-group">
+                    <label>出版社</label>
+                    <input type="text" id="publisher" placeholder="出版社名稱">
+                </div>
+                <div class="form-group">
+                    <label>出版年月</label>
+                    <input type="date" id="pub_date">
+                </div>
+                <div class="form-group">
+                    <label>完成日期</label>
+                    <input type="date" id="finish_date">
+                </div>
+                <div class="form-group full">
+                    <label>分類（逗號分隔）</label>
+                    <input type="text" id="category" placeholder="例：文學, 心理, 科技">
+                </div>
+                <div class="form-group full">
+                    <label>系列標籤（逗號分隔）</label>
+                    <input type="text" id="tags" placeholder="例：必讀, 推薦, 重讀">
+                </div>
+                <div class="form-group full">
+                    <label>閱讀進度</label>
+                    <input type="text" id="progress" placeholder="例：已完成 / 第 3 章 / 60%">
+                </div>
+                <div class="form-group full">
+                    <label>名人推薦</label>
+                    <textarea id="recommend" placeholder="推薦語或心得摘要..."></textarea>
+                </div>
+                <div class="form-group full">
+                    <label>相關網址</label>
+                    <input type="url" id="url" placeholder="https://...">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">📚 儲存書籍</button>
+        </form>
+    </div>
+</section>
+
+<!-- 查詢書單 -->
+<section id="page-search" class="page">
+    <div class="stats-bar">
+        <div class="stat-box">
+            <span class="num" id="count-year">0</span>
+            <span class="label">今年已讀（本）</span>
+        </div>
+        <div class="stat-box">
+            <span class="num" id="count-total">0</span>
+            <span class="label">累計總本數</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>查詢書單</h2>
+        <div id="search-login-note" class="login-note" style="display:none">請先登入才能查詢書單。</div>
+        <div id="search-controls" style="display:none">
+            <div class="search-wrap">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="search-input" placeholder="搜尋書名、作者、ISBN…" oninput="searchBooks()">
+            </div>
+            <div id="results"></div>
+        </div>
+    </div>
+</section>
+```
+
+</main>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+        from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, collection, addDoc, query, where, getDocs }
+        from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+    // ✅ Firebase 設定（已修正重複宣告錯誤）
+    const firebaseConfig = {
+        apiKey: "AIzaSyBCmv8R5t-9sZ9knKT-ewS1IOaeFD035j4",
+        authDomain: "hhbooks-23c93.firebaseapp.com",
+        projectId: "hhbooks-23c93",
+        storageBucket: "hhbooks-23c93.firebasestorage.app",
+        messagingSenderId: "676890019080",
+        appId: "1:676890019080:web:f8bb06893e2136d09a18bd"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let uid = null;
+
+    // --- 工具函式 ---
+    function showAlert(id, msg, type = 'success') {
+        const el = document.getElementById(id);
+        el.className = `alert alert-${type} show`;
+        el.textContent = msg;
+        setTimeout(() => el.classList.remove('show'), 4000);
+    }
+
+    function stars(n) {
+        return '★'.repeat(n) + '☆'.repeat(5 - n);
+    }
+
+    // --- 頁面切換 ---
+    window.showPage = (id, btn) => {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+        document.getElementById(`page-${id}`).classList.add('active');
+        if (btn) btn.classList.add('active');
+
+        if (id === 'search') loadBooks();
+        if (id === 'edit') updateEditPage();
+    };
+
+    // --- 登入狀態監聽 ---
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            uid = user.uid;
+            let nickname = user.email;
+            try {
+                const userDoc = await getDoc(doc(db, "users", uid));
+                if (userDoc.exists()) nickname = userDoc.data()?.nickname || user.email;
+            } catch {}
+
+            document.getElementById("nickname-display2").textContent = nickname;
+            document.getElementById("nickname-label").textContent = nickname;
+            document.getElementById("login-box").style.display = 'none';
+            document.getElementById("user-box").style.display = 'block';
+            document.getElementById("user-name-display").style.display = 'inline';
+            document.getElementById("logout-btn").style.display = 'inline';
+
+            updateEditPage();
+            loadBooks();
+        } else {
+            uid = null;
+            document.getElementById("login-box").style.display = 'block';
+            document.getElementById("user-box").style.display = 'none';
+            document.getElementById("user-name-display").style.display = 'none';
+            document.getElementById("logout-btn").style.display = 'none';
+            updateEditPage();
+            updateSearchPage();
+        }
+    });
+
+    function updateEditPage() {
+        document.getElementById('edit-login-note').style.display = uid ? 'none' : 'block';
+        document.getElementById('book-form').style.display = uid ? 'block' : 'none';
+    }
+
+    function updateSearchPage() {
+        document.getElementById('search-login-note').style.display = uid ? 'none' : 'block';
+        document.getElementById('search-controls').style.display = uid ? 'block' : 'none';
+    }
+
+    // --- 儲存書籍 ---
+    document.getElementById('book-form').onsubmit = async (e) => {
+        e.preventDefault();
+
+        // ✅ 修正：未登入時阻止提交
+        if (!uid) {
+            showAlert('edit-alert', '請先登入才能儲存書籍', 'error');
+            return;
+        }
+
+        const data = {
+            uid,
+            isbn: document.getElementById('isbn').value.trim(),
+            title: document.getElementById('title').value.trim(),
+            en_title: document.getElementById('en_title').value.trim(),
+            author: document.getElementById('author').value.trim(),
+            publisher: document.getElementById('publisher').value.trim(),
+            pub_date: document.getElementById('pub_date').value,
+            category: document.getElementById('category').value.split(',').map(s => s.trim()).filter(Boolean),
+            tags: document.getElementById('tags').value.split(',').map(s => s.trim()).filter(Boolean),
+            progress: document.getElementById('progress').value.trim(),
+            finish_date: document.getElementById('finish_date').value,
+            rating: parseInt(document.getElementById('rating').value),
+            recommend: document.getElementById('recommend').value.trim(),
+            url: document.getElementById('url').value.trim(),
+            createdAt: new Date().toISOString()
+        };
+
+        try {
+            await addDoc(collection(db, "books"), data);
+            showAlert('edit-alert', '✅ 書籍儲存成功！', 'success');
+            document.getElementById('book-form').reset();
+        } catch (err) {
+            showAlert('edit-alert', '儲存失敗：' + err.message, 'error');
+        }
+    };
+
+    // --- 載入 / 搜尋書籍 ---
+    async function loadBooks() {
+        if (!uid) { updateSearchPage(); return; }
+        updateSearchPage();
+        const keyword = (document.getElementById('search-input')?.value || '').toLowerCase();
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = '<div class="empty-msg">載入中…</div>';
+
+        try {
+            const q = query(collection(db, "books"), where("uid", "==", uid));
+            const snapshot = await getDocs(q);
+
+            let yearCount = 0;
+            let totalCount = 0;
+            const currentYear = new Date().getFullYear().toString();
+            const items = [];
+
+            snapshot.forEach(d => {
+                const b = { id: d.id, ...d.data() };
+                totalCount++;
+                if (b.finish_date?.startsWith(currentYear)) yearCount++;
+                if (!keyword
+                    || b.title?.toLowerCase().includes(keyword)
+                    || b.author?.toLowerCase().includes(keyword)
+                    || b.isbn?.includes(keyword)) {
+                    items.push(b);
+                }
+            });
+
+            document.getElementById('count-year').textContent = yearCount;
+            document.getElementById('count-total').textContent = totalCount;
+
+            if (items.length === 0) {
+                resultsDiv.innerHTML = '<div class="empty-msg">找不到符合的書籍</div>';
+                return;
+            }
+
+            // 依完成日期排序（新→舊）
+            items.sort((a, b) => (b.finish_date || '').localeCompare(a.finish_date || ''));
+
+            resultsDiv.innerHTML = items.map(b => `
+                <div class="book-item">
+                    <div class="book-rating">${stars(b.rating || 0)}</div>
+                    <div class="book-info">
+                        <div class="book-title">${b.title || '（無書名）'}</div>
+                        <div class="book-meta">
+                            ${b.author ? `<span>✍ ${b.author}</span>` : ''}
+                            ${b.publisher ? `<span>🏢 ${b.publisher}</span>` : ''}
+                            ${b.finish_date ? `<span>📅 ${b.finish_date}</span>` : ''}
+                            ${b.progress ? `<span>📖 ${b.progress}</span>` : ''}
+                        </div>
+                        ${(b.tags?.length || b.category?.length) ? `
+                        <div class="book-tags">
+                            ${(b.category || []).map(c => `<span class="tag">${c}</span>`).join('')}
+                            ${(b.tags || []).map(t => `<span class="tag" style="background:#fff8e8;border-color:#d4b870;color:#8a6c20">${t}</span>`).join('')}
+                        </div>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        } catch (err) {
+            resultsDiv.innerHTML = `<div class="empty-msg">載入失敗：${err.message}</div>`;
+        }
+    }
+
+    window.searchBooks = () => loadBooks();
+
+    // --- 登入 / 登出 ---
+    window.login = () => {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        if (!email || !password) { showAlert('auth-alert', '請輸入帳號和密碼', 'error'); return; }
+        signInWithEmailAndPassword(auth, email, password)
+            .catch(err => showAlert('auth-alert', '登入失敗：' + err.message, 'error'));
+    };
+
+    // ✅ 修正：登出時清除 uid
+    window.logout = () => signOut(auth).then(() => { uid = null; location.reload(); });
+</script>
+
+</body>
+</html>
