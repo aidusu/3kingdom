@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>反脆弱的公式 · Podcast</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;600;900&family=Space+Mono:wght@400;700&display=swap');
+
+:root {
+–bg: #0a0a08;
+–surface: #111110;
+–card: #1a1a17;
+–accent: #c8a96e;
+–accent2: #e8c87a;
+–text: #e8e4d8;
+–muted: #7a7668;
+–border: #2a2a24;
+–live: #e05c4a;
+–wave: #c8a96e;
+}
+
+- { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+background: var(–bg);
+color: var(–text);
+font-family: ‘Noto Serif TC’, serif;
+min-height: 100vh;
+overflow-x: hidden;
+}
+
+/* Grain overlay */
+body::before {
+content: ‘’;
+position: fixed;
+inset: 0;
+background-image: url(“data:image/svg+xml,%3Csvg viewBox=‘0 0 256 256’ xmlns=‘http://www.w3.org/2000/svg’%3E%3Cfilter id=‘noise’%3E%3CfeTurbulence type=‘fractalNoise’ baseFrequency=‘0.9’ numOctaves=‘4’ stitchTiles=‘stitch’/%3E%3C/filter%3E%3Crect width=‘100%25’ height=‘100%25’ filter=‘url(%23noise)’ opacity=‘0.04’/%3E%3C/svg%3E”);
+pointer-events: none;
+z-index: 1000;
+opacity: 0.6;
+}
+
+.container {
+max-width: 900px;
+margin: 0 auto;
+padding: 0 24px;
+}
+
+/* Header */
+header {
+padding: 32px 0 20px;
+border-bottom: 1px solid var(–border);
+position: relative;
+}
+
+.header-inner {
+display: flex;
+align-items: center;
+justify-content: space-between;
+flex-wrap: wrap;
+gap: 16px;
+}
+
+.show-brand {
+display: flex;
+align-items: center;
+gap: 14px;
+}
+
+.brand-icon {
+width: 44px;
+height: 44px;
+background: var(–accent);
+border-radius: 10px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-family: ‘Space Mono’, monospace;
+font-size: 18px;
+color: var(–bg);
+font-weight: 700;
+flex-shrink: 0;
+}
+
+.show-name {
+font-size: 13px;
+color: var(–muted);
+font-family: ‘Space Mono’, monospace;
+letter-spacing: 0.15em;
+text-transform: uppercase;
+}
+
+.show-title {
+font-size: 17px;
+font-weight: 600;
+color: var(–text);
+letter-spacing: 0.02em;
+}
+
+.live-badge {
+display: flex;
+align-items: center;
+gap: 7px;
+background: rgba(224,92,74,0.12);
+border: 1px solid rgba(224,92,74,0.35);
+border-radius: 20px;
+padding: 6px 14px;
+font-family: ‘Space Mono’, monospace;
+font-size: 11px;
+color: var(–live);
+letter-spacing: 0.12em;
+text-transform: uppercase;
+}
+
+.live-dot {
+width: 7px;
+height: 7px;
+background: var(–live);
+border-radius: 50%;
+animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+0%, 100% { opacity: 1; transform: scale(1); }
+50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* Episode hero */
+.episode-hero {
+padding: 40px 0 32px;
+display: grid;
+grid-template-columns: auto 1fr;
+gap: 32px;
+align-items: start;
+}
+
+.cover-art {
+width: 180px;
+height: 180px;
+border-radius: 16px;
+background: var(–card);
+border: 1px solid var(–border);
+overflow: hidden;
+position: relative;
+flex-shrink: 0;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+.cover-art svg {
+position: absolute;
+inset: 0;
+width: 100%;
+height: 100%;
+}
+
+.cover-text {
+position: relative;
+z-index: 2;
+text-align: center;
+padding: 20px;
+}
+
+.cover-formula {
+font-family: ‘Space Mono’, monospace;
+font-size: 11px;
+color: var(–accent);
+letter-spacing: 0.08em;
+line-height: 2.2;
+}
+
+.episode-meta {
+display: flex;
+flex-direction: column;
+justify-content: center;
+gap: 10px;
+}
+
+.ep-number {
+font-family: ‘Space Mono’, monospace;
+font-size: 11px;
+color: var(–accent);
+letter-spacing: 0.2em;
+text-transform: uppercase;
+}
+
+.ep-title {
+font-size: 26px;
+font-weight: 900;
+line-height: 1.25;
+color: var(–text);
+letter-spacing: -0.01em;
+}
+
+.ep-subtitle {
+font-size: 14px;
+color: var(–muted);
+line-height: 1.6;
+margin-top: 4px;
+}
+
+.ep-tags {
+display: flex;
+flex-wrap: wrap;
+gap: 7px;
+margin-top: 6px;
+}
+
+.tag {
+padding: 3px 10px;
+border-radius: 4px;
+border: 1px solid var(–border);
+font-family: ‘Space Mono’, monospace;
+font-size: 10px;
+color: var(–muted);
+letter-spacing: 0.08em;
+}
+
+/* Player */
+.player-card {
+background: var(–card);
+border: 1px solid var(–border);
+border-radius: 16px;
+padding: 28px;
+margin-bottom: 32px;
+}
+
+/* Waveform */
+.waveform-container {
+position: relative;
+height: 64px;
+margin-bottom: 16px;
+cursor: pointer;
+border-radius: 4px;
+overflow: hidden;
+}
+
+.waveform-bars {
+display: flex;
+align-items: center;
+height: 100%;
+gap: 2px;
+}
+
+.waveform-bar {
+flex: 1;
+border-radius: 2px;
+transition: background 0.2s;
+position: relative;
+}
+
+.progress-overlay {
+position: absolute;
+left: 0;
+top: 0;
+bottom: 0;
+background: transparent;
+pointer-events: none;
+transition: width 0.3s linear;
+}
+
+/* Timeline */
+.timeline {
+display: flex;
+align-items: center;
+gap: 14px;
+margin-bottom: 22px;
+}
+
+.time-label {
+font-family: ‘Space Mono’, monospace;
+font-size: 11px;
+color: var(–muted);
+white-space: nowrap;
+min-width: 42px;
+}
+
+.progress-bar {
+flex: 1;
+height: 3px;
+background: var(–border);
+border-radius: 2px;
+cursor: pointer;
+position: relative;
+overflow: hidden;
+}
+
+.progress-fill {
+height: 100%;
+background: var(–accent);
+border-radius: 2px;
+width: 0%;
+transition: width 0.3s linear;
+}
+
+/* Controls */
+.controls {
+display: flex;
+align-items: center;
+justify-content: space-between;
+flex-wrap: wrap;
+gap: 16px;
+}
+
+.controls-center {
+display: flex;
+align-items: center;
+gap: 20px;
+}
+
+.ctrl-btn {
+background: none;
+border: none;
+color: var(–muted);
+cursor: pointer;
+padding: 8px;
+border-radius: 8px;
+display: flex;
+align-items: center;
+justify-content: center;
+transition: color 0.2s, background 0.2s;
+font-family: ‘Space Mono’, monospace;
+font-size: 12px;
+gap: 4px;
+}
+
+.ctrl-btn:hover { color: var(–text); background: var(–border); }
+
+.play-btn {
+width: 54px;
+height: 54px;
+border-radius: 50%;
+background: var(–accent);
+border: none;
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+transition: transform 0.15s, background 0.2s;
+color: var(–bg);
+}
+
+.play-btn:hover { transform: scale(1.07); background: var(–accent2); }
+.play-btn:active { transform: scale(0.96); }
+
+.play-btn svg { transition: opacity 0.15s; }
+
+.controls-right {
+display: flex;
+align-items: center;
+gap: 12px;
+}
+
+.volume-row {
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+.volume-slider {
+width: 72px;
+height: 3px;
+-webkit-appearance: none;
+background: var(–border);
+border-radius: 2px;
+cursor: pointer;
+outline: none;
+}
+
+.volume-slider::-webkit-slider-thumb {
+-webkit-appearance: none;
+width: 12px;
+height: 12px;
+border-radius: 50%;
+background: var(–accent);
+cursor: pointer;
+}
+
+/* Chapter list */
+.section-label {
+font-family: ‘Space Mono’, monospace;
+font-size: 11px;
+color: var(–muted);
+letter-spacing: 0.18em;
+text-transform: uppercase;
+margin-bottom: 16px;
+display: flex;
+align-items: center;
+gap: 10px;
+}
+
+.section-label::after {
+content: ‘’;
+flex: 1;
+height: 1px;
+background: var(–border);
+}
+
+.chapter-list {
+display: flex;
+flex-direction: column;
+gap: 4px;
+margin-bottom: 36px;
+}
+
+.chapter-item {
+display: grid;
+grid-template-columns: 32px 1fr auto auto;
+align-items: center;
+gap: 14px;
+padding: 14px 16px;
+border-radius: 10px;
+cursor: pointer;
+transition: background 0.18s;
+border: 1px solid transparent;
+}
+
+.chapter-item:hover { background: var(–card); border-color: var(–border); }
+
+.chapter-item.active {
+background: rgba(200, 169, 110, 0.08);
+border-color: rgba(200, 169, 110, 0.25);
+}
+
+.ch-num {
+font-family: ‘Space Mono’, monospace;
+font-size: 11px;
+color: var(–muted);
+text-align: center;
+}
+
+.chapter-item.active .ch-num { color: var(–accent); }
+
+.ch-info {}
+
+.ch-title {
+font-size: 14px;
+font-weight: 600;
+color: var(–text);
+margin-bottom: 2px;
+}
+
+.ch-desc {
+font-size: 12px;
+color: var(–muted);
+line-height: 1.5;
+}
+
+.ch-dur {
+font-family: ‘Space Mono’, monospace;
+font-size: 11px;
+color: var(–muted);
+white-space: nowrap;
+}
+
+.ch-icon {
+width: 20px;
+display: flex;
+align-items: center;
+justify-content: center;
+color: var(–accent);
+}
+
+/* Now playing bar */
+.now-playing {
+position: fixed;
+bottom: 0;
+left: 0;
+right: 0;
+background: rgba(10,10,8,0.95);
+backdrop-filter: blur(20px);
+border-top: 1px solid var(–border);
+padding: 12px 24px;
+display: flex;
+align-items: center;
+gap: 16px;
+z-index: 100;
+}
+
+.np-text {
+flex: 1;
+min-width: 0;
+}
+
+.np-label {
+font-family: ‘Space Mono’, monospace;
+font-size: 10px;
+color: var(–accent);
+letter-spacing: 0.15em;
+text-transform: uppercase;
+}
+
+.np-chapter {
+font-size: 13px;
+font-weight: 600;
+color: var(–text);
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+}
+
+.np-progress {
+flex: 1;
+max-width: 300px;
+height: 2px;
+background: var(–border);
+border-radius: 1px;
+overflow: hidden;
+}
+
+.np-fill {
+height: 100%;
+background: var(–accent);
+width: 0%;
+transition: width 0.3s linear;
+}
+
+/* Chart card */
+.chart-card {
+background: var(–card);
+border: 1px solid var(–border);
+border-radius: 16px;
+padding: 28px;
+margin-bottom: 32px;
+}
+
+.chart-header {
+display: flex;
+align-items: flex-start;
+justify-content: space-between;
+flex-wrap: wrap;
+gap: 12px;
+margin-bottom: 20px;
+}
+
+.chart-title {
+font-size: 15px;
+font-weight: 600;
+color: var(–text);
+margin-bottom: 4px;
+}
+
+.chart-subtitle {
+font-family: ‘Space Mono’, monospace;
+font-size: 11px;
+color: var(–muted);
+letter-spacing: 0.04em;
+}
+
+.chart-legend {
+display: flex;
+gap: 16px;
+flex-wrap: wrap;
+}
+
+.legend-item {
+display: flex;
+align-items: center;
+gap: 6px;
+font-family: ‘Space Mono’, monospace;
+font-size: 11px;
+color: var(–muted);
+}
+
+.legend-dot {
+width: 10px;
+height: 10px;
+border-radius: 50%;
+flex-shrink: 0;
+}
+
+#asymChart {
+width: 100%;
+display: block;
+margin-bottom: 20px;
+}
+
+.chart-table {
+overflow-x: auto;
+margin-bottom: 20px;
+}
+
+.chart-table table {
+width: 100%;
+border-collapse: collapse;
+font-family: ‘Space Mono’, monospace;
+font-size: 12px;
+}
+
+.chart-table th {
+color: var(–muted);
+font-weight: 400;
+padding: 8px 12px;
+border-bottom: 1px solid var(–border);
+text-align: left;
+letter-spacing: 0.05em;
+}
+
+.chart-table td {
+padding: 8px 12px;
+border-bottom: 1px solid rgba(42,42,36,0.5);
+color: var(–text);
+}
+
+.chart-table tr:last-child td { border-bottom: none; }
+
+.insight-row {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 12px;
+}
+
+.insight-box {
+border-radius: 10px;
+padding: 16px;
+border: 1px solid;
+}
+
+.insight-fragile {
+background: rgba(224,92,74,0.07);
+border-color: rgba(224,92,74,0.25);
+}
+
+.insight-anti {
+background: rgba(200,169,110,0.07);
+border-color: rgba(200,169,110,0.25);
+}
+
+.insight-label {
+font-family: ‘Space Mono’, monospace;
+font-size: 10px;
+letter-spacing: 0.12em;
+text-transform: uppercase;
+margin-bottom: 8px;
+}
+
+.insight-fragile .insight-label { color: #e05c4a; }
+.insight-anti .insight-label { color: var(–accent); }
+
+.insight-text {
+font-size: 13px;
+color: #b8b4a8;
+line-height: 1.7;
+}
+
+@media (max-width: 500px) {
+.insight-row { grid-template-columns: 1fr; }
+.chart-header { flex-direction: column; }
+}
+
+/* Transcript */
+.transcript-card {
+background: var(–card);
+border: 1px solid var(–border);
+border-radius: 16px;
+padding: 28px;
+margin-bottom: 100px;
+}
+
+.transcript-content {
+font-size: 14px;
+line-height: 2.0;
+color: #b8b4a8;
+max-height: 280px;
+overflow: hidden;
+position: relative;
+transition: max-height 0.5s ease;
+}
+
+.transcript-content.expanded { max-height: 2000px; }
+
+.transcript-content p { margin-bottom: 16px; }
+
+.transcript-content .highlight {
+color: var(–accent2);
+font-weight: 600;
+}
+
+.transcript-fade {
+position: absolute;
+bottom: 0;
+left: 0;
+right: 0;
+height: 80px;
+background: linear-gradient(transparent, var(–card));
+pointer-events: none;
+transition: opacity 0.3s;
+}
+
+.transcript-fade.hidden { opacity: 0; }
+
+.expand-btn {
+background: none;
+border: 1px solid var(–border);
+color: var(–muted);
+padding: 10px 20px;
+border-radius: 8px;
+cursor: pointer;
+font-family: ‘Noto Serif TC’, serif;
+font-size: 13px;
+margin-top: 16px;
+transition: all 0.2s;
+display: block;
+}
+
+.expand-btn:hover { color: var(–text); border-color: var(–accent); }
+
+/* Responsive */
+@media (max-width: 600px) {
+.episode-hero { grid-template-columns: 1fr; }
+.cover-art { width: 140px; height: 140px; }
+.ep-title { font-size: 20px; }
+.controls-right { display: none; }
+.chapter-item { grid-template-columns: 24px 1fr auto; }
+.ch-icon { display: none; }
+}
+
+/* Equalizer animation */
+.eq {
+display: flex;
+align-items: flex-end;
+gap: 2px;
+height: 14px;
+}
+
+.eq-bar {
+width: 3px;
+background: var(–accent);
+border-radius: 1px;
+animation: eq-bounce 0.8s ease-in-out infinite;
+}
+
+.eq-bar:nth-child(1) { animation-delay: 0s; height: 60%; }
+.eq-bar:nth-child(2) { animation-delay: 0.15s; height: 100%; }
+.eq-bar:nth-child(3) { animation-delay: 0.3s; height: 50%; }
+.eq-bar:nth-child(4) { animation-delay: 0.1s; height: 80%; }
+
+@keyframes eq-bounce {
+0%, 100% { transform: scaleY(0.4); }
+50% { transform: scaleY(1); }
+}
+
+.eq.paused .eq-bar { animation-play-state: paused; }
+</style>
+
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <header>
+    <div class="header-inner">
+      <div class="show-brand">
+        <div class="brand-icon">AF</div>
+        <div>
+          <div class="show-name">思想領地 · Podcast</div>
+          <div class="show-title">用函數讀懂經典</div>
+        </div>
+      </div>
+      <div class="live-badge">
+        <div class="live-dot"></div>
+        LIVE 直播中
+      </div>
+    </div>
+  </header>
+
+  <!-- Episode Hero -->
+
+  <div class="episode-hero">
+    <div class="cover-art">
+      <svg viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg">
+        <rect width="180" height="180" fill="#111110"/>
+        <defs>
+          <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#c8a96e" stop-opacity="0.15"/>
+            <stop offset="100%" stop-color="#c8a96e" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <rect width="180" height="180" fill="url(#glow)"/>
+        <!-- Grid lines -->
+        <line x1="0" y1="90" x2="180" y2="90" stroke="#2a2a24" stroke-width="0.5"/>
+        <line x1="90" y1="0" x2="90" y2="180" stroke="#2a2a24" stroke-width="0.5"/>
+        <!-- Convex curve for antifragile -->
+        <path d="M20 150 Q90 20 160 100" stroke="#c8a96e" stroke-width="2" fill="none" opacity="0.8"/>
+        <!-- Concave curve for fragile -->
+        <path d="M20 60 Q90 130 160 50" stroke="#7a7668" stroke-width="1.5" fill="none" opacity="0.5" stroke-dasharray="4,3"/>
+        <!-- Dots -->
+        <circle cx="90" cy="65" r="3.5" fill="#c8a96e"/>
+        <circle cx="45" cy="115" r="2.5" fill="#7a7668" opacity="0.6"/>
+      </svg>
+      <div class="cover-text">
+        <div class="cover-formula">
+          d = a<br/>
+          + f(x)<br/>
+          + g(y)<br/>
+          + h(z)
+        </div>
+      </div>
+    </div>
+
+```
+<div class="episode-meta">
+  <div class="ep-number">EP. 07 · 書評系列</div>
+  <div class="ep-title">反脆弱的公式<br>——用函數讀懂 Taleb</div>
+  <div class="ep-subtitle">凹性崩潰、凸性爆發、黑天鵝從不預警——<br>用函數與不對稱性，看穿 Taleb 最核心的世界觀。</div>
+  <div class="ep-tags">
+    <span class="tag">#反脆弱</span>
+    <span class="tag">#Nassim Taleb</span>
+    <span class="tag">#黑天鵝</span>
+    <span class="tag">#不對稱性</span>
+    <span class="tag">#投資思維</span>
+    <span class="tag">#函數思考</span>
+  </div>
+</div>
+```
+
+  </div>
+
+  <!-- Player Card -->
+
+  <div class="player-card">
+    <!-- Waveform -->
+    <div class="waveform-container" id="waveform" onclick="seekFromWaveform(event)">
+      <div class="waveform-bars" id="waveformBars"></div>
+      <div class="progress-overlay" id="waveProgress"></div>
+    </div>
+
+```
+<!-- Timeline -->
+<div class="timeline">
+  <span class="time-label" id="currentTime">00:00</span>
+  <div class="progress-bar" id="progressBar" onclick="seekFromBar(event)">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+  <span class="time-label" style="text-align:right" id="totalTime">51:42</span>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <div class="controls-center">
+    <button class="ctrl-btn" onclick="skipBack()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/>
+      </svg>
+    </button>
+    <button class="ctrl-btn" onclick="skip(-15)" title="-15秒">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M2.5 2v6h6M2.66 15.57a10 10 0 1 0 .57-8.38"/>
+      </svg>
+      <span>15</span>
+    </button>
+    <button class="play-btn" id="playBtn" onclick="togglePlay()">
+      <svg id="playIcon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+        <polygon points="5 3 19 12 5 21 5 3"/>
+      </svg>
+      <svg id="pauseIcon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="display:none">
+        <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+      </svg>
+    </button>
+    <button class="ctrl-btn" onclick="skip(15)" title="+15秒">
+      <span>15</span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38"/>
+      </svg>
+    </button>
+    <button class="ctrl-btn" onclick="skipForward()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="controls-right">
+    <button class="ctrl-btn" id="speedBtn" onclick="cycleSpeed()">1x</button>
+    <div class="volume-row">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2">
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+      </svg>
+      <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="80" oninput="setVolume(this.value)">
+    </div>
+  </div>
+</div>
+```
+
+  </div>
+
+  <!-- Chapters -->
+
+  <div class="section-label">章節導覽</div>
+  <div class="chapter-list" id="chapterList"></div>
+
+  <!-- Asymmetry Chart -->
+
+  <div class="section-label">本集核心圖解</div>
+  <div class="chart-card">
+    <div class="chart-header">
+      <div>
+        <div class="chart-title">凹性 vs. 凸性：不對稱的損益結構</div>
+        <div class="chart-subtitle">f(x) = −x²（脆弱）&nbsp;&nbsp;·&nbsp;&nbsp;h(x) = +x²（反脆弱）</div>
+      </div>
+      <div class="chart-legend">
+        <span class="legend-item"><span class="legend-dot" style="background:#e05c4a"></span>脆弱 f(x)=−x²</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#c8a96e"></span>反脆弱 h(x)=+x²</span>
+      </div>
+    </div>
+    <canvas id="asymChart" height="260"></canvas>
+    <div class="chart-table">
+      <table>
+        <thead>
+          <tr><th>衝擊 x</th><th style="color:#e05c4a">脆弱 f(x)=−x²</th><th style="color:#c8a96e">反脆弱 h(x)=+x²</th><th>差距</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>2</td><td style="color:#e05c4a">−4</td><td style="color:#c8a96e">+4</td><td>8</td></tr>
+          <tr><td>4</td><td style="color:#e05c4a">−16</td><td style="color:#c8a96e">+16</td><td>32</td></tr>
+          <tr><td>6</td><td style="color:#e05c4a">−36</td><td style="color:#c8a96e">+36</td><td>72</td></tr>
+          <tr><td>8</td><td style="color:#e05c4a">−64</td><td style="color:#c8a96e">+64</td><td>128</td></tr>
+          <tr><td>10</td><td style="color:#e05c4a">−100</td><td style="color:#c8a96e">+100</td><td>200</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="insight-row">
+      <div class="insight-box insight-fragile">
+        <div class="insight-label">脆弱系統</div>
+        <div class="insight-text">波動每增加一倍，損失以<strong>平方速度</strong>惡化。系統看似穩定，實則暗藏加速崩潰的引線。</div>
+      </div>
+      <div class="insight-box insight-anti">
+        <div class="insight-label">反脆弱系統</div>
+        <div class="insight-text">波動每增加一倍，獲益以<strong>平方速度</strong>攀升。極端事件不再是威脅，而是加速成長的燃料。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transcript -->
+
+  <div class="section-label">本集重點摘要</div>
+  <div class="transcript-card">
+    <div class="transcript-content" id="transcriptContent">
+      <p>歡迎來到《思想領地》，今天我們要用一個非常不一樣的角度——<span class="highlight">數學函數</span>——來重新解讀 Nassim Taleb 的經典之作《反脆弱》。</p>
+      <p>Taleb 在書中提出了一個核心問題：面對不確定性和衝擊，你的系統是會崩潰、維持原狀，還是因此變得更強？他把第三種可能命名為「反脆弱」。</p>
+      <p>我們用一條公式來框架整本書：<span class="highlight">d = a + f(x) + g(y) + h(z)</span>。其中 a 是初始狀態，f(x) 是外在衝擊帶來的影響，g(y) 是人為干預的效果，而 h(z) 則是系統自我修復、甚至強化的能力——也就是反脆弱的核心。</p>
+      <p>以跑步為例。你的肌肉在訓練中受損，這是 f(x) 的作用，是負值。但身體會自我修復，心肺功能提升，肌肉變得更強，這是 h(z) 的魔法。然而，如果我們因為焦慮而過度補充蛋白質、塞滿比賽行程，g(y) 的干預可能反而壓制了 h(z)，讓系統失去自癒的空間。</p>
+      <p>Taleb 特別警示：<span class="highlight">h(z) 是有上限的</span>。衝擊若超過臨界值，沒有任何自癒能力能夠挽救。這正是為什麼大自然在設計生命時，內建了冗餘——那些看似多餘的備份，是壓力下存活的關鍵。</p>
+      <p>2007年的金融海嘯是另一個絕佳案例。次貸違約人數從100人增加到100,000人，損失不是線性增長100倍，而是暴增6,000倍。這種凹性的損失曲線，揭示了脆弱系統最危險的特質：風險被系統性低估。</p>
+      <p>而胖子托尼和銀行雇員的對比，則說明了在同樣的風暴中，兩個人的結局天差地遠。差距不在運氣，而在於：<span class="highlight">事前是否建立了反脆弱的結構</span>。</p>
+      <p>最後，Taleb 的「減法哲學」或許是全書最反直覺的洞見：有時候，不作為才是最好的作為。我們習慣性地想要控制、介入、修正，卻忘了系統本身就具備自我修復的能力——而過度干預，正是親手扼殺這種能力的元兇。</p>
+
+```
+  <hr style="border:none;border-top:1px solid var(--border);margin:24px 0;">
+
+  <p style="color:var(--accent);font-family:'Space Mono',monospace;font-size:11px;letter-spacing:0.15em;">── 第二部：不對稱性 ──</p>
+
+  <p>接下來我們進入 Taleb 最核心的數學洞見：<span class="highlight">脆弱是凹性，反脆弱是凸性</span>。這不只是比喻，而是可以用方程式精確描述的現實。</p>
+
+  <p>脆弱函數的形式是 <span class="highlight">f(x) = −x²</span>。當 x 從 2 增加到 4 再到 8，f(x) 分別是 −4、−16、−64。注意：x 每次翻倍，損失卻以平方速度惡化。這就是凹性——<span class="highlight">每一單位的額外衝擊，傷害比上一單位更重</span>。這正是金融海嘯的本質：系統原本設計來承受小波動，一旦進入極端情境，損失就像雪崩一樣加速。</p>
+
+  <p>反脆弱函數的形式則是 <span class="highlight">h(x) = +x²</span>。同樣的 x 值，結果是 +4、+16、+64。波動愈大，獲益愈以平方速度攀升。一家口罩廠在 2019 年前只是默默經營，完全無法預知 COVID-19；但當疫情以指數速度擴散，他們的獲利也跟著以指數速度爆發。這就是凸性結構的威力——<span class="highlight">波動是朋友，而非敵人</span>。</p>
+
+  <p>這裡有一個關鍵的不對稱性值得深思：脆弱系統的損失有上限（最多歸零），但反脆弱系統的獲益理論上沒有上限。這正是 Taleb 說的「正面黑天鵝」——最壞的情況你早已知道，最好的情況卻遠超你的想像。</p>
+
+  <p>再說到<span class="highlight">隨機性與黑天鵝</span>。我們在做年度計劃時，通常只考慮 x1、x2、x3……x5 這些已知的、觀察過的變數。至於 x6、x7……xn，因為發生機率極低，往往被排除在模型之外。但 Taleb 的核心警示是：<span class="highlight">正是這些長尾變數，才能造成最大的衝擊</span>。</p>
+
+  <p>福島核電廠的設計師從未將九級以上地震納入風險模型。銀行的風控系統從未認真考慮內部員工大規模盜竊的可能。這不是疏忽，而是人類認知的結構性缺陷——我們習慣用過去的經驗推斷未來，卻忘了歷史從不重演，它只是押韻。</p>
+
+  <p>Taleb 用「火雞」這個比喻說得最透徹。一隻火雞根據過去兩年每天被餵食的經驗，建立了一個完美的預測模型：「明天主人還是會餵我。」這個模型在感恩節前一天，信心指數達到歷史最高。然後，屠刀落下。<span class="highlight">根據過去建立的確信，在黑天鵝面前毫無防禦力。</span></p>
+
+  <p>最後談到<span class="highlight">平均數的謊言</span>。我們習慣用平均值來判斷一件事的影響，卻忽略了極端事件的破壞力與爆發力。投資時，我們傾向選擇過去平均獲利穩定的大公司，卻因此錯過了那些現在沒有盈利、但未來可能爆發性成長的公司；同時，也忽視了那些平均獲利亮眼、但其實已在懸崖邊緣的企業。</p>
+
+  <p>Taleb 的答案不是更精準的預測，而是<span class="highlight">建立「可選擇性」</span>——讓自己處於一個在好事發生時能充分受益、在壞事發生時損失有限的位置。具體的方法，是試錯啟發法：小規模試驗、快速迭代、從實作中學習，而非依賴宏大的理論框架。因為理論的盲點，正是那些還沒發生的 x6、x7……xn。</p>
+</div>
+<div class="transcript-fade" id="transcriptFade"></div>
+<button class="expand-btn" id="expandBtn" onclick="toggleTranscript()">展開全文 ↓</button>
+```
+
+  </div>
+</div>
+
+<!-- Bottom Now Playing Bar -->
+
+<div class="now-playing">
+  <div class="eq" id="eq">
+    <div class="eq-bar"></div>
+    <div class="eq-bar"></div>
+    <div class="eq-bar"></div>
+    <div class="eq-bar"></div>
+  </div>
+  <div class="np-text">
+    <div class="np-label">正在播放</div>
+    <div class="np-chapter" id="npChapter">引言：為什麼用函數讀 Taleb？</div>
+  </div>
+  <div class="np-progress">
+    <div class="np-fill" id="npFill"></div>
+  </div>
+  <button class="ctrl-btn" onclick="togglePlay()" style="color:var(--accent)">
+    <svg id="npPlayIcon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+      <polygon points="5 3 19 12 5 21 5 3"/>
+    </svg>
+    <svg id="npPauseIcon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="display:none">
+      <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
+    </svg>
+  </button>
+</div>
+
+<script>
+const CHAPTERS = [
+  { title: "引言：為什麼用函數讀 Taleb？", desc: "建立 d = a + f(x) + g(y) + h(z) 的框架", start: 0, dur: 248 },
+  { title: "一、跑步與肌耐力", desc: "最直觀的反脆弱案例：訓練、損傷與自癒", start: 248, dur: 312 },
+  { title: "二、大自然的冗餘設計", desc: "h(z) 就是反脆弱性，骨骼愈練愈強的道理", start: 560, dur: 238 },
+  { title: "三、2008金融海嘯的啟示", desc: "非線性損失曲線，與胖子托尼的預判", start: 798, dur: 456 },
+  { title: "四、雇員 vs. 計程車司機", desc: "冗餘不是浪費，是抵禦脆弱的資本", start: 1254, dur: 328 },
+  { title: "五、作家的反脆弱特權", desc: "壞事對他們而言，有時是翻身機會", start: 1582, dur: 274 },
+  { title: "六、減法哲學：不作為的智慧", desc: "面對癌症、面對系統——有時不干預才正確", start: 1856, dur: 282 },
+  { title: "七、凹性 vs. 凸性：不對稱的核心", desc: "f(x)=−x² 與 h(x)=x²，損失與獲益的加速結構", start: 2138, dur: 356 },
+  { title: "八、黑天鵝與長尾風險", desc: "x6、x7…xn 才是真正的危險，火雞的悲劇", start: 2494, dur: 318 },
+  { title: "九、平均數的謊言與極端事件", desc: "試錯啟發法：從實作而非理論找到可選擇性", start: 2812, dur: 290 },
+];
+
+const TOTAL = 3102; // 51:42
+let currentTime = 0;
+let isPlaying = false;
+let interval = null;
+let speed = 1;
+const speeds = [1, 1.25, 1.5, 2];
+let speedIdx = 0;
+
+// Draw asymmetry chart
+function drawAsymChart() {
+  const canvas = document.getElementById('asymChart');
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.offsetWidth;
+  const H = 260;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const pad = { top: 20, right: 20, bottom: 36, left: 52 };
+  const cw = W - pad.left - pad.right;
+  const ch = H - pad.top - pad.bottom;
+
+  // Background
+  ctx.fillStyle = '#1a1a17';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  const xMin = 0, xMax = 10, yMin = -110, yMax = 110;
+  function toCanvasX(x) { return pad.left + ((x - xMin) / (xMax - xMin)) * cw; }
+  function toCanvasY(y) { return pad.top + ((yMax - y) / (yMax - yMin)) * ch; }
+
+  // Grid lines
+  ctx.strokeStyle = '#2a2a24';
+  ctx.lineWidth = 0.5;
+  for (let y = -100; y <= 100; y += 25) {
+    ctx.beginPath();
+    ctx.moveTo(pad.left, toCanvasY(y));
+    ctx.lineTo(pad.left + cw, toCanvasY(y));
+    ctx.stroke();
+    ctx.fillStyle = '#7a7668';
+    ctx.font = `10px 'Space Mono', monospace`;
+    ctx.textAlign = 'right';
+    ctx.fillText(y, pad.left - 8, toCanvasY(y) + 4);
+  }
+  for (let x = 0; x <= 10; x += 2) {
+    ctx.beginPath();
+    ctx.moveTo(toCanvasX(x), pad.top);
+    ctx.lineTo(toCanvasX(x), pad.top + ch);
+    ctx.stroke();
+    ctx.fillStyle = '#7a7668';
+    ctx.font = `10px 'Space Mono', monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText(x, toCanvasX(x), pad.top + ch + 18);
+  }
+
+  // Zero axis
+  ctx.strokeStyle = '#3a3a34';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad.left, toCanvasY(0));
+  ctx.lineTo(pad.left + cw, toCanvasY(0));
+  ctx.stroke();
+
+  // Fragile curve f(x) = -x^2  (red)
+  ctx.beginPath();
+  ctx.strokeStyle = '#e05c4a';
+  ctx.lineWidth = 2.5;
+  ctx.shadowColor = '#e05c4a';
+  ctx.shadowBlur = 6;
+  for (let i = 0; i <= 200; i++) {
+    const x = xMin + (i / 200) * (xMax - xMin);
+    const y = -(x * x);
+    if (y < yMin) continue;
+    const cx2 = toCanvasX(x), cy2 = toCanvasY(y);
+    i === 0 ? ctx.moveTo(cx2, cy2) : ctx.lineTo(cx2, cy2);
+  }
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Anti-fragile curve h(x) = +x^2 (gold)
+  ctx.beginPath();
+  ctx.strokeStyle = '#c8a96e';
+  ctx.lineWidth = 2.5;
+  ctx.shadowColor = '#c8a96e';
+  ctx.shadowBlur = 6;
+  for (let i = 0; i <= 200; i++) {
+    const x = xMin + (i / 200) * (xMax - xMin);
+    const y = x * x;
+    if (y > yMax) continue;
+    const cx2 = toCanvasX(x), cy2 = toCanvasY(y);
+    i === 0 ? ctx.moveTo(cx2, cy2) : ctx.lineTo(cx2, cy2);
+  }
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Labels on curves
+  ctx.font = `bold 11px 'Space Mono', monospace`;
+  ctx.fillStyle = '#e05c4a';
+  ctx.textAlign = 'left';
+  ctx.fillText('f(x)=−x²', toCanvasX(6.2) + 4, toCanvasY(-36) - 6);
+  ctx.fillStyle = '#c8a96e';
+  ctx.fillText('h(x)=+x²', toCanvasX(6.2) + 4, toCanvasY(36) + 14);
+
+  // x-axis label
+  ctx.fillStyle = '#7a7668';
+  ctx.font = `10px 'Space Mono', monospace`;
+  ctx.textAlign = 'center';
+  ctx.fillText('衝擊強度 x', pad.left + cw / 2, H - 4);
+}
+
+// Build waveform
+function buildWaveform() {
+  const bars = document.getElementById('waveformBars');
+  const count = 120;
+  for (let i = 0; i < count; i++) {
+    const div = document.createElement('div');
+    div.className = 'waveform-bar';
+    const h = 15 + Math.random() * 70 + Math.sin(i * 0.25) * 15;
+    div.style.height = h + '%';
+    div.style.minHeight = '4px';
+    div.style.background = '#2a2a24';
+    bars.appendChild(div);
+  }
+}
+
+function updateWaveform() {
+  const bars = document.getElementById('waveformBars').children;
+  const progress = currentTime / TOTAL;
+  const filled = Math.floor(progress * bars.length);
+  for (let i = 0; i < bars.length; i++) {
+    bars[i].style.background = i < filled ? 'var(--accent)' : '#2a2a24';
+  }
+}
+
+function seekFromWaveform(e) {
+  const rect = e.currentTarget.getBoundingClientRect();
+  const ratio = (e.clientX - rect.left) / rect.width;
+  currentTime = Math.floor(ratio * TOTAL);
+  updateAll();
+}
+
+function seekFromBar(e) {
+  const rect = e.currentTarget.getBoundingClientRect();
+  const ratio = (e.clientX - rect.left) / rect.width;
+  currentTime = Math.floor(ratio * TOTAL);
+  updateAll();
+}
+
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+function getCurrentChapter() {
+  for (let i = CHAPTERS.length - 1; i >= 0; i--) {
+    if (currentTime >= CHAPTERS[i].start) return i;
+  }
+  return 0;
+}
+
+function updateAll() {
+  const pct = (currentTime / TOTAL) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('npFill').style.width = pct + '%';
+  document.getElementById('currentTime').textContent = formatTime(currentTime);
+  updateWaveform();
+
+  const ch = getCurrentChapter();
+  document.getElementById('npChapter').textContent = CHAPTERS[ch].title;
+
+  document.querySelectorAll('.chapter-item').forEach((el, i) => {
+    el.classList.toggle('active', i === ch);
+  });
+}
+
+function togglePlay() {
+  isPlaying = !isPlaying;
+  document.getElementById('playIcon').style.display = isPlaying ? 'none' : '';
+  document.getElementById('pauseIcon').style.display = isPlaying ? '' : 'none';
+  document.getElementById('npPlayIcon').style.display = isPlaying ? 'none' : '';
+  document.getElementById('npPauseIcon').style.display = isPlaying ? '' : 'none';
+  document.getElementById('eq').classList.toggle('paused', !isPlaying);
+
+  if (isPlaying) {
+    interval = setInterval(() => {
+      currentTime = Math.min(currentTime + 1, TOTAL);
+      updateAll();
+      if (currentTime >= TOTAL) { isPlaying = false; clearInterval(interval); }
+    }, 1000 / speed);
+  } else {
+    clearInterval(interval);
+  }
+}
+
+function skip(sec) {
+  currentTime = Math.max(0, Math.min(TOTAL, currentTime + sec));
+  updateAll();
+}
+
+function skipBack() {
+  const ch = getCurrentChapter();
+  if (ch > 0) {
+    currentTime = CHAPTERS[ch - 1].start;
+  } else {
+    currentTime = 0;
+  }
+  updateAll();
+}
+
+function skipForward() {
+  const ch = getCurrentChapter();
+  if (ch < CHAPTERS.length - 1) {
+    currentTime = CHAPTERS[ch + 1].start;
+  }
+  updateAll();
+}
+
+function cycleSpeed() {
+  speedIdx = (speedIdx + 1) % speeds.length;
+  speed = speeds[speedIdx];
+  document.getElementById('speedBtn').textContent = speed + 'x';
+  if (isPlaying) {
+    clearInterval(interval);
+    interval = setInterval(() => {
+      currentTime = Math.min(currentTime + 1, TOTAL);
+      updateAll();
+    }, 1000 / speed);
+  }
+}
+
+function setVolume(v) {}
+
+function buildChapters() {
+  const list = document.getElementById('chapterList');
+  CHAPTERS.forEach((ch, i) => {
+    const div = document.createElement('div');
+    div.className = 'chapter-item' + (i === 0 ? ' active' : '');
+    div.innerHTML = `
+      <div class="ch-num">${String(i + 1).padStart(2,'0')}</div>
+      <div class="ch-info">
+        <div class="ch-title">${ch.title}</div>
+        <div class="ch-desc">${ch.desc}</div>
+      </div>
+      <div class="ch-dur">${formatTime(ch.dur)}</div>
+      <div class="ch-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+      </div>
+    `;
+    div.onclick = () => {
+      currentTime = ch.start;
+      updateAll();
+      if (!isPlaying) togglePlay();
+    };
+    list.appendChild(div);
+  });
+}
+
+let transcriptExpanded = false;
+function toggleTranscript() {
+  transcriptExpanded = !transcriptExpanded;
+  document.getElementById('transcriptContent').classList.toggle('expanded', transcriptExpanded);
+  document.getElementById('transcriptFade').classList.toggle('hidden', transcriptExpanded);
+  document.getElementById('expandBtn').textContent = transcriptExpanded ? '收起 ↑' : '展開全文 ↓';
+}
+
+buildWaveform();
+buildChapters();
+updateAll();
+drawAsymChart();
+window.addEventListener('resize', drawAsymChart);
+</script>
+
+</body>
+</html>
