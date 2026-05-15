@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
 <title>土耳其之旅 2025</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
@@ -105,42 +106,55 @@ body{
 
 #map{
   flex:1;
+  position:relative;
 }
 
-/* Legend */
+/* 底部日期路線板 */
 #day-legend{
   position:absolute;
-  top:12px;
-  right:12px;
+  bottom:14px;
+  left:50%;
+  transform:translateX(-50%);
+
   z-index:999;
+
+  display:flex;
+  align-items:center;
+  gap:14px;
+  flex-wrap:wrap;
+
   background:rgba(255,255,255,0.92);
   border:1px solid var(--border);
-  border-radius:12px;
-  padding:10px 14px;
+  border-radius:14px;
+
+  padding:10px 16px;
+
   backdrop-filter:blur(10px);
-  max-height:80vh;
-  overflow:auto;
+
   box-shadow:0 4px 20px rgba(0,0,0,0.08);
+
+  max-width:90vw;
 }
 
 #day-legend h4{
   font-size:10px;
   color:var(--muted);
-  margin-bottom:8px;
   letter-spacing:.08em;
+  margin-right:4px;
 }
 
 .legend-row{
   display:flex;
   align-items:center;
-  gap:8px;
-  margin-bottom:6px;
+  gap:6px;
+  white-space:nowrap;
 }
 
 .legend-dot{
   width:10px;
   height:10px;
   border-radius:50%;
+  flex-shrink:0;
 }
 
 .legend-label{
@@ -152,9 +166,29 @@ body{
   opacity:.45;
 }
 
-/* popup style */
+/* popup */
 .leaflet-popup-content-wrapper{
   border-radius:10px !important;
+}
+
+/* 手機版 */
+@media (max-width:768px){
+
+  #header{
+    flex-wrap:wrap;
+  }
+
+  #day-legend{
+    width:95%;
+    justify-content:flex-start;
+    overflow-x:auto;
+    flex-wrap:nowrap;
+    padding:10px 12px;
+  }
+
+  .legend-label{
+    font-size:11px;
+  }
 }
 </style>
 </head>
@@ -162,6 +196,7 @@ body{
 <body>
 
 <div id="header">
+
   <div>
     <div id="header-title">🕌 土耳其之旅 2025</div>
     <div id="header-sub">Jul 31 – Aug 11 · Turkey Road Trip</div>
@@ -173,28 +208,36 @@ body{
 
   <div id="status-chip">準備中…</div>
 
-  <!-- 加快速度 -->
+  <!-- 加快播放速度 -->
   <select id="speed-sel" class="ctrl-btn">
     <option value="8">超快</option>
     <option value="15" selected>快速</option>
     <option value="30">正常</option>
   </select>
 
-  <button class="ctrl-btn" id="pause-btn" onclick="togglePause()">⏸ 暫停</button>
-  <button class="ctrl-btn" onclick="restartAll()">↺ 重播</button>
+  <button class="ctrl-btn" id="pause-btn" onclick="togglePause()">
+    ⏸ 暫停
+  </button>
+
+  <button class="ctrl-btn" onclick="restartAll()">
+    ↺ 重播
+  </button>
 </div>
 
 <div id="map">
+
   <div id="day-legend">
-    <h4>日期</h4>
+    <h4>每日路線</h4>
   </div>
+
 </div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
-/* ── 資料 ── */
-const RAW =[
+/* ── 旅程資料 ── */
+/* 你可以直接替換成完整 RAW 資料 */
+const RAW = [
   {"Date":"2025-07-31","Location":"安卡拉機場 (降落與上車)","Latitude":40.14199,"Longitude":32.991757},
   {"Date":"2025-07-31","Location":"Ankara Highway O 20","Latitude":40.032411,"Longitude":32.870921},
   {"Date":"2025-07-31","Location":"Gimai房屋群","Latitude":40.081685,"Longitude":32.6061},
@@ -253,20 +296,21 @@ const RAW =[
   {"Date":"2025-08-10","Location":"卡莫多階梯/加拉達塔晚餐","Latitude":41.026714,"Longitude":28.974157},
   {"Date":"2025-08-11","Location":"伊斯坦堡機場 (登機回台)","Latitude":41.256811,"Longitude":28.735222}
 ];
-/* ── 每天顏色 ── */
+
+/* ── 每日顏色 ── */
 const DAY_COLORS = {
-  '2025-07-31': 'blue',
-  '2025-08-01': 'red',
-  '2025-08-02': 'black',
-  '2025-08-03': 'blue',
-  '2025-08-04': 'red',
-  '2025-08-05': 'black',
-  '2025-08-06': 'blue',
-  '2025-08-07': 'red',
-  '2025-08-08': 'black',
-  '2025-08-09': 'blue',
-  '2025-08-10': 'red',
-  '2025-08-11': 'black',
+  '2025-07-31': '#d97706',
+  '2025-08-01': '#22c55e',
+  '2025-08-02': '#3b82f6',
+  '2025-08-03': '#ef4444',
+  '2025-08-04': '#a855f7',
+  '2025-08-05': '#10b981',
+  '2025-08-06': '#f97316',
+  '2025-08-07': '#8b5cf6',
+  '2025-08-08': '#0ea5e9',
+  '2025-08-09': '#ec4899',
+  '2025-08-10': '#eab308',
+  '2025-08-11': '#65a30d',
 };
 
 const DAY_LABELS = {
@@ -284,8 +328,8 @@ const DAY_LABELS = {
   '2025-08-11': '8/11 登機',
 };
 
-/* ── 地圖初始化（改成淺色） ── */
-const map = L.map('map', {
+/* ── 地圖初始化（淺色地圖） ── */
+const map = L.map('map',{
   zoomControl:false
 }).setView([39,32],6);
 
@@ -301,18 +345,25 @@ L.control.zoom({
   position:'bottomright'
 }).addTo(map);
 
-/* ── 圖例 ── */
+/* ── 建立底部路線板 ── */
 const legendEl = document.getElementById('day-legend');
 
 Object.entries(DAY_LABELS).forEach(([date,label])=>{
+
   const row = document.createElement('div');
 
   row.className='legend-row';
   row.id='leg-'+date;
 
   row.innerHTML=`
-    <div class="legend-dot" style="background:${DAY_COLORS[date]}"></div>
-    <span class="legend-label muted">${label}</span>
+    <div
+      class="legend-dot"
+      style="background:${DAY_COLORS[date]}"
+    ></div>
+
+    <span class="legend-label muted">
+      ${label}
+    </span>
   `;
 
   legendEl.appendChild(row);
@@ -323,16 +374,21 @@ const roadCache = {};
 
 async function getRoadCoords(a,b){
 
-  const key = `${a.Latitude},${a.Longitude}|${b.Latitude},${b.Longitude}`;
+  const key =
+    `${a.Latitude},${a.Longitude}|${b.Latitude},${b.Longitude}`;
 
-  if(roadCache[key]) return roadCache[key];
+  if(roadCache[key]){
+    return roadCache[key];
+  }
 
   const dist = Math.hypot(
     a.Latitude - b.Latitude,
     a.Longitude - b.Longitude
   );
 
+  /* 太遠直接畫直線 */
   if(dist > 2.5){
+
     return [
       [a.Latitude,a.Longitude],
       [b.Latitude,b.Longitude]
@@ -351,9 +407,10 @@ async function getRoadCoords(a,b){
 
     const json = await res.json();
 
-    const coords = json.routes[0].geometry.coordinates.map(
-      ([lng,lat])=>[lat,lng]
-    );
+    const coords =
+      json.routes[0].geometry.coordinates.map(
+        ([lng,lat])=>[lat,lng]
+      );
 
     roadCache[key]=coords;
 
@@ -368,13 +425,14 @@ async function getRoadCoords(a,b){
   }
 }
 
-/* ── 狀態 ── */
+/* ── 播放狀態 ── */
 let timer = null;
 let allMarkers = [];
 let allPolylines = [];
 let playing = false;
 let paused = false;
 
+/* UI */
 const setStatus = t=>{
   document.getElementById('status-chip').textContent=t;
 };
@@ -384,11 +442,11 @@ const setProgress = p=>{
     Math.min(p,100)+'%';
 };
 
-/* ── Marker（不再顯示資訊 popup） ── */
+/* Marker（不顯示資訊） */
 function addMarker(pt,color,idx){
 
   const isFirst = idx===0;
-  const isLast = idx===RAW.length-1;
+  const isLast  = idx===RAW.length-1;
 
   const marker = L.circleMarker(
     [pt.Latitude,pt.Longitude],
@@ -404,29 +462,33 @@ function addMarker(pt,color,idx){
   allMarkers.push(marker);
 }
 
-/* ── 路線動畫（加快） ── */
+/* 線段動畫 */
 function animateSegment(polyline,coords){
 
   return new Promise(resolve=>{
 
-    let idx=0;
+    let idx = 0;
 
-    // 加速
-    const interval = parseInt(
-      document.getElementById('speed-sel').value
-    );
+    const interval =
+      parseInt(
+        document.getElementById('speed-sel').value
+      );
 
     timer = setInterval(()=>{
 
       if(!playing){
+
         clearInterval(timer);
         resolve();
         return;
       }
 
-      if(paused) return;
+      if(paused){
+        return;
+      }
 
       if(idx >= coords.length){
+
         clearInterval(timer);
         resolve();
         return;
@@ -435,11 +497,10 @@ function animateSegment(polyline,coords){
       polyline.addLatLng(coords[idx++]);
 
     },interval);
-
   });
 }
 
-/* ── 清除 ── */
+/* 清除 */
 function clearAll(){
 
   if(timer){
@@ -456,21 +517,24 @@ function clearAll(){
   paused=false;
 
   Object.keys(DAY_LABELS).forEach(d=>{
-    const el = document.getElementById('leg-'+d);
+
+    const el =
+      document.getElementById('leg-'+d);
 
     if(el){
+
       el.querySelector('.legend-label').className =
         'legend-label muted';
     }
   });
 }
 
-/* ── 播放 ── */
+/* 開始播放 */
 async function startPlayback(){
 
   clearAll();
 
-  playing=true;
+  playing = true;
 
   const bounds = L.latLngBounds(
     RAW.map(p=>[p.Latitude,p.Longitude])
@@ -485,11 +549,16 @@ async function startPlayback(){
 
   for(let i=0;i<RAW.length;i++){
 
+    if(!playing){
+      return;
+    }
+
     const pt = RAW[i];
 
     const color =
       DAY_COLORS[pt.Date] || '#d97706';
 
+    /* 新的一天 */
     if(pt.Date !== currentDay){
 
       currentDay = pt.Date;
@@ -508,22 +577,28 @@ async function startPlayback(){
         document.getElementById('leg-'+pt.Date);
 
       if(legEl){
+
         legEl.querySelector('.legend-label').className =
           'legend-label';
       }
 
-      setStatus(DAY_LABELS[pt.Date] || pt.Date);
+      setStatus(
+        DAY_LABELS[pt.Date] || pt.Date
+      );
     }
 
     addMarker(pt,color,i);
 
-    setProgress((i / RAW.length) * 100);
+    setProgress(
+      (i / RAW.length) * 100
+    );
 
     if(i < RAW.length - 1){
 
       const next = RAW[i+1];
 
-      const coords = await getRoadCoords(pt,next);
+      const coords =
+        await getRoadCoords(pt,next);
 
       await animateSegment(polyline,coords);
     }
@@ -534,18 +609,20 @@ async function startPlayback(){
   setProgress(100);
 }
 
-/* ── 控制 ── */
+/* 重播 */
 function restartAll(){
 
   clearAll();
 
   paused=false;
 
-  document.getElementById('pause-btn').textContent='⏸ 暫停';
+  document.getElementById('pause-btn').textContent =
+    '⏸ 暫停';
 
   startPlayback();
 }
 
+/* 暫停 */
 function togglePause(){
 
   paused=!paused;
@@ -554,9 +631,10 @@ function togglePause(){
     paused ? '▶ 繼續' : '⏸ 暫停';
 }
 
-/* ── 啟動 ── */
+/* 啟動 */
 startPlayback();
 
 </script>
+
 </body>
 </html>
