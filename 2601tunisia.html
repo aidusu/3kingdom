@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>2601突尼西亞 - 公路導航版</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0; 
+      padding: 0;
+    }
+    #map {
+      width: 100vw;
+      height: 100vh;
+      max-width: 100%;
+      max-height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const jsonUrl = 'https://raw.githubusercontent.com/joyease/game/main/2601tunisia.json';
+    const map = L.map('map').setView([35.33, 9.66], 7);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // 標示主要城市標籤
+    const cities = [
+      { name: "突尼斯", pos: [36.8565, 10.1815] },
+      { name: "蘇斯", pos: [35.8148, 10.6084] },
+      { name: "雪尼尼", pos: [32.9014, 10.2618] },
+      { name: "吐澤", pos: [33.9197, 8.1335] },
+      { name: "斯貝特拉", pos: [35.2331, 9.1124] },
+      { name: "米代斯", pos: [34.4056, 7.9194] },
+      { name: "開羅安", pos: [35.6937, 10.0944] },
+      { name: "杜茲", pos: [33.4354, 9.0203] },
+      { name: "杜加", pos: [36.4427, 9.2201] }
+    ];
+
+    // 動態 CSS
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .custom-city-label {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: #555555 !important;
+        font-weight: bold;
+        font-size: 9px;
+        padding: 0 !important;
+      }
+      .custom-city-label:before { display: none !important; }
+    `;
+    document.head.appendChild(style);
+
+    cities.forEach(city => {
+      L.circleMarker(city.pos, { radius: 3, color: 'blue', fillColor: 'blue', fillOpacity: 1, weight: 1 }).addTo(map)
+      .bindTooltip(city.name, { permanent: true, direction: 'bottom', opacity: 1, className: 'custom-city-label' });
+    });
+
+    // --- 核心功能：呼叫 OSRM 取得公路路徑 ---
+    async function drawRoute(start, end, color) {
+      // OSRM API 格式: [經度,緯度];[經度,緯度]
+      const url = `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`;
+      
+      try {
+        const response = await fetch(url);
+        const result = await response.json();
+        if (result.code === 'Ok') {
+          const routeData = result.routes[0].geometry.coordinates;
+          // 轉換座標格式為 Leaflet 使用的 [緯度, 經度]
+          const latLngs = routeData.map(coord => [coord[1], coord[0]]);
+          L.polyline(latLngs, {
+            color: color,
+            weight: 3,
+            opacity: 0.7,
+            dashArray: '5, 10' // 如果想要實線，可以移除這行
+          }).addTo(map);
+        }
+      } catch (err) {
+        console.error('OSRM 請求失敗:', err);
+        // 如果 API 失敗，退而求其次畫直線
+        L.polyline([start, end], { color: color, weight: 1, dashArray: '3, 3' }).addTo(map);
+      }
+    }
+
+    fetch(jsonUrl)
+      .then(response => response.json())
+      .then(data => {
+        let index = 0;
+        const colors = ['red', 'blue', 'green', 'purple', 'orange'];
+        const latlngs = data.map(p => [p.latitude, p.longitude]);
+        map.fitBounds(L.latLngBounds(latlngs));
+
+        async function addNextPoint() {
+          if (index >= data.length) return;
+
+          const point = data[index];
+          const currentLatLng = [point.latitude, point.longitude];
+          const colorIndex = Math.floor(index / 20) % colors.length;
+          const markerColor = colors[colorIndex];
+
+          // 畫點
+          const circleMarker = L.circleMarker(currentLatLng, {
+            radius: 2,
+            fillColor: markerColor,
+            color: 'white',
+            weight: 1,
+            fillOpacity: 0.8
+          }).addTo(map);
+
+          circleMarker.bindPopup(`<b>標籤:</b> ${point.label}<br>海拔: ${point.elevation} m`);
+
+          // 畫線：如果不是第一個點，則向 OSRM 請求與前一點的公路連線
+          if (index > 0) {
+            const prevLatLng = [data[index - 1].latitude, data[index - 1].longitude];
+            // 這裡不使用 await 也是為了保持動畫流暢度，讓點先出來，線隨後補上
+            drawRoute(prevLatLng, currentLatLng, markerColor);
+          }
+
+          index++;
+          // 考慮到 OSRM API 的頻率限制，建議延遲稍微拉長（例如 300-500ms）
+          setTimeout(addNextPoint, 500);
+        }
+
+        addNextPoint();
+      })
+      .catch(err => console.error('載入JSON出錯:', err));
+  </script>
+</body>
+</html>
