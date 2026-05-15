@@ -228,9 +228,9 @@ body{
   </div>
 
   <select id="speed-sel" class="ctrl-btn">
-    <option value="3">超快</option>
-    <option value="5" selected>快速</option>
-    <option value="8">正常</option>
+    <option value="2">超快</option>
+    <option value="3" selected>快速</option>
+    <option value="5">正常</option>
   </select>
 
   <button
@@ -267,7 +267,8 @@ body{
 <script>
 /* ── 資料 ── */
 const RAW = [
-  {"Date":"2025-07-31","Location":"安卡拉機場 (降落與上車)","Latitude":40.14199,"Longitude":32.991757},
+  {"Date":"2025-08-11","Location":"伊斯坦堡機場","Latitude":41.256811,"Longitude":28.735222},
+  {"Date":"2025-07-31","Location":"安卡拉機場","Latitude":40.14199,"Longitude":32.991757},
   {"Date":"2025-07-31","Location":"Ankara Highway O 20","Latitude":40.032411,"Longitude":32.870921},
   {"Date":"2025-07-31","Location":"Gimai房屋群","Latitude":40.081685,"Longitude":32.6061},
   {"Date":"2025-07-31","Location":"往番紅花城途中加油站","Latitude":40.612935,"Longitude":32.258174},
@@ -328,18 +329,18 @@ const RAW = [
 
 /* ── 顏色 ── */
 const DAY_COLORS = {
-  '2025-07-31': '#d97706',
-  '2025-08-01': '#22c55e',
-  '2025-08-02': '#3b82f6',
-  '2025-08-03': '#ef4444',
-  '2025-08-04': '#a855f7',
-  '2025-08-05': '#10b981',
-  '2025-08-06': '#f97316',
-  '2025-08-07': '#8b5cf6',
-  '2025-08-08': '#0ea5e9',
-  '2025-08-09': '#ec4899',
-  '2025-08-10': '#eab308',
-  '2025-08-11': '#65a30d',
+  '2025-07-31': 'blue',
+  '2025-08-01': 'red',
+  '2025-08-02': 'green',
+  '2025-08-03': 'green',
+  '2025-08-04': 'blue',
+  '2025-08-05': 'red',
+  '2025-08-06': 'purple',
+  '2025-08-07': 'blue',
+  '2025-08-08': 'red',
+  '2025-08-09': 'green',
+  '2025-08-10': 'red',
+  '2025-08-11': 'red',
 };
 
 const DAY_LABELS = {
