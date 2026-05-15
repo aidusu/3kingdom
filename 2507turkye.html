@@ -1,174 +1,269 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
 <title>土耳其之旅 2025</title>
+
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Noto+Sans+TC:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Noto+Sans+TC:wght@300;400;500&display=swap');
 
-  :root {
-    --bg:       #f7f7f7;
-    --panel:    #ffffff;
-    --border:   #d1d5db;
-    --gold:     #d4a853;
-    --gold2:    #f0c97a;
-    --red:      #c0392b;
-    --text:     #111827;
-    --muted:    #6b7280;
-    --accent:   #3b82f6;
+:root{
+  --bg:#f5f1e8;
+  --panel:#ffffff;
+  --border:#d8d2c7;
+  --gold:#c28b2c;
+  --gold2:#e6b85c;
+  --text:#2b2b2b;
+  --muted:#7b7b7b;
+}
+
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+body{
+  font-family:'Noto Sans TC',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+
+/* Header */
+#header{
+  display:flex;
+  align-items:center;
+  gap:14px;
+
+  padding:10px 18px;
+
+  background:rgba(255,255,255,0.92);
+
+  border-bottom:1px solid var(--border);
+
+  backdrop-filter:blur(10px);
+
+  z-index:10;
+}
+
+#header-title{
+  font-family:'Playfair Display',serif;
+  font-size:20px;
+  color:var(--gold);
+}
+
+#header-sub{
+  font-size:11px;
+  color:var(--muted);
+}
+
+#prog-track{
+  flex:1;
+  height:4px;
+  background:#ece7de;
+  border-radius:999px;
+  overflow:hidden;
+}
+
+#prog-fill{
+  height:100%;
+  width:0%;
+  background:linear-gradient(
+    90deg,
+    var(--gold),
+    var(--gold2)
+  );
+
+  transition:width .15s linear;
+}
+
+#status-chip{
+  font-size:11px;
+  color:var(--gold);
+
+  background:#fff6e8;
+
+  border:1px solid #ecd3a2;
+
+  padding:4px 12px;
+
+  border-radius:999px;
+}
+
+.ctrl-btn{
+  background:#fff;
+
+  border:1px solid #d6d0c4;
+
+  color:#333;
+
+  padding:6px 12px;
+
+  border-radius:8px;
+
+  cursor:pointer;
+
+  font-size:12px;
+}
+
+.ctrl-btn:hover{
+  background:#f7f3ec;
+}
+
+/* 地圖 */
+#map{
+  flex:1;
+  min-height:0;
+}
+
+/* 地圖下方區塊 */
+#bottom-panel{
+  background:rgba(255,255,255,0.92);
+
+  border-top:1px solid var(--border);
+
+  padding:12px 18px;
+
+  overflow-x:auto;
+
+  backdrop-filter:blur(10px);
+}
+
+/* 每日路線板 */
+#day-legend{
+  display:flex;
+  align-items:center;
+  gap:14px;
+
+  min-width:max-content;
+}
+
+#day-legend h4{
+  font-size:10px;
+  color:var(--muted);
+  letter-spacing:.08em;
+  margin-right:8px;
+  flex-shrink:0;
+}
+
+.legend-row{
+  display:flex;
+  align-items:center;
+  gap:6px;
+
+  white-space:nowrap;
+
+  padding:4px 8px;
+
+  border-radius:999px;
+
+  background:#faf7f2;
+
+  border:1px solid #ece6dc;
+}
+
+.legend-dot{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  flex-shrink:0;
+}
+
+.legend-label{
+  font-size:12px;
+  color:#444;
+}
+
+.legend-label.muted{
+  opacity:.45;
+}
+
+/* 手機版 */
+@media (max-width:768px){
+
+  #header{
+    flex-wrap:wrap;
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: 'Noto Sans TC', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+  #bottom-panel{
+    padding:10px;
   }
 
-  /* ── Header ── */
-  #header {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 10px 18px;
-    background: var(--panel);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-    z-index: 10;
+  .legend-label{
+    font-size:11px;
   }
-
-  #header-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 20px;
-    color: var(--gold);
-    letter-spacing: 0.04em;
-    white-space: nowrap;
-  }
-
-  #header-sub {
-    font-size: 11px;
-    color: var(--muted);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-
-  /* progress bar */
-  #prog-track {
-    flex: 1;
-    height: 3px;
-    background: var(--border);
-    border-radius: 2px;
-    overflow: hidden;
-    min-width: 60px;
-  }
-  #prog-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--gold), var(--gold2));
-    width: 0%;
-    transition: width 0.25s;
-    border-radius: 2px;
-  }
-
-  /* status chip */
-  #status-chip {
-    font-size: 11px;
-    color: var(--gold2);
-    background: rgba(212,168,83,0.12);
-    border: 1px solid rgba(212,168,83,0.25);
-    padding: 3px 10px;
-    border-radius: 20px;
-    white-space: nowrap;
-    min-width: 120px;
-    text-align: center;
-  }
-
-  /* control buttons */
-  .ctrl-btn {
-    background: var(--border);
-    border: 1px solid #d1d5db;
-    color: var(--text);
-    font-family: 'Noto Sans TC', sans-serif;
-    font-size: 12px;
-    padding: 5px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background 0.15s;
-    white-space: nowrap;
-  }
-  .ctrl-btn:hover { background: #e5e7eb; }
-  .ctrl-btn.active { background: rgba(212,168,83,0.18); border-color: var(--gold); color: var(--gold); }
-
-  /* ── Map ── */
-  #map { flex: 1; position: relative; }
-
-  /* ── Day legend ── */
-  #day-legend {
-    background: rgba(255,255,255,0.9);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 12px;
-    margin: 10px 18px;
-    font-size: 11px;
-    max-height: 150px;
-    overflow-x: auto;
-    display: flex;
-    gap: 10px;
-  }
-  #day-legend h4 {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--muted);
-    margin-right: 10px;
-    align-self: center;
-  }
-  .legend-row {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    cursor: pointer;
-  }
-  .legend-dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-  .legend-label { color: var(--text); font-size: 10px; }
-
+}
 </style>
 </head>
+
 <body>
 
+<!-- Header -->
 <div id="header">
+
   <div>
-    <div id="header-title">🕌 土耳其之旅 2025</div>
-    <div id="header-sub">Jul 31 – Aug 11 · Turkey Road Trip</div>
+    <div id="header-title">
+      🕌 土耳其之旅 2025
+    </div>
+
+    <div id="header-sub">
+      Jul 31 – Aug 11 · Turkey Road Trip
+    </div>
   </div>
-  <div id="prog-track"><div id="prog-fill"></div></div>
-  <div id="status-chip">準備中…</div>
-  <select id="speed-sel" class="ctrl-btn" title="播放速度">
-    <option value="1">極速</option>
-    <option value="3" selected>超快</option>
-    <option value="8">快速</option>
-    <option value="20">正常</option>
+
+  <div id="prog-track">
+    <div id="prog-fill"></div>
+  </div>
+
+  <div id="status-chip">
+    準備中…
+  </div>
+
+  <select id="speed-sel" class="ctrl-btn">
+    <option value="3">超快</option>
+    <option value="5" selected>快速</option>
+    <option value="8">正常</option>
   </select>
-  <button class="ctrl-btn" id="pause-btn" onclick="togglePause()">⏸ 暫停</button>
-  <button class="ctrl-btn" onclick="restartAll()">↺ 重播</button>
+
+  <button
+    class="ctrl-btn"
+    id="pause-btn"
+    onclick="togglePause()"
+  >
+    ⏸ 暫停
+  </button>
+
+  <button
+    class="ctrl-btn"
+    onclick="restartAll()"
+  >
+    ↺ 重播
+  </button>
+
 </div>
 
+<!-- 地圖 -->
 <div id="map"></div>
 
-<div id="day-legend"><h4>日期</h4></div>
+<!-- 地圖外部下方 -->
+<div id="bottom-panel">
+
+  <div id="day-legend">
+    <h4>每日路線</h4>
+  </div>
+
+</div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
 <script>
 /* ── 資料 ── */
 const RAW = [
@@ -231,21 +326,20 @@ const RAW = [
   {"Date":"2025-08-11","Location":"伊斯坦堡機場 (登機回台)","Latitude":41.256811,"Longitude":28.735222}
 ];
 
-
-/* ── 每天分配顏色 ── */
+/* ── 顏色 ── */
 const DAY_COLORS = {
-  '2025-07-31': '#e8a838',
-  '2025-08-01': '#4ade80',
-  '2025-08-02': '#60a5fa',
-  '2025-08-03': '#f87171',
-  '2025-08-04': '#c084fc',
-  '2025-08-05': '#34d399',
-  '2025-08-06': '#fb923c',
-  '2025-08-07': '#a78bfa',
-  '2025-08-08': '#38bdf8',
-  '2025-08-09': '#f472b6',
-  '2025-08-10': '#facc15',
-  '2025-08-11': '#86efac',
+  '2025-07-31': '#d97706',
+  '2025-08-01': '#22c55e',
+  '2025-08-02': '#3b82f6',
+  '2025-08-03': '#ef4444',
+  '2025-08-04': '#a855f7',
+  '2025-08-05': '#10b981',
+  '2025-08-06': '#f97316',
+  '2025-08-07': '#8b5cf6',
+  '2025-08-08': '#0ea5e9',
+  '2025-08-09': '#ec4899',
+  '2025-08-10': '#eab308',
+  '2025-08-11': '#65a30d',
 };
 
 const DAY_LABELS = {
@@ -263,128 +357,353 @@ const DAY_LABELS = {
   '2025-08-11': '8/11 登機',
 };
 
-/* ── 地圖初始化 ── */
-const map = L.map('map', { zoomControl: false }).setView([39, 32], 6);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  attribution: '© OpenStreetMap © CARTO',
-  subdomains: 'abcd', maxZoom: 19
-}).addTo(map);
-L.control.zoom({ position: 'bottomright' }).addTo(map);
+/* 地圖 */
+const map = L.map('map',{
+  zoomControl:false
+}).setView([39,32],6);
 
-/* ── 圖例 ── */
-const legendEl = document.getElementById('day-legend');
-Object.entries(DAY_LABELS).forEach(([date, label]) => {
-  const row = document.createElement('div');
-  row.className = 'legend-row';
-  row.id = 'leg-' + date;
-  row.innerHTML = `<div class="legend-dot" style="background:${DAY_COLORS[date]}"></div>
-    <span class="legend-label">${label}</span>`;
+L.tileLayer(
+  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  {
+    attribution:'© OpenStreetMap',
+    maxZoom:19
+  }
+).addTo(map);
+
+L.control.zoom({
+  position:'bottomright'
+}).addTo(map);
+
+/* 底部每日路線 */
+const legendEl =
+  document.getElementById('day-legend');
+
+Object.entries(DAY_LABELS).forEach(
+([date,label])=>{
+
+  const row =
+    document.createElement('div');
+
+  row.className='legend-row';
+
+  row.id='leg-'+date;
+
+  row.innerHTML=`
+    <div
+      class="legend-dot"
+      style="background:${DAY_COLORS[date]}"
+    ></div>
+
+    <span class="legend-label muted">
+      ${label}
+    </span>
+  `;
+
   legendEl.appendChild(row);
 });
 
-/* ── 播放狀態 ── */
+/* 快取 */
+const roadCache = {};
+
+async function getRoadCoords(a,b){
+
+  const key =
+    `${a.Latitude},${a.Longitude}|${b.Latitude},${b.Longitude}`;
+
+  if(roadCache[key]){
+    return roadCache[key];
+  }
+
+  const dist = Math.hypot(
+    a.Latitude - b.Latitude,
+    a.Longitude - b.Longitude
+  );
+
+  if(dist > 2.5){
+
+    return [
+      [a.Latitude,a.Longitude],
+      [b.Latitude,b.Longitude]
+    ];
+  }
+
+  try{
+
+    const url =
+      `https://router.project-osrm.org/route/v1/driving/`+
+      `${a.Longitude},${a.Latitude};`+
+      `${b.Longitude},${b.Latitude}`+
+      `?overview=full&geometries=geojson`;
+
+    const res = await fetch(url);
+
+    const json = await res.json();
+
+    const coords =
+      json.routes[0].geometry.coordinates.map(
+        ([lng,lat])=>[lat,lng]
+      );
+
+    roadCache[key]=coords;
+
+    return coords;
+
+  }catch{
+
+    return [
+      [a.Latitude,a.Longitude],
+      [b.Latitude,b.Longitude]
+    ];
+  }
+}
+
+/* 狀態 */
 let timer = null;
 let allMarkers = [];
 let allPolylines = [];
 let playing = false;
 let paused = false;
 
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-const setStatus = t => document.getElementById('status-chip').textContent = t;
-const setProgress = p => document.getElementById('prog-fill').style.width = Math.min(p,100) + '%';
+const setStatus = t=>{
+  document.getElementById(
+    'status-chip'
+  ).textContent=t;
+};
 
-function addMarker(pt, color) {
-  const m = L.circleMarker([pt.Latitude, pt.Longitude], {
-    radius: 0,
-    color: 'transparent',
-    fillColor: 'transparent'
-  }).addTo(map);
-  allMarkers.push(m);
+const setProgress = p=>{
+  document.getElementById(
+    'prog-fill'
+  ).style.width=Math.min(p,100)+'%';
+};
+
+/* Marker */
+function addMarker(pt,color,idx){
+
+  const isFirst = idx===0;
+  const isLast =
+    idx===RAW.length-1;
+
+  const marker = L.circleMarker(
+    [pt.Latitude,pt.Longitude],
+    {
+      radius:(isFirst||isLast)?6:4,
+      color:'#ffffff',
+      weight:1.5,
+      fillColor:color,
+      fillOpacity:1
+    }
+  ).addTo(map);
+
+  allMarkers.push(marker);
 }
 
-function animateSegment(polyline, coords) {
-  return new Promise(resolve => {
-    let idx = 0;
-    const interval = parseInt(document.getElementById('speed-sel').value);
-    timer = setInterval(() => {
-      if (!playing) { clearInterval(timer); timer = null; resolve(); return; }
-      if (paused) return;
-      if (idx >= coords.length) { clearInterval(timer); timer = null; resolve(); return; }
-      // 每次畫多個點，加速
-      for(let i=0;i<8 && idx<coords.length;i++){
-        polyline.addLatLng(coords[idx++]);
+/* 動畫 */
+function animateSegment(polyline,coords){
+
+  return new Promise(resolve=>{
+
+    let idx=0;
+
+    const interval =
+      parseInt(
+        document.getElementById(
+          'speed-sel'
+        ).value
+      );
+
+    timer=setInterval(()=>{
+
+      if(!playing){
+
+        clearInterval(timer);
+        resolve();
+        return;
       }
-    }, interval);
+
+      if(paused){
+        return;
+      }
+
+      if(idx>=coords.length){
+
+        clearInterval(timer);
+        resolve();
+        return;
+      }
+
+      polyline.addLatLng(
+        coords[idx++]
+      );
+
+    },interval);
   });
 }
 
-function clearAll() {
-  if (timer) { clearInterval(timer); timer = null; }
-  allMarkers.forEach(m => map.removeLayer(m));
-  allMarkers = [];
-  allPolylines.forEach(l => map.removeLayer(l));
-  allPolylines = [];
-  playing = false; paused = false;
+/* 清除 */
+function clearAll(){
+
+  if(timer){
+    clearInterval(timer);
+  }
+
+  allMarkers.forEach(
+    m=>map.removeLayer(m)
+  );
+
+  allPolylines.forEach(
+    l=>map.removeLayer(l)
+  );
+
+  allMarkers=[];
+  allPolylines=[];
+
+  playing=false;
+  paused=false;
+
+  Object.keys(DAY_LABELS)
+  .forEach(d=>{
+
+    const el =
+      document.getElementById(
+        'leg-'+d
+      );
+
+    if(el){
+
+      el.querySelector(
+        '.legend-label'
+      ).className =
+        'legend-label muted';
+    }
+  });
 }
 
-async function startPlayback() {
+/* 開始播放 */
+async function startPlayback(){
+
   clearAll();
-  playing = true;
 
-  const bounds = L.latLngBounds(RAW.map(p => [p.Latitude, p.Longitude]));
-  map.fitBounds(bounds, { padding: [40, 160] });
+  playing=true;
 
-  let currentDay = null;
-  let polyline = null;
+  const bounds = L.latLngBounds(
+    RAW.map(
+      p=>[
+        p.Latitude,
+        p.Longitude
+      ]
+    )
+  );
 
-  for (let i = 0; i < RAW.length; i++) {
-    if (!playing) return;
+  map.fitBounds(bounds,{
+    padding:[40,120]
+  });
 
-    const pt = RAW[i];
-    const color = DAY_COLORS[pt.Date] || '#d4a853';
+  let currentDay=null;
+  let polyline=null;
 
-    if (pt.Date !== currentDay) {
-      currentDay = pt.Date;
-      polyline = L.polyline([], {
-        color, weight: 2.5, opacity: 0.9,
-        lineJoin: 'round', lineCap: 'round'
-      }).addTo(map);
-      allPolylines.push(polyline);
-      // 高亮圖例
-      const legEl = document.getElementById('leg-' + pt.Date);
-      if (legEl) legEl.querySelector('.legend-label').style.fontWeight = 'bold';
-      setStatus(DAY_LABELS[pt.Date] || pt.Date);
+  for(let i=0;i<RAW.length;i++){
+
+    if(!playing){
+      return;
     }
 
-    addMarker(pt, color);
+    const pt = RAW[i];
 
-    if (i < RAW.length - 1) {
-      const next = RAW[i + 1];
-      // 直線段
-      await animateSegment(polyline, [[pt.Latitude, pt.Longitude], [next.Latitude, next.Longitude]]);
+    const color =
+      DAY_COLORS[pt.Date] ||
+      '#d97706';
+
+    if(pt.Date!==currentDay){
+
+      currentDay=pt.Date;
+
+      polyline=L.polyline([],{
+        color,
+        weight:4,
+        opacity:.9,
+        lineJoin:'round',
+        lineCap:'round'
+      }).addTo(map);
+
+      allPolylines.push(polyline);
+
+      const legEl =
+        document.getElementById(
+          'leg-'+pt.Date
+        );
+
+      if(legEl){
+
+        legEl.querySelector(
+          '.legend-label'
+        ).className='legend-label';
+      }
+
+      setStatus(
+        DAY_LABELS[pt.Date] ||
+        pt.Date
+      );
+    }
+
+    addMarker(pt,color,i);
+
+    setProgress(
+      (i / RAW.length) * 100
+    );
+
+    if(i < RAW.length-1){
+
+      const next = RAW[i+1];
+
+      const coords =
+        await getRoadCoords(
+          pt,
+          next
+        );
+
+      await animateSegment(
+        polyline,
+        coords
+      );
     }
   }
 
   setStatus('旅程結束 ✈️');
+
   setProgress(100);
 }
 
-function restartAll() {
+/* 重播 */
+function restartAll(){
+
   clearAll();
-  paused = false;
-  document.getElementById('pause-btn').textContent = '⏸ 暫停';
-  document.getElementById('pause-btn').classList.remove('active');
+
+  paused=false;
+
+  document.getElementById(
+    'pause-btn'
+  ).textContent='⏸ 暫停';
+
   startPlayback();
 }
 
-function togglePause() {
-  paused = !paused;
-  const btn = document.getElementById('pause-btn');
-  btn.textContent = paused ? '▶ 繼續' : '⏸ 暫停';
-  btn.classList.toggle('active', paused);
+/* 暫停 */
+function togglePause(){
+
+  paused=!paused;
+
+  document.getElementById(
+    'pause-btn'
+  ).textContent =
+    paused ?
+    '▶ 繼續' :
+    '⏸ 暫停';
 }
 
+/* 啟動 */
 startPlayback();
+
 </script>
+
 </body>
 </html>
