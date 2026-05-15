@@ -94,7 +94,7 @@
       .then(response => response.json())
       .then(data => {
         let index = 0;
-        const colors = ['red', 'blue', 'green', 'purple', 'orange'];
+        const colors = ['red', 'blue', 'green', 'purple', 'black'];
         const latlngs = data.map(p => [p.latitude, p.longitude]);
         map.fitBounds(L.latLngBounds(latlngs));
 
