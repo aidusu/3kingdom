@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>土耳其之旅 2025</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Noto+Sans+TC:wght@300;400;500&display=swap');
+
+  :root {
+    --bg:       #f7f7f7;
+    --panel:    #ffffff;
+    --border:   #d1d5db;
+    --gold:     #d4a853;
+    --gold2:    #f0c97a;
+    --red:      #c0392b;
+    --text:     #111827;
+    --muted:    #6b7280;
+    --accent:   #3b82f6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Header ── */
+  #header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 18px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    z-index: 10;
+  }
+
+  #header-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    color: var(--gold);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+
+  #header-sub {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* progress bar */
+  #prog-track {
+    flex: 1;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    min-width: 60px;
+  }
+  #prog-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--gold2));
+    width: 0%;
+    transition: width 0.25s;
+    border-radius: 2px;
+  }
+
+  /* status chip */
+  #status-chip {
+    font-size: 11px;
+    color: var(--gold2);
+    background: rgba(212,168,83,0.12);
+    border: 1px solid rgba(212,168,83,0.25);
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    min-width: 120px;
+    text-align: center;
+  }
+
+  /* control buttons */
+  .ctrl-btn {
+    background: var(--border);
+    border: 1px solid #d1d5db;
+    color: var(--text);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .ctrl-btn:hover { background: #e5e7eb; }
+  .ctrl-btn.active { background: rgba(212,168,83,0.18); border-color: var(--gold); color: var(--gold); }
+
+  /* ── Map ── */
+  #map { flex: 1; position: relative; }
+
+  /* ── Day legend ── */
+  #day-legend {
+    background: rgba(255,255,255,0.9);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin: 10px 18px;
+    font-size: 11px;
+    max-height: 150px;
+    overflow-x: auto;
+    display: flex;
+    gap: 10px;
+  }
+  #day-legend h4 {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-right: 10px;
+    align-self: center;
+  }
+  .legend-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .legend-label { color: var(--text); font-size: 10px; }
+
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div>
+    <div id="header-title">🕌 土耳其之旅 2025</div>
+    <div id="header-sub">Jul 31 – Aug 11 · Turkey Road Trip</div>
+  </div>
+  <div id="prog-track"><div id="prog-fill"></div></div>
+  <div id="status-chip">準備中…</div>
+  <select id="speed-sel" class="ctrl-btn" title="播放速度">
+    <option value="1">極速</option>
+    <option value="3" selected>超快</option>
+    <option value="8">快速</option>
+    <option value="20">正常</option>
+  </select>
+  <button class="ctrl-btn" id="pause-btn" onclick="togglePause()">⏸ 暫停</button>
+  <button class="ctrl-btn" onclick="restartAll()">↺ 重播</button>
+</div>
+
+<div id="map"></div>
+
+<div id="day-legend"><h4>日期</h4></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+/* ── 資料 ── */
+const RAW = [
+  {"Date":"2025-07-31","Location":"安卡拉機場 (降落與上車)","Latitude":40.14199,"Longitude":32.991757},
+  {"Date":"2025-07-31","Location":"Ankara Highway O 20","Latitude":40.032411,"Longitude":32.870921},
+  {"Date":"2025-07-31","Location":"Gimai房屋群","Latitude":40.081685,"Longitude":32.6061},
+  {"Date":"2025-07-31","Location":"往番紅花城途中加油站","Latitude":40.612935,"Longitude":32.258174},
+  {"Date":"2025-07-31","Location":"E80交流道轉D755","Latitude":40.862419,"Longitude":32.558458},
+  {"Date":"2025-07-31","Location":"1937土耳其鋼鐵廠","Latitude":41.165984,"Longitude":32.639405},
+  {"Date":"2025-07-31","Location":"番紅花城 (午餐與老城心)","Latitude":41.24427,"Longitude":32.694347},
+  {"Date":"2025-07-31","Location":"BarlarSarayHotel (入住)","Latitude":41.256464,"Longitude":32.675133},
+  {"Date":"2025-08-01","Location":"番紅花新區/SF文化中心","Latitude":41.260235,"Longitude":32.674311},
+  {"Date":"2025-08-01","Location":"大水壩 (途中)","Latitude":40.457852,"Longitude":32.373749},
+  {"Date":"2025-08-01","Location":"Ankara市區/Cevik kuvvet","Latitude":39.945691,"Longitude":32.775509},
+  {"Date":"2025-08-01","Location":"Kemal雕像古跡城堡","Latitude":39.948702,"Longitude":32.838822},
+  {"Date":"2025-08-01","Location":"Ankara博物館100周年展","Latitude":39.938432,"Longitude":32.86208},
+  {"Date":"2025-08-01","Location":"Kemal紀念館 (Anit lezzer)","Latitude":39.921422,"Longitude":32.8367},
+  {"Date":"2025-08-01","Location":"Mogan lake","Latitude":39.746247,"Longitude":32.804263},
+  {"Date":"2025-08-01","Location":"Tuzlake (圖茲鹽湖)","Latitude":39.073296,"Longitude":33.407331},
+  {"Date":"2025-08-01","Location":"克澤爾河","Latitude":39.056023,"Longitude":33.725936},
+  {"Date":"2025-08-01","Location":"往卡帕多其亞 (D300公路)","Latitude":38.598804,"Longitude":34.679234},
+  {"Date":"2025-08-02","Location":"KAYA OTEL (卡帕多其亞飯店)","Latitude":38.623916,"Longitude":34.804501},
+  {"Date":"2025-08-02","Location":"熱氣球等待區","Latitude":38.660736,"Longitude":34.841233},
+  {"Date":"2025-08-02","Location":"Uchisar castle (烏奇沙城堡)","Latitude":38.633175,"Longitude":34.802643},
+  {"Date":"2025-08-02","Location":"Carpet school (地毯工廠)","Latitude":38.609947,"Longitude":34.784206},
+  {"Date":"2025-08-02","Location":"Kaymakli 地下城","Latitude":38.529982,"Longitude":34.753401},
+  {"Date":"2025-08-02","Location":"Love山谷/洞穴教堂","Latitude":38.641843,"Longitude":34.842911},
+  {"Date":"2025-08-02","Location":"卡帕多其亞吉普車行程","Latitude":38.657261,"Longitude":34.829497},
+  {"Date":"2025-08-03","Location":"熱氣球升空體驗","Latitude":38.669585,"Longitude":34.830917},
+  {"Date":"2025-08-03","Location":"帕夏貝蘑菇岩 (Pasabag)","Latitude":38.679433,"Longitude":34.853148},
+  {"Date":"2025-08-03","Location":"Venessa Seramik (陶藝/珠寶店)","Latitude":38.702661,"Longitude":34.842033},
+  {"Date":"2025-08-03","Location":"駱駝岩/公雞岩","Latitude":38.67242,"Longitude":34.885409},
+  {"Date":"2025-08-03","Location":"Espresso LAB Coffee","Latitude":38.620654,"Longitude":34.864984},
+  {"Date":"2025-08-04","Location":"Sultanhani Caravanserai (蘇丹哈尼驛站)","Latitude":38.248057,"Longitude":33.546886},
+  {"Date":"2025-08-04","Location":"孔亞 (午餐與清真寺)","Latitude":37.871773,"Longitude":32.504404},
+  {"Date":"2025-08-05","Location":"Bayir Diamond hotel (孔亞)","Latitude":37.889856,"Longitude":32.496426},
+  {"Date":"2025-08-05","Location":"貝伊謝希爾湖","Latitude":37.635036,"Longitude":31.602117},
+  {"Date":"2025-08-05","Location":"Aspendos Theatre (阿斯班多斯劇場)","Latitude":36.938559,"Longitude":31.173346},
+  {"Date":"2025-08-05","Location":"安塔利亞市區與海邊","Latitude":36.884359,"Longitude":30.70343},
+  {"Date":"2025-08-05","Location":"RAMADA HOTEL (安塔利亞)","Latitude":36.877204,"Longitude":30.708389},
+  {"Date":"2025-08-06","Location":"Denizli 市區 (午餐與毛巾店)","Latitude":37.78527,"Longitude":29.088518},
+  {"Date":"2025-08-06","Location":"棉堡 (Pamukkale) 石灰華地形","Latitude":37.924994,"Longitude":29.12328},
+  {"Date":"2025-08-06","Location":"DOGA Resort (棉堡飯店)","Latitude":37.962757,"Longitude":29.100855},
+  {"Date":"2025-08-07","Location":"皮衣專賣店 (Donna Milan)","Latitude":37.942725,"Longitude":27.308391},
+  {"Date":"2025-08-07","Location":"聖母瑪利亞故居","Latitude":37.913298,"Longitude":27.332295},
+  {"Date":"2025-08-07","Location":"以弗所古城 (Ephesus)","Latitude":37.935822,"Longitude":27.345752},
+  {"Date":"2025-08-07","Location":"Le Bleu Hotel (庫薩達西)","Latitude":37.840386,"Longitude":27.237314},
+  {"Date":"2025-08-08","Location":"Izmir 機場","Latitude":38.276739,"Longitude":27.15147},
+  {"Date":"2025-08-08","Location":"伊斯坦堡機場 (抵達)","Latitude":41.248054,"Longitude":28.731072},
+  {"Date":"2025-08-08","Location":"蘇萊曼清真寺/伊斯坦堡大學","Latitude":41.015754,"Longitude":28.964293},
+  {"Date":"2025-08-08","Location":"Pera Palace/獨立大道散步","Latitude":41.03144,"Longitude":28.973402},
+  {"Date":"2025-08-09","Location":"塔克辛廣場","Latitude":41.040631,"Longitude":28.986367},
+  {"Date":"2025-08-09","Location":"Wish Hotel 伊斯坦堡/家樂福","Latitude":41.045781,"Longitude":28.899715},
+  {"Date":"2025-08-09","Location":"聖索非亞大教堂/地下水宮殿","Latitude":41.008796,"Longitude":28.98116},
+  {"Date":"2025-08-09","Location":"大巴札 (Grand Bazaar)","Latitude":41.009835,"Longitude":28.971589},
+  {"Date":"2025-08-09","Location":"藍色清真寺/方尖碑","Latitude":41.006035,"Longitude":28.975824},
+  {"Date":"2025-08-10","Location":"博斯普魯斯海峽遊船 (魯梅利堡壘)","Latitude":41.072316,"Longitude":29.050407},
+  {"Date":"2025-08-10","Location":"多爾瑪巴赫切皇宮 (DP皇宮)","Latitude":41.038078,"Longitude":28.996929},
+  {"Date":"2025-08-10","Location":"卡莫多階梯/加拉達塔晚餐","Latitude":41.026714,"Longitude":28.974157},
+  {"Date":"2025-08-11","Location":"伊斯坦堡機場 (登機回台)","Latitude":41.256811,"Longitude":28.735222}
+];
+
+
+/* ── 每天分配顏色 ── */
+const DAY_COLORS = {
+  '2025-07-31': '#e8a838',
+  '2025-08-01': '#4ade80',
+  '2025-08-02': '#60a5fa',
+  '2025-08-03': '#f87171',
+  '2025-08-04': '#c084fc',
+  '2025-08-05': '#34d399',
+  '2025-08-06': '#fb923c',
+  '2025-08-07': '#a78bfa',
+  '2025-08-08': '#38bdf8',
+  '2025-08-09': '#f472b6',
+  '2025-08-10': '#facc15',
+  '2025-08-11': '#86efac',
+};
+
+const DAY_LABELS = {
+  '2025-07-31': '7/31 伊斯坦堡→番紅花城',
+  '2025-08-01': '8/01 番紅花→安卡拉→卡帕',
+  '2025-08-02': '8/02 卡帕多其亞探索',
+  '2025-08-03': '8/03 熱氣球升空',
+  '2025-08-04': '8/04 卡帕→孔亞',
+  '2025-08-05': '8/05 孔亞→安塔利亞',
+  '2025-08-06': '8/06 安塔利亞→棉堡',
+  '2025-08-07': '8/07 棉堡→以弗所→庫薩達斯',
+  '2025-08-08': '8/08 庫薩達斯→伊斯坦堡',
+  '2025-08-09': '8/09 伊斯坦堡古城',
+  '2025-08-10': '8/10 遊船→托普卡匹→回國',
+  '2025-08-11': '8/11 登機',
+};
+
+/* ── 地圖初始化 ── */
+const map = L.map('map', { zoomControl: false }).setView([39, 32], 6);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap © CARTO',
+  subdomains: 'abcd', maxZoom: 19
+}).addTo(map);
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+/* ── 圖例 ── */
+const legendEl = document.getElementById('day-legend');
+Object.entries(DAY_LABELS).forEach(([date, label]) => {
+  const row = document.createElement('div');
+  row.className = 'legend-row';
+  row.id = 'leg-' + date;
+  row.innerHTML = `<div class="legend-dot" style="background:${DAY_COLORS[date]}"></div>
+    <span class="legend-label">${label}</span>`;
+  legendEl.appendChild(row);
+});
+
+/* ── 播放狀態 ── */
+let timer = null;
+let allMarkers = [];
+let allPolylines = [];
+let playing = false;
+let paused = false;
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const setStatus = t => document.getElementById('status-chip').textContent = t;
+const setProgress = p => document.getElementById('prog-fill').style.width = Math.min(p,100) + '%';
+
+function addMarker(pt, color) {
+  const m = L.circleMarker([pt.Latitude, pt.Longitude], {
+    radius: 0,
+    color: 'transparent',
+    fillColor: 'transparent'
+  }).addTo(map);
+  allMarkers.push(m);
+}
+
+function animateSegment(polyline, coords) {
+  return new Promise(resolve => {
+    let idx = 0;
+    const interval = parseInt(document.getElementById('speed-sel').value);
+    timer = setInterval(() => {
+      if (!playing) { clearInterval(timer); timer = null; resolve(); return; }
+      if (paused) return;
+      if (idx >= coords.length) { clearInterval(timer); timer = null; resolve(); return; }
+      // 每次畫多個點，加速
+      for(let i=0;i<8 && idx<coords.length;i++){
+        polyline.addLatLng(coords[idx++]);
+      }
+    }, interval);
+  });
+}
+
+function clearAll() {
+  if (timer) { clearInterval(timer); timer = null; }
+  allMarkers.forEach(m => map.removeLayer(m));
+  allMarkers = [];
+  allPolylines.forEach(l => map.removeLayer(l));
+  allPolylines = [];
+  playing = false; paused = false;
+}
+
+async function startPlayback() {
+  clearAll();
+  playing = true;
+
+  const bounds = L.latLngBounds(RAW.map(p => [p.Latitude, p.Longitude]));
+  map.fitBounds(bounds, { padding: [40, 160] });
+
+  let currentDay = null;
+  let polyline = null;
+
+  for (let i = 0; i < RAW.length; i++) {
+    if (!playing) return;
+
+    const pt = RAW[i];
+    const color = DAY_COLORS[pt.Date] || '#d4a853';
+
+    if (pt.Date !== currentDay) {
+      currentDay = pt.Date;
+      polyline = L.polyline([], {
+        color, weight: 2.5, opacity: 0.9,
+        lineJoin: 'round', lineCap: 'round'
+      }).addTo(map);
+      allPolylines.push(polyline);
+      // 高亮圖例
+      const legEl = document.getElementById('leg-' + pt.Date);
+      if (legEl) legEl.querySelector('.legend-label').style.fontWeight = 'bold';
+      setStatus(DAY_LABELS[pt.Date] || pt.Date);
+    }
+
+    addMarker(pt, color);
+
+    if (i < RAW.length - 1) {
+      const next = RAW[i + 1];
+      // 直線段
+      await animateSegment(polyline, [[pt.Latitude, pt.Longitude], [next.Latitude, next.Longitude]]);
+    }
+  }
+
+  setStatus('旅程結束 ✈️');
+  setProgress(100);
+}
+
+function restartAll() {
+  clearAll();
+  paused = false;
+  document.getElementById('pause-btn').textContent = '⏸ 暫停';
+  document.getElementById('pause-btn').classList.remove('active');
+  startPlayback();
+}
+
+function togglePause() {
+  paused = !paused;
+  const btn = document.getElementById('pause-btn');
+  btn.textContent = paused ? '▶ 繼續' : '⏸ 暫停';
+  btn.classList.toggle('active', paused);
+}
+
+startPlayback();
+</script>
+</body>
+</html>
