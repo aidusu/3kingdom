@@ -274,12 +274,12 @@ body {
 // ── Firebase 配置 (請根據需要保持最新) ──
 // ⚠️ 提示：請確保此金鑰與您填入「打卡輸入網頁」的 config 完全一致，並指引到同一個專案
 const firebaseConfig = {
-  apiKey: "AIzaSyAGEV8VTgzmSGfII4yWCbEjfD9h9G_u1tk",
-  authDomain: "teamtrack-6f827.firebaseapp.com",
-  projectId: "teamtrack-6f827",
-  storageBucket: "teamtrack-6f827.firebasestorage.app",
-  messagingSenderId: "43073879164",
-  appId: "1:43073879164:web:15af9d63af30ddbe8b9df9"
+  apiKey:            "AIzaSyCsI9fZHO8uaaahUmYJKh7yjgvp3fCVLhc",
+  authDomain:        "trackin-ae66d.firebaseapp.com",
+  projectId:         "trackin-ae66d",
+  storageBucket:     "trackin-ae66d.firebasestorage.app",
+  messagingSenderId: "693858252787",
+  appId:             "1:693858252787:web:918b7e05b08d94c0ae4486"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -395,3 +395,199 @@ function drawSegments(rows, onDone) {
     });
   }
   next(0);
+}
+
+function buildLegend(total) {
+  var groups = Math.ceil(total / 10);
+  if (groups <= 1) return;
+  var row = document.getElementById('legendRow');
+  row.innerHTML = '';
+  for (var g = 0; g < groups; g++) {
+    var c     = COLORS[g % COLORS.length];
+    var start = g * 10 + 1;
+    var end   = Math.min((g + 1) * 10, total);
+    var chip  = document.createElement('div');
+    chip.className = 'legend-chip';
+    chip.style.background = c.fill + '18';
+    chip.style.borderColor = c.line;
+    chip.style.color = c.line;
+    chip.innerHTML =
+      '<span style="width:8px;height:8px;border-radius:50%;background:'+c.fill+';display:inline-block;flex-shrink:0;"></span>'
+      + (start === end ? '#'+start : '#'+start+'–'+end);
+    row.appendChild(chip);
+  }
+  row.classList.add('show');
+}
+
+// ── 【修改 3】重構核心搜尋邏輯：對接全新的 Firestore 三層結構 ──
+function doSearch() {
+  if (searching) return;
+
+  var nickname = document.getElementById('inNickname').value.trim();
+  var tripcode  = document.getElementById('inTripcode').value.trim();
+  if (!nickname) { setStatus('請輸入暱稱', 'err'); return; }
+  if (!tripcode)  { setStatus('請輸入行程代碼', 'err'); return; }
+
+  // 為了能公開查詢，公開查詢頁必須先做一次「匿名登入」或使用現成狀態，以符合安全規則 (request.auth != null)
+  searching = true;
+  clearMap();
+  osrmCache = {}; 
+  setProgress(0);
+  setStatus('正在安全連線至資料庫…');
+  document.getElementById('searchBtn').disabled = true;
+  document.getElementById('searchBtn').innerHTML = '<span class="spinner"></span> 查詢中';
+  setToolbar('<span class="map-info">載入中…</span>');
+
+  // 確保是驗證狀態以滿足 Rules 的 if request.auth != null
+  firebase.auth().signInAnonymously()
+    .then(function() {
+      setStatus('正在查詢 Firestore 行程…');
+      // 精準指定全新結構路徑：/nicknames/{nickname}/trips/{tripcode}/checkins
+      return db.collection('nicknames').doc(nickname)
+               .collection('trips').doc(tripcode)
+               .collection('checkins')
+               .get();
+    })
+    .then(function(querySnapshot) {
+      document.getElementById('searchBtn').disabled = false;
+      document.getElementById('searchBtn').innerHTML =
+        '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> 查詢';
+      searching = false;
+
+      if (querySnapshot.empty) {
+        setStatus('找不到此暱稱與行程的打卡紀錄', 'err');
+        setProgress(null);
+        setToolbar('<span class="map-info">查無資料</span>');
+        return;
+      }
+
+      var rows = [];
+      querySnapshot.forEach(function(doc) {
+        var d = doc.data();
+        if (d.lat && d.lng) {
+          rows.push(d);
+        }
+      });
+
+      // 排序：依據時間戳
+      rows.sort(function(a, b) {
+        var ta = a.clientTime || a.timestamp || '';
+        var tb = b.clientTime || b.timestamp || '';
+        return ta < tb ? -1 : ta > tb ? 1 : 0;
+      });
+
+      if (!rows.length) {
+        setStatus('此行程下無含有效 GPS 的打卡紀錄', 'err');
+        setProgress(null);
+        setToolbar('<span class="map-info">查無 GPS 資料</span>');
+        return;
+      }
+
+      // 繪製起終點
+      var firstD = rows[0];
+      var lastD  = rows[rows.length - 1];
+
+      function makeEndpointIcon(label, bg) {
+        return L.divIcon({
+          className: '',
+          iconSize:  [32, 32],
+          iconAnchor:[16, 16],
+          html: '<div style="'
+            + 'width:32px;height:32px;border-radius:50%;'
+            + 'background:'+bg+';'
+            + 'border:3px solid #fff;'
+            + 'box-shadow:0 2px 8px rgba(0,0,0,0.55);'
+            + 'display:flex;align-items:center;justify-content:center;'
+            + 'font-family:Syne,sans-serif;font-size:11px;font-weight:800;color:#fff;'
+            + '">'+label+'</div>'
+        });
+      }
+
+      var startMarker = L.marker([firstD.lat, firstD.lng], { icon: makeEndpointIcon('START', '#16a34a'), zIndexOffset: 1000 })
+        .addTo(map)
+        .bindPopup(
+          '<div style="min-width:160px;">'
+          + '<div style="font-family:Syne,sans-serif;font-weight:700;color:#16a34a;margin-bottom:4px;">▶ 起點</div>'
+          + '<div style="font-size:0.78rem;color:#6b7280;margin-bottom:6px;">'+(firstD.timestamp||'')+'</div>'
+          + (firstD.note ? '<div style="font-size:0.82rem;margin-bottom:4px;">'+firstD.note+'</div>' : '')
+          + '<div style="font-size:0.72rem;color:#9ca3af;">'+firstD.lat.toFixed(5)+', '+firstD.lng.toFixed(5)+'</div>'
+          + '</div>'
+        );
+      mapLayers.push(startMarker);
+
+      if (rows.length > 1) {
+        var endMarker = L.marker([lastD.lat, lastD.lng], { icon: makeEndpointIcon('END', '#dc2626'), zIndexOffset: 1000 })
+          .addTo(map)
+          .bindPopup(
+            '<div style="min-width:160px;">'
+            + '<div style="font-family:Syne,sans-serif;font-weight:700;color:#dc2626;margin-bottom:4px;">⬛ 終點</div>'
+            + '<div style="font-size:0.78rem;color:#6b7280;margin-bottom:6px;">'+(lastD.timestamp||'')+'</div>'
+            + (lastD.note ? '<div style="font-size:0.82rem;margin-bottom:4px;">'+lastD.note+'</div>' : '')
+            + '<div style="font-size:0.72rem;color:#9ca3af;">'+lastD.lat.toFixed(5)+', '+lastD.lng.toFixed(5)+'</div>'
+            + '</div>'
+          );
+        mapLayers.push(endMarker);
+      }
+
+      var bounds = L.latLngBounds(rows.map(function(d){ return [d.lat, d.lng]; }));
+      map.fitBounds(bounds, { padding:[40, 40], maxZoom:16 });
+
+      buildLegend(rows.length);
+
+      // 動態更新工具列內容 (直接將處理好的 HTML 塞回工具列)
+      setToolbar(
+        '<span class="trip-tag">'+nickname+' · '+tripcode+'</span>'
+        + '<span class="map-info">共 '+rows.length+' 個位置</span>'
+        + '<button class="btn-refresh show" id="refreshBtn" onclick="doSearch()">↺ 重整</button>'
+      );
+
+      if (rows.length < 2) {
+        setStatus('僅 1 個位置，無需繪製路線', 'ok');
+        setProgress(null);
+        return;
+      }
+
+      setStatus('路線載入中 0 / '+(rows.length-1)+'…');
+      setProgress(0);
+
+      drawSegments(rows, function() {
+        setStatus('✓ 共 '+rows.length+' 個打卡位置，路線已全部載入', 'ok');
+      });
+    })
+    .catch(function(e) {
+      searching = false;
+      document.getElementById('searchBtn').disabled = false;
+      document.getElementById('searchBtn').innerHTML =
+        '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> 查詢';
+      setStatus('查詢失敗：' + e.message, 'err');
+      setProgress(null);
+    });
+}
+
+['inNickname','inTripcode'].forEach(function(id){
+  document.getElementById(id).addEventListener('keydown', function(e){
+    if (e.key === 'Enter') doSearch();
+  });
+});
+
+(function(){
+  var params = new URLSearchParams(location.search);
+  var n = params.get('nick') || params.get('nickname');
+  var t = params.get('trip') || params.get('tripcode');
+  if (n) document.getElementById('inNickname').value = n;
+  if (t) document.getElementById('inTripcode').value = t;
+  if (n && t) doSearch();
+})();
+
+if (typeof ResizeObserver !== 'undefined') {
+  var ro = new ResizeObserver(function() {
+    if (map) map.invalidateSize();
+  });
+  ro.observe(document.body);
+}
+setInterval(function() {
+  if (map) map.invalidateSize();
+}, 1000);
+</script>
+</body>
+</html>
