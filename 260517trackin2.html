@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>MyTrackIn · 行程查詢</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root {
+  --moss:    #3a5a40;
+  --moss-lt: #52796f;
+  --leaf:    #74c69d;
+  --ink:     #1a1f1c;
+  --stone:   #6b7280;
+  --sand:    #f4f1eb;
+  --card:    #ffffff;
+  --border:  rgba(58,90,64,0.14);
+  --red:     #c0392b;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  height: 100%;
+}
+body {
+  font-family: 'Noto Sans TC', sans-serif;
+  background: var(--sand);
+  color: var(--ink);
+  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; 
+}
+
+/* ── HEADER ── */
+.app-header {
+  background: var(--moss);
+  color: #fff;
+  padding: 16px 20px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.logo-icon {
+  width: 32px; height: 32px;
+  background: rgba(255,255,255,0.18);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.logo-icon svg { width: 18px; height: 18px; fill: #fff; }
+.logo-text {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.15rem; font-weight: 800; letter-spacing: .03em;
+}
+.logo-text span { opacity: 0.7; font-weight: 400; font-size: 0.82rem; margin-left: 6px; }
+
+/* ── QUERY PANEL ── */
+.query-panel {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+  max-height: 45vh;
+  overflow-y: auto;
+}
+.query-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.query-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 120px;
+}
+.query-field label {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--moss);
+}
+.query-field input {
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  padding: 9px 11px;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 0.88rem;
+  background: #fafafa;
+  outline: none;
+  transition: border-color .2s;
+  width: 100%;
+}
+.query-field input:focus { border-color: var(--moss); }
+
+.btn-search {
+  background: var(--moss);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 9px 18px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  white-space: nowrap;
+  transition: background .2s;
+  flex-shrink: 0;
+}
+.btn-search:hover { background: #2d4a33; }
+.btn-search:disabled { opacity: .5; cursor: not-allowed; }
+.btn-search svg { width: 15px; height: 15px; fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* status bar */
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-height: 22px;
+}
+.status-text { font-size: 0.78rem; color: var(--stone); }
+.status-text.err { color: var(--red); }
+.status-text.ok  { color: var(--moss); }
+
+/* progress */
+.prog-wrap {
+  flex: 1; height: 3px;
+  background: var(--border);
+  border-radius: 2px; overflow: hidden;
+  min-width: 60px; display: none;
+}
+.prog-wrap.show { display: block; }
+.prog-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--moss), var(--leaf));
+  width: 0%; border-radius: 2px;
+  transition: width .2s;
+}
+
+/* color legend chips */
+.legend-row {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  display: none;
+}
+.legend-row.show { display: flex; }
+.legend-chip {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 0.7rem; font-family: 'Syne', sans-serif; font-weight: 600;
+  padding: 3px 9px; border-radius: 12px;
+  border: 1.5px solid transparent;
+}
+
+/* ── MAP ── */
+#map {
+  flex: 1 1 0%;
+  min-height: 200px;
+  height: calc(100dvh - 190px);
+  height: -webkit-fill-available;
+}
+
+/* ── TOOLBAR ── */
+.map-toolbar {
+  padding: 10px 16px;
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.trip-tag {
+  font-size: 0.75rem;
+  background: rgba(58,90,64,.1); color: var(--moss);
+  padding: 4px 10px; border-radius: 20px;
+  font-family: 'Syne', sans-serif; font-weight: 600;
+}
+.map-info { font-size: 0.75rem; color: var(--stone); }
+.btn-refresh {
+  margin-left: auto;
+  font-size: 0.75rem; padding: 4px 10px;
+  background: var(--moss); color: #fff;
+  border: none; border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Syne', sans-serif; font-weight: 600;
+  display: none;
+}
+.btn-refresh.show { display: block; }
+.btn-refresh:hover { background: #2d4a33; }
+
+/* spinner */
+.spinner {
+  width: 13px; height: 13px;
+  border: 2px solid rgba(255,255,255,.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* leaflet popup */
+.leaflet-popup-content-wrapper {
+  border-radius: 8px !important;
+  background: #1e2433 !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  color: #e2e8f0 !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6) !important;
+}
+.leaflet-popup-content { font-family: 'Noto Sans TC', sans-serif; font-size: 0.82rem; line-height: 1.5; color: #e2e8f0; }
+.leaflet-popup-tip { background: #1e2433 !important; }
+.leaflet-popup-close-button { color: #94a3b8 !important; }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="logo-icon">
+    <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5" fill="white"/></svg>
+  </div>
+  <div class="logo-text">MyTrackIn <span>行程查詢</span></div>
+</header>
+
+<div class="query-panel">
+  <div class="query-row">
+    <div class="query-field">
+      <label>暱稱 Nickname</label>
+      <input type="text" id="inNickname" placeholder="例如：小明" maxlength="30" autocomplete="off">
+    </div>
+    <div class="query-field">
+      <label>行程代碼 Trip Code</label>
+      <input type="text" id="inTripcode" placeholder="例如：TRIP2025" maxlength="40" autocomplete="off">
+    </div>
+    <button class="btn-search" id="searchBtn" onclick="doSearch()">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      查詢
+    </button>
+  </div>
+
+  <div class="status-bar">
+    <span class="status-text" id="statusText">請輸入暱稱與行程代碼後按查詢</span>
+    <div class="prog-wrap" id="progWrap"><div class="prog-bar" id="progBar"></div></div>
+  </div>
+
+  <div class="legend-row" id="legendRow"></div>
+</div>
+
+<div id="map"></div>
+
+<div class="map-toolbar" id="mapToolbar">
+  <span class="map-info" id="toolbarInfo">地圖尚未載入資料</span>
+  <button class="btn-refresh" id="refreshBtn" onclick="doSearch()">↺ 重新整理</button>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<script>
+// ── Firebase 配置 (請根據需要保持最新) ──
+// ⚠️ 提示：請確保此金鑰與您填入「打卡輸入網頁」的 config 完全一致，並指引到同一個專案
+const firebaseConfig = {
+  apiKey:            "AIzaSyCsI9fZHO8uaaahUmYJKh7yjgvp3fCVLhc",
+  authDomain:        "trackin-ae66d.firebaseapp.com",
+  projectId:         "trackin-ae66d",
+  storageBucket:     "trackin-ae66d.firebasestorage.app",
+  messagingSenderId: "693858252787",
+  appId:             "1:693858252787:web:918b7e05b08d94c0ae4486"
+};
+
+firebase.initializeApp(firebaseConfig);
+// 【修改 2】初始化實體改為 Firestore Database
+const db = firebase.firestore();
+
+// ── Map init ──
+const map = L.map('map').setView([25.0330, 121.5654], 13);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',
+  subdomains: 'abcd',
+  maxZoom: 19
+}).addTo(map);
+
+const COLORS = [
+  { key:'blue',   line:'#2563eb', fill:'#3b82f6', label:'藍' },
+  { key:'red',    line:'#c0392b', fill:'#ef4444', label:'紅' },
+  { key:'black',  line:'#1a1f1c', fill:'#374151', label:'黑' },
+  { key:'purple', line:'#7c3aed', fill:'#a855f7', label:'紫' },
+];
+
+function colorForIndex(i) {
+  return COLORS[Math.floor(i / 10) % COLORS.length];
+}
+
+let mapLayers   = [];
+let osrmCache   = {};
+let searching   = false;
+let lastNick    = '';
+let lastTrip    = '';
+
+function setStatus(text, cls) {
+  var el = document.getElementById('statusText');
+  el.textContent = text;
+  el.className = 'status-text' + (cls ? ' ' + cls : '');
+}
+function setProgress(pct) {
+  var wrap = document.getElementById('progWrap');
+  var bar  = document.getElementById('progBar');
+  if (pct === null) { wrap.classList.remove('show'); return; }
+  wrap.classList.add('show');
+  bar.style.width = Math.min(pct, 100) + '%';
+}
+function setToolbar(html) {
+  document.getElementById('mapToolbar').innerHTML = html;
+}
+
+function clearMap() {
+  mapLayers.forEach(function(l){ map.removeLayer(l); });
+  mapLayers = [];
+  document.getElementById('legendRow').classList.remove('show');
+  document.getElementById('legendRow').innerHTML = '';
+}
+
+function getRoadCoords(a, b) {
+  var key = a[0].toFixed(5)+','+a[1].toFixed(5)+'|'+b[0].toFixed(5)+','+b[1].toFixed(5);
+  if (osrmCache[key]) return Promise.resolve(osrmCache[key]);
+  var url = 'https://router.project-osrm.org/route/v1/driving/'
+    + a[1]+','+a[0]+';'+b[1]+','+b[0]
+    + '?overview=full&geometries=geojson';
+  return fetch(url)
+    .then(function(r){ if(!r.ok) throw new Error(); return r.json(); })
+    .then(function(j){
+      if (j.code !== 'Ok' || !j.routes || !j.routes.length) throw new Error();
+      var coords = j.routes[0].geometry.coordinates.map(function(c){ return [c[1], c[0]]; });
+      osrmCache[key] = coords;
+      return coords;
+    })
+    .catch(function(){ return [a, b]; });
+}
+
+function drawSegments(rows, onDone) {
+  var total = rows.length - 1;
+  if (total < 1) { onDone && onDone(); return; }
+  var done = 0;
+
+  function next(i) {
+    if (i >= total) {
+      setProgress(100);
+      setTimeout(function(){ setProgress(null); }, 600);
+      onDone && onDone();
+      return;
+    }
+    var a = [rows[i].lat,   rows[i].lng];
+    var b = [rows[i+1].lat, rows[i+1].lng];
+    var c = colorForIndex(i);
+
+    getRoadCoords(a, b).then(function(coords) {
+      var outline = L.polyline(coords, {
+        color:   '#ffffff',
+        weight:  9,
+        opacity: 0.25,
+        lineJoin: 'round',
+        lineCap:  'round'
+      }).addTo(map);
+      outline.bringToBack();
+      mapLayers.push(outline);
+
+      var seg = L.polyline(coords, {
+        color:   c.line,
+        weight:  5,
+        opacity: 1,
+        lineJoin: 'round',
+        lineCap:  'round'
+      }).addTo(map);
+      mapLayers.push(seg);
+
+      done++;
+      setProgress(Math.round((done / total) * 100));
+      setStatus('路線載入中 ' + done + ' / ' + total + '…');
+
+      setTimeout(function(){ next(i + 1); }, 85);
+    });
+  }
+  next(0);
