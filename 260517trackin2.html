@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>MyTrackIn · 行程查詢</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -20,20 +20,13 @@
   --red:     #c0392b;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-
-html {
-  height: 100%;
-}
 body {
   font-family: 'Noto Sans TC', sans-serif;
   background: var(--sand);
   color: var(--ink);
-  height: 100%;
   min-height: 100vh;
-  min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  overflow: hidden; 
 }
 
 /* ── HEADER ── */
@@ -64,13 +57,11 @@ body {
 .query-panel {
   background: var(--card);
   border-bottom: 1px solid var(--border);
-  padding: 10px 16px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   flex-shrink: 0;
-  max-height: 45vh;
-  overflow-y: auto;
 }
 .query-row {
   display: flex;
@@ -167,16 +158,13 @@ body {
 
 /* ── MAP ── */
 #map {
-  flex: 1 1 0%;
-  min-height: 200px;
-  height: calc(100dvh - 190px);
-  height: -webkit-fill-available;
+  flex: 1;
+  min-height: 0;
 }
 
 /* ── TOOLBAR ── */
 .map-toolbar {
   padding: 10px 16px;
-  padding-bottom: max(10px, env(safe-area-inset-bottom));
   background: var(--card);
   border-top: 1px solid var(--border);
   display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
@@ -213,16 +201,8 @@ body {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* leaflet popup */
-.leaflet-popup-content-wrapper {
-  border-radius: 8px !important;
-  background: #1e2433 !important;
-  border: 1px solid rgba(255,255,255,0.12) !important;
-  color: #e2e8f0 !important;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.6) !important;
-}
-.leaflet-popup-content { font-family: 'Noto Sans TC', sans-serif; font-size: 0.82rem; line-height: 1.5; color: #e2e8f0; }
-.leaflet-popup-tip { background: #1e2433 !important; }
-.leaflet-popup-close-button { color: #94a3b8 !important; }
+.leaflet-popup-content-wrapper { border-radius: 8px !important; }
+.leaflet-popup-content { font-family: 'Noto Sans TC', sans-serif; font-size: 0.82rem; line-height: 1.5; }
 </style>
 </head>
 <body>
@@ -271,26 +251,24 @@ body {
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <script>
-// ── Firebase 配置 (請根據需要保持最新) ──
-// ⚠️ 提示：請確保此金鑰與您填入「打卡輸入網頁」的 config 完全一致，並指引到同一個專案
+// ── Firebase 初始化配置 ──
 const firebaseConfig = {
-  apiKey:            "AIzaSyCsI9fZHO8uaaahUmYJKh7yjgvp3fCVLhc",
-  authDomain:        "trackin-ae66d.firebaseapp.com",
-  projectId:         "trackin-ae66d",
-  storageBucket:     "trackin-ae66d.firebasestorage.app",
-  messagingSenderId: "693858252787",
-  appId:             "1:693858252787:web:918b7e05b08d94c0ae4486"
+  apiKey: "AIzaSyAGEV8VTgzmSGfII4yWCbEjfD9h9G_u1tk",
+  authDomain: "teamtrack-6f827.firebaseapp.com",
+  projectId: "teamtrack-6f827",
+  storageBucket: "teamtrack-6f827.firebasestorage.app",
+  messagingSenderId: "43073879164",
+  appId: "1:43073879164:web:15af9d63af30ddbe8b9df9"
 };
 
 firebase.initializeApp(firebaseConfig);
-// 【修改 2】初始化實體改為 Firestore Database
+// 【修改 2】將資料庫實體宣告為 Firestore 物件
 const db = firebase.firestore();
 
 // ── Map init ──
 const map = L.map('map').setView([25.0330, 121.5654], 13);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',
-  subdomains: 'abcd',
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   maxZoom: 19
 }).addTo(map);
 
@@ -368,23 +346,14 @@ function drawSegments(rows, onDone) {
     var c = colorForIndex(i);
 
     getRoadCoords(a, b).then(function(coords) {
-      var outline = L.polyline(coords, {
-        color:   '#ffffff',
-        weight:  9,
-        opacity: 0.25,
-        lineJoin: 'round',
-        lineCap:  'round'
-      }).addTo(map);
-      outline.bringToBack();
-      mapLayers.push(outline);
-
       var seg = L.polyline(coords, {
         color:   c.line,
-        weight:  5,
-        opacity: 1,
+        weight:  3.5,
+        opacity: 0.85,
         lineJoin: 'round',
         lineCap:  'round'
       }).addTo(map);
+      seg.bringToBack();
       mapLayers.push(seg);
 
       done++;
@@ -419,7 +388,7 @@ function buildLegend(total) {
   row.classList.add('show');
 }
 
-// ── 【修改 3】重構核心搜尋邏輯：對接全新的 Firestore 三層結構 ──
+// ── 【修改 3】核心重構：建立匿名登入並對接三層結構安全規則 ──
 function doSearch() {
   if (searching) return;
 
@@ -428,21 +397,24 @@ function doSearch() {
   if (!nickname) { setStatus('請輸入暱稱', 'err'); return; }
   if (!tripcode)  { setStatus('請輸入行程代碼', 'err'); return; }
 
-  // 為了能公開查詢，公開查詢頁必須先做一次「匿名登入」或使用現成狀態，以符合安全規則 (request.auth != null)
+  lastNick = nickname;
+  lastTrip = tripcode;
   searching = true;
+
   clearMap();
   osrmCache = {}; 
   setProgress(0);
-  setStatus('正在安全連線至資料庫…');
+  setStatus('安全資料庫連線中…');
   document.getElementById('searchBtn').disabled = true;
   document.getElementById('searchBtn').innerHTML = '<span class="spinner"></span> 查詢中';
+  document.getElementById('refreshBtn').classList.remove('show');
   setToolbar('<span class="map-info">載入中…</span>');
 
-  // 確保是驗證狀態以滿足 Rules 的 if request.auth != null
+  // 第一步：觸發匿名登入，使通行憑證滿足規則中的 `request.auth != null`
   firebase.auth().signInAnonymously()
     .then(function() {
-      setStatus('正在查詢 Firestore 行程…');
-      // 精準指定全新結構路徑：/nicknames/{nickname}/trips/{tripcode}/checkins
+      setStatus('正在讀取行程軌跡…');
+      // 第二步：精準瞄準你的安全性規則嵌套路徑：/nicknames/{nickname}/trips/{tripcode}/checkins
       return db.collection('nicknames').doc(nickname)
                .collection('trips').doc(tripcode)
                .collection('checkins')
@@ -469,7 +441,7 @@ function doSearch() {
         }
       });
 
-      // 排序：依據時間戳
+      // 排序時間戳
       rows.sort(function(a, b) {
         var ta = a.clientTime || a.timestamp || '';
         var tb = b.clientTime || b.timestamp || '';
@@ -483,58 +455,42 @@ function doSearch() {
         return;
       }
 
-      // 繪製起終點
-      var firstD = rows[0];
-      var lastD  = rows[rows.length - 1];
+      // 第三步：還原你此版本原有的邏輯，將所有打卡點繪製在地圖上 (CircleMarker)
+      rows.forEach(function(d, idx) {
+        var c = colorForIndex(idx);
+        var isFirst = idx === 0;
+        var isLast  = idx === rows.length - 1;
 
-      function makeEndpointIcon(label, bg) {
-        return L.divIcon({
-          className: '',
-          iconSize:  [32, 32],
-          iconAnchor:[16, 16],
-          html: '<div style="'
-            + 'width:32px;height:32px;border-radius:50%;'
-            + 'background:'+bg+';'
-            + 'border:3px solid #fff;'
-            + 'box-shadow:0 2px 8px rgba(0,0,0,0.55);'
-            + 'display:flex;align-items:center;justify-content:center;'
-            + 'font-family:Syne,sans-serif;font-size:11px;font-weight:800;color:#fff;'
-            + '">'+label+'</div>'
-        });
-      }
+        var dot = L.circleMarker([d.lat, d.lng], {
+          radius:      isFirst || isLast ? 7 : 5,
+          fillColor:   c.fill,
+          color:       '#fff',
+          weight:      isFirst || isLast ? 2.5 : 1.5,
+          opacity:     1,
+          fillOpacity: 1
+        }).addTo(map);
 
-      var startMarker = L.marker([firstD.lat, firstD.lng], { icon: makeEndpointIcon('START', '#16a34a'), zIndexOffset: 1000 })
-        .addTo(map)
-        .bindPopup(
+        dot.bindPopup(
           '<div style="min-width:160px;">'
-          + '<div style="font-family:Syne,sans-serif;font-weight:700;color:#16a34a;margin-bottom:4px;">▶ 起點</div>'
-          + '<div style="font-size:0.78rem;color:#6b7280;margin-bottom:6px;">'+(firstD.timestamp||'')+'</div>'
-          + (firstD.note ? '<div style="font-size:0.82rem;margin-bottom:4px;">'+firstD.note+'</div>' : '')
-          + '<div style="font-size:0.72rem;color:#9ca3af;">'+firstD.lat.toFixed(5)+', '+firstD.lng.toFixed(5)+'</div>'
+          + '<div style="font-family:Syne,sans-serif;font-weight:700;margin-bottom:4px;color:'+c.line+';">'
+          +    nickname + '</div>'
+          + '<div style="font-size:0.78rem;color:#6b7280;margin-bottom:6px;">'+ (d.timestamp||'') +'</div>'
+          + (d.note ? '<div style="font-size:0.82rem;margin-bottom:4px;">'+d.note+'</div>' : '')
+          + '<div style="font-size:0.72rem;color:#9ca3af;">'+d.lat.toFixed(5)+', '+d.lng.toFixed(5)+'</div>'
+          + (d.accuracy ? '<div style="font-size:0.72rem;color:#9ca3af;">精度 ±'+Math.round(d.accuracy)+'m</div>' : '')
           + '</div>'
         );
-      mapLayers.push(startMarker);
 
-      if (rows.length > 1) {
-        var endMarker = L.marker([lastD.lat, lastD.lng], { icon: makeEndpointIcon('END', '#dc2626'), zIndexOffset: 1000 })
-          .addTo(map)
-          .bindPopup(
-            '<div style="min-width:160px;">'
-            + '<div style="font-family:Syne,sans-serif;font-weight:700;color:#dc2626;margin-bottom:4px;">⬛ 終點</div>'
-            + '<div style="font-size:0.78rem;color:#6b7280;margin-bottom:6px;">'+(lastD.timestamp||'')+'</div>'
-            + (lastD.note ? '<div style="font-size:0.82rem;margin-bottom:4px;">'+lastD.note+'</div>' : '')
-            + '<div style="font-size:0.72rem;color:#9ca3af;">'+lastD.lat.toFixed(5)+', '+lastD.lng.toFixed(5)+'</div>'
-            + '</div>'
-          );
-        mapLayers.push(endMarker);
-      }
+        mapLayers.push(dot);
+      });
 
+      // 調整地圖視野至涵蓋所有點
       var bounds = L.latLngBounds(rows.map(function(d){ return [d.lat, d.lng]; }));
       map.fitBounds(bounds, { padding:[40, 40], maxZoom:16 });
 
+      // 建置圖例與工具列
       buildLegend(rows.length);
 
-      // 動態更新工具列內容 (直接將處理好的 HTML 塞回工具列)
       setToolbar(
         '<span class="trip-tag">'+nickname+' · '+tripcode+'</span>'
         + '<span class="map-info">共 '+rows.length+' 個位置</span>'
@@ -550,6 +506,7 @@ function doSearch() {
       setStatus('路線載入中 0 / '+(rows.length-1)+'…');
       setProgress(0);
 
+      // 呼叫 OSRM 繪製沿路軌跡
       drawSegments(rows, function() {
         setStatus('✓ 共 '+rows.length+' 個打卡位置，路線已全部載入', 'ok');
       });
@@ -564,6 +521,7 @@ function doSearch() {
     });
 }
 
+// ── 快捷鍵與預填 URL 參數邏輯保持不變 ──
 ['inNickname','inTripcode'].forEach(function(id){
   document.getElementById(id).addEventListener('keydown', function(e){
     if (e.key === 'Enter') doSearch();
@@ -578,16 +536,6 @@ function doSearch() {
   if (t) document.getElementById('inTripcode').value = t;
   if (n && t) doSearch();
 })();
-
-if (typeof ResizeObserver !== 'undefined') {
-  var ro = new ResizeObserver(function() {
-    if (map) map.invalidateSize();
-  });
-  ro.observe(document.body);
-}
-setInterval(function() {
-  if (map) map.invalidateSize();
-}, 1000);
 </script>
 </body>
 </html>
