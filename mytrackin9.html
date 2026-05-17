@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>MyTrackIn · 行程查詢</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root {
+  --moss:    #3a5a40;
+  --moss-lt: #52796f;
+  --leaf:    #74c69d;
+  --ink:     #1a1f1c;
+  --stone:   #6b7280;
+  --sand:    #f4f1eb;
+  --card:    #ffffff;
+  --border:  rgba(58,90,64,0.14);
+  --red:     #c0392b;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── iframe / Google Sites 相容高度
+   Google Sites 以固定高度 iframe 嵌入，
+   必須讓 html + body 撐滿 iframe 的 100%，
+   同時用 dvh 兼顧手機瀏覽器動態工具列。 ── */
+html {
+  height: 100%;
+}
+body {
+  font-family: 'Noto Sans TC', sans-serif;
+  background: var(--sand);
+  color: var(--ink);
+  /* 三層 fallback：px 給舊版、vh 給桌機、dvh 給手機 */
+  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* 防止子元素撐破 body 造成雙滾動條 */
+}
+
+/* ── HEADER ── */
+.app-header {
+  background: var(--moss);
+  color: #fff;
+  padding: 16px 20px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.logo-icon {
+  width: 32px; height: 32px;
+  background: rgba(255,255,255,0.18);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.logo-icon svg { width: 18px; height: 18px; fill: #fff; }
+.logo-text {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.15rem; font-weight: 800; letter-spacing: .03em;
+}
+.logo-text span { opacity: 0.7; font-weight: 400; font-size: 0.82rem; margin-left: 6px; }
+
+/* ── QUERY PANEL ── */
+.query-panel {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+  /* Prevent query panel from growing too large on small screens */
+  max-height: 45vh;
+  overflow-y: auto;
+}
+.query-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.query-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 120px;
+}
+.query-field label {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--moss);
+}
+.query-field input {
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  padding: 9px 11px;
+  font-family: 'Noto Sans TC', sans-serif;
+  font-size: 0.88rem;
+  background: #fafafa;
+  outline: none;
+  transition: border-color .2s;
+  width: 100%;
+}
+.query-field input:focus { border-color: var(--moss); }
+
+.btn-search {
+  background: var(--moss);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 9px 18px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  white-space: nowrap;
+  transition: background .2s;
+  flex-shrink: 0;
+}
+.btn-search:hover { background: #2d4a33; }
+.btn-search:disabled { opacity: .5; cursor: not-allowed; }
+.btn-search svg { width: 15px; height: 15px; fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* status bar */
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-height: 22px;
+}
+.status-text { font-size: 0.78rem; color: var(--stone); }
+.status-text.err { color: var(--red); }
+.status-text.ok  { color: var(--moss); }
+
+/* progress */
+.prog-wrap {
+  flex: 1; height: 3px;
+  background: var(--border);
+  border-radius: 2px; overflow: hidden;
+  min-width: 60px; display: none;
+}
+.prog-wrap.show { display: block; }
+.prog-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--moss), var(--leaf));
+  width: 0%; border-radius: 2px;
+  transition: width .2s;
+}
+
+/* color legend chips */
+.legend-row {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  display: none;
+}
+.legend-row.show { display: flex; }
+.legend-chip {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 0.7rem; font-family: 'Syne', sans-serif; font-weight: 600;
+  padding: 3px 9px; border-radius: 12px;
+  border: 1.5px solid transparent;
+}
+
+/* ── MAP ── */
+/* MAP: flex:1 fills remaining viewport.
+   calc() fallback ensures correct height inside Google Sites iframe
+   where viewport units may not resolve to the iframe height. */
+#map {
+  flex: 1 1 0%;
+  min-height: 200px;
+  /* Fallback explicit height for iframe contexts:
+     56px header + ~90px query panel + 44px toolbar = ~190px chrome */
+  height: calc(100dvh - 190px);
+  height: -webkit-fill-available;
+}
+
+/* ── TOOLBAR ── */
+.map-toolbar {
+  padding: 10px 16px;
+  /* safe-area-inset-bottom: respects iPhone home bar */
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.trip-tag {
+  font-size: 0.75rem;
+  background: rgba(58,90,64,.1); color: var(--moss);
+  padding: 4px 10px; border-radius: 20px;
+  font-family: 'Syne', sans-serif; font-weight: 600;
+}
+.map-info { font-size: 0.75rem; color: var(--stone); }
+.btn-refresh {
+  margin-left: auto;
+  font-size: 0.75rem; padding: 4px 10px;
+  background: var(--moss); color: #fff;
+  border: none; border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Syne', sans-serif; font-weight: 600;
+  display: none;
+}
+.btn-refresh.show { display: block; }
+.btn-refresh:hover { background: #2d4a33; }
+
+/* spinner */
+.spinner {
+  width: 13px; height: 13px;
+  border: 2px solid rgba(255,255,255,.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* leaflet popup — dark themed to match map */
+.leaflet-popup-content-wrapper {
+  border-radius: 8px !important;
+  background: #1e2433 !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  color: #e2e8f0 !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6) !important;
+}
+.leaflet-popup-content { font-family: 'Noto Sans TC', sans-serif; font-size: 0.82rem; line-height: 1.5; color: #e2e8f0; }
+.leaflet-popup-tip { background: #1e2433 !important; }
+.leaflet-popup-close-button { color: #94a3b8 !important; }
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header class="app-header">
+  <div class="logo-icon">
+    <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5" fill="white"/></svg>
+  </div>
+  <div class="logo-text">MyTrackIn <span>行程查詢</span></div>
+</header>
+
+<!-- ── Query Panel ── -->
+<div class="query-panel">
+  <div class="query-row">
+    <div class="query-field">
+      <label>暱稱 Nickname</label>
+      <input type="text" id="inNickname" placeholder="例如：小明" maxlength="30" autocomplete="off">
+    </div>
+    <div class="query-field">
+      <label>行程代碼 Trip Code</label>
+      <input type="text" id="inTripcode" placeholder="例如：TRIP2025" maxlength="40" autocomplete="off">
+    </div>
+    <button class="btn-search" id="searchBtn" onclick="doSearch()">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      查詢
+    </button>
+  </div>
+
+  <div class="status-bar">
+    <span class="status-text" id="statusText">請輸入暱稱與行程代碼後按查詢</span>
+    <div class="prog-wrap" id="progWrap"><div class="prog-bar" id="progBar"></div></div>
+  </div>
+
+  <div class="legend-row" id="legendRow"></div>
+</div>
+
+<!-- ── Map ── -->
+<div id="map"></div>
+
+<!-- ── Toolbar ── -->
+<div class="map-toolbar" id="mapToolbar">
+  <span class="map-info" id="toolbarInfo">地圖尚未載入資料</span>
+  <button class="btn-refresh" id="refreshBtn" onclick="doSearch()">↺ 重新整理</button>
+</div>
+
+<!-- Firebase & Leaflet -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+<script>
+// ── Firebase (read-only for public viewer) ──
+firebase.initializeApp({
+  apiKey:            "AIzaSyCsI9fZHO8uaaahUmYJKh7yjgvp3fCVLhc",
+  authDomain:        "trackin-ae66d.firebaseapp.com",
+  databaseURL:       "https://trackin-ae66d-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:         "trackin-ae66d",
+  storageBucket:     "trackin-ae66d.firebasestorage.app",
+  messagingSenderId: "693858252787",
+  appId:             "1:693858252787:web:918b7e05b08d94c0ae4486"
+});
+const db = firebase.database();
+
+// ── Map init ──
+const map = L.map('map').setView([25.0330, 121.5654], 13);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',
+  subdomains: 'abcd',
+  maxZoom: 19
+}).addTo(map);
+
+// ── Color cycle (every 10 points) ──
+const COLORS = [
+  { key:'blue',   line:'#2563eb', fill:'#3b82f6', label:'藍' },
+  { key:'red',    line:'#c0392b', fill:'#ef4444', label:'紅' },
+  { key:'black',  line:'#1a1f1c', fill:'#374151', label:'黑' },
+  { key:'purple', line:'#7c3aed', fill:'#a855f7', label:'紫' },
+];
+
+function colorForIndex(i) {
+  return COLORS[Math.floor(i / 10) % COLORS.length];
+}
+
+// ── State ──
+let mapLayers   = [];
+let osrmCache   = {};
+let searching   = false;
+let lastNick    = '';
+let lastTrip    = '';
+
+// ── UI helpers ──
+function setStatus(text, cls) {
+  var el = document.getElementById('statusText');
+  el.textContent = text;
+  el.className = 'status-text' + (cls ? ' ' + cls : '');
+}
+function setProgress(pct) {
+  var wrap = document.getElementById('progWrap');
+  var bar  = document.getElementById('progBar');
+  if (pct === null) { wrap.classList.remove('show'); return; }
+  wrap.classList.add('show');
+  bar.style.width = Math.min(pct, 100) + '%';
+}
+function setToolbar(html) {
+  document.getElementById('mapToolbar').innerHTML = html;
+}
+
+// ── Clear map ──
+function clearMap() {
+  mapLayers.forEach(function(l){ map.removeLayer(l); });
+  mapLayers = [];
+  document.getElementById('legendRow').classList.remove('show');
+  document.getElementById('legendRow').innerHTML = '';
+}
+
+// ── OSRM road route ──
+function getRoadCoords(a, b) {
+  var key = a[0].toFixed(5)+','+a[1].toFixed(5)+'|'+b[0].toFixed(5)+','+b[1].toFixed(5);
+  if (osrmCache[key]) return Promise.resolve(osrmCache[key]);
+  var url = 'https://router.project-osrm.org/route/v1/driving/'
+    + a[1]+','+a[0]+';'+b[1]+','+b[0]
+    + '?overview=full&geometries=geojson';
+  return fetch(url)
+    .then(function(r){ if(!r.ok) throw new Error(); return r.json(); })
+    .then(function(j){
+      if (j.code !== 'Ok' || !j.routes || !j.routes.length) throw new Error();
+      var coords = j.routes[0].geometry.coordinates.map(function(c){ return [c[1], c[0]]; });
+      osrmCache[key] = coords;
+      return coords;
+    })
+    .catch(function(){ return [a, b]; }); // fallback straight line
+}
+
+// ── Draw segments sequentially ──
+function drawSegments(rows, onDone) {
+  var total = rows.length - 1;
+  if (total < 1) { onDone && onDone(); return; }
+  var done = 0;
+
+  function next(i) {
+    if (i >= total) {
+      setProgress(100);
+      setTimeout(function(){ setProgress(null); }, 600);
+      onDone && onDone();
+      return;
+    }
+    var a = [rows[i].lat,   rows[i].lng];
+    var b = [rows[i+1].lat, rows[i+1].lng];
+    var c = colorForIndex(i);
+
+    getRoadCoords(a, b).then(function(coords) {
+      // White outline layer (drawn first, sits behind)
+      var outline = L.polyline(coords, {
+        color:   '#ffffff',
+        weight:  9,
+        opacity: 0.25,
+        lineJoin: 'round',
+        lineCap:  'round'
+      }).addTo(map);
+      outline.bringToBack();
+      mapLayers.push(outline);
+
+      // Coloured line on top
+      var seg = L.polyline(coords, {
+        color:   c.line,
+        weight:  5,
+        opacity: 1,
+        lineJoin: 'round',
+        lineCap:  'round'
+      }).addTo(map);
+      mapLayers.push(seg);
+
+      done++;
+      setProgress(Math.round((done / total) * 100));
+      setStatus('路線載入中 ' + done + ' / ' + total + '…');
+
+      setTimeout(function(){ next(i + 1); }, 85);
+    });
+  }
+
+  next(0);
+}
+
+// ── Build legend ──
+function buildLegend(total) {
+  var groups = Math.ceil(total / 10);
+  if (groups <= 1) return; // no need for legend if only one color
+  var row = document.getElementById('legendRow');
+  row.innerHTML = '';
+  for (var g = 0; g < groups; g++) {
+    var c     = COLORS[g % COLORS.length];
+    var start = g * 10 + 1;
+    var end   = Math.min((g + 1) * 10, total);
+    var chip  = document.createElement('div');
+    chip.className = 'legend-chip';
+    chip.style.background = c.fill + '18';
+    chip.style.borderColor = c.line;
+    chip.style.color = c.line;
+    chip.innerHTML =
+      '<span style="width:8px;height:8px;border-radius:50%;background:'+c.fill+';display:inline-block;flex-shrink:0;"></span>'
+      + (start === end ? '#'+start : '#'+start+'–'+end);
+    row.appendChild(chip);
+  }
+  row.classList.add('show');
+}
+
+// ── Main search ──
+function doSearch() {
+  if (searching) return;
+
+  var nickname = document.getElementById('inNickname').value.trim();
+  var tripcode  = document.getElementById('inTripcode').value.trim();
+  if (!nickname) { setStatus('請輸入暱稱', 'err'); return; }
+  if (!tripcode)  { setStatus('請輸入行程代碼', 'err'); return; }
+
+  lastNick = nickname;
+  lastTrip = tripcode;
+  searching = true;
+
+  clearMap();
+  osrmCache = {}; // clear cache on new search
+  setProgress(0);
+  setStatus('正在查詢 Firebase…');
+  document.getElementById('searchBtn').disabled = true;
+  document.getElementById('searchBtn').innerHTML = '<span class="spinner"></span> 查詢中';
+  document.getElementById('refreshBtn').classList.remove('show');
+  setToolbar('<span class="map-info">載入中…</span>');
+
+  db.ref('checkins')
+    .orderByChild('tripcode')
+    .equalTo(tripcode)
+    .once('value')
+    .then(function(snap) {
+
+      // Reset button
+      document.getElementById('searchBtn').disabled = false;
+      document.getElementById('searchBtn').innerHTML =
+        '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> 查詢';
+      searching = false;
+
+      if (!snap.exists()) {
+        setStatus('找不到此行程代碼的打卡紀錄', 'err');
+        setProgress(null);
+        setToolbar('<span class="map-info">查無資料</span>');
+        return;
+      }
+
+      // Collect, filter, sort
+      var rows = [];
+      snap.forEach(function(child) {
+        var d = child.val();
+        if (d.nickname !== nickname) return;
+        if (!d.lat || !d.lng) return;
+        rows.push(d);
+      });
+
+      rows.sort(function(a, b) {
+        var ta = a.clientTime || a.timestamp || '';
+        var tb = b.clientTime || b.timestamp || '';
+        return ta < tb ? -1 : ta > tb ? 1 : 0;
+      });
+
+      if (!rows.length) {
+        setStatus('此暱稱在此行程代碼下無含 GPS 的打卡紀錄', 'err');
+        setProgress(null);
+        setToolbar('<span class="map-info">查無 GPS 資料</span>');
+        return;
+      }
+
+      // Draw START and END markers only — no mid-point clutter
+      var firstD = rows[0];
+      var lastD  = rows[rows.length - 1];
+      var firstC = colorForIndex(0);
+      var lastC  = colorForIndex(rows.length - 1);
+
+      function makeEndpointIcon(label, bg) {
+        return L.divIcon({
+          className: '',
+          iconSize:  [32, 32],
+          iconAnchor:[16, 16],
+          html: '<div style="'
+            + 'width:32px;height:32px;border-radius:50%;'
+            + 'background:'+bg+';'
+            + 'border:3px solid #fff;'
+            + 'box-shadow:0 2px 8px rgba(0,0,0,0.55);'
+            + 'display:flex;align-items:center;justify-content:center;'
+            + 'font-family:Syne,sans-serif;font-size:11px;font-weight:800;color:#fff;'
+            + '">'+label+'</div>'
+        });
+      }
+
+      // Start marker
+      var startMarker = L.marker([firstD.lat, firstD.lng], { icon: makeEndpointIcon('START', '#16a34a'), zIndexOffset: 1000 })
+        .addTo(map)
+        .bindPopup(
+          '<div style="min-width:160px;">'
+          + '<div style="font-family:Syne,sans-serif;font-weight:700;color:#16a34a;margin-bottom:4px;">▶ 起點</div>'
+          + '<div style="font-size:0.78rem;color:#6b7280;margin-bottom:6px;">'+(firstD.timestamp||'')+'</div>'
+          + (firstD.note ? '<div style="font-size:0.82rem;margin-bottom:4px;">'+firstD.note+'</div>' : '')
+          + '<div style="font-size:0.72rem;color:#9ca3af;">'+firstD.lat.toFixed(5)+', '+firstD.lng.toFixed(5)+'</div>'
+          + '</div>'
+        );
+      mapLayers.push(startMarker);
+
+      // End marker (only if > 1 point)
+      if (rows.length > 1) {
+        var endMarker = L.marker([lastD.lat, lastD.lng], { icon: makeEndpointIcon('END', '#dc2626'), zIndexOffset: 1000 })
+          .addTo(map)
+          .bindPopup(
+            '<div style="min-width:160px;">'
+            + '<div style="font-family:Syne,sans-serif;font-weight:700;color:#dc2626;margin-bottom:4px;">⬛ 終點</div>'
+            + '<div style="font-size:0.78rem;color:#6b7280;margin-bottom:6px;">'+(lastD.timestamp||'')+'</div>'
+            + (lastD.note ? '<div style="font-size:0.82rem;margin-bottom:4px;">'+lastD.note+'</div>' : '')
+            + '<div style="font-size:0.72rem;color:#9ca3af;">'+lastD.lat.toFixed(5)+', '+lastD.lng.toFixed(5)+'</div>'
+            + '</div>'
+          );
+        mapLayers.push(endMarker);
+      }
+
+      // Fit bounds
+      var bounds = L.latLngBounds(rows.map(function(d){ return [d.lat, d.lng]; }));
+      map.fitBounds(bounds, { padding:[40, 40], maxZoom:16 });
+
+      // Legend
+      buildLegend(rows.length);
+
+      // Toolbar
+      setToolbar(
+        '<span class="trip-tag">'+nickname+' · '+tripcode+'</span>'
+        + '<span class="map-info">共 '+rows.length+' 個位置</span>'
+        + '<button class="btn-refresh show" id="refreshBtn" onclick="doSearch()">↺ 重整</button>'
+      );
+
+      if (rows.length < 2) {
+        setStatus('僅 1 個位置，無需繪製路線', 'ok');
+        setProgress(null);
+        return;
+      }
+
+      setStatus('路線載入中 0 / '+(rows.length-1)+'…');
+      setProgress(0);
+
+      drawSegments(rows, function() {
+        setStatus('✓ 共 '+rows.length+' 個打卡位置，路線已全部載入', 'ok');
+      });
+    })
+    .catch(function(e) {
+      searching = false;
+      document.getElementById('searchBtn').disabled = false;
+      document.getElementById('searchBtn').innerHTML =
+        '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> 查詢';
+      setStatus('查詢失敗：' + e.message, 'err');
+      setProgress(null);
+    });
+}
+
+// ── Enter key shortcut ──
+['inNickname','inTripcode'].forEach(function(id){
+  document.getElementById(id).addEventListener('keydown', function(e){
+    if (e.key === 'Enter') doSearch();
+  });
+});
+
+// ── Pre-fill from URL params (optional: ?nick=XX&trip=YY) ──
+(function(){
+  var params = new URLSearchParams(location.search);
+  var n = params.get('nick') || params.get('nickname');
+  var t = params.get('trip') || params.get('tripcode');
+  if (n) document.getElementById('inNickname').value = n;
+  if (t) document.getElementById('inTripcode').value = t;
+  if (n && t) doSearch();
+})();
+
+// ── Google Sites iframe 高度修正 ──
+// ResizeObserver 監聽 body 大小變化時重新計算地圖尺寸
+if (typeof ResizeObserver !== 'undefined') {
+  var ro = new ResizeObserver(function() {
+    if (map) map.invalidateSize();
+  });
+  ro.observe(document.body);
+}
+// setInterval fallback（舊版 WebView、iOS Safari iframe）
+setInterval(function() {
+  if (map) map.invalidateSize();
+}, 1000);
+</script>
+</body>
+</html>
