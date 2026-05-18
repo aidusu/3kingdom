@@ -61,9 +61,8 @@
         // 顯示機器人思考中
         const loadingDiv = appendMessage("⚡ SportPal 正在連線筆電 AI 運算中", 'bot');
         
-        // 💡 啟動前端動態計時器，動態更新「...」讓瀏覽器知道連線還活著
         let dotCount = 0;
-        const思考計時器 = setInterval(() => {
+        const 思考計時器 = setInterval(() => {
             dotCount = (dotCount + 1) % 4;
             const dots = ".".repeat(dotCount);
             loadingDiv.textContent = `⚡ SportPal 正在連線筆電 AI 運算中${dots} (本地 Gemma 模型正在全力計算處方，請稍候約 5-15 秒)`;
@@ -72,11 +71,11 @@
         const systemPrompt = "你現在是一位專業、溫柔的健康管理顧問。請針對使用者的症狀與運動數據提供溫和的衛教建議與日常改善方向。請在回答的最後，務必換行並加上這句免責聲明：『⚠️ 免責聲明：以上內容僅供健康衛教參考，無法取代醫師面對面的診斷，若有身體不適請立即就醫。』";
 
         try {
-            // 發起乾淨、相容性最高的 POST 請求
+            // 💡 核心修改：將 Content-Type 改為 text/plain，徹底繞過瀏覽器的 OPTIONS 攔截！
             const response = await fetch(API_URL, {
                 method: "POST",
                 headers: { 
-                    "Content-Type": "application/json",
+                    "Content-Type": "text/plain", 
                     "ngrok-skip-browser-warning": "true" 
                 },
                 body: JSON.stringify({
@@ -85,17 +84,16 @@
                         { role: "system", content: systemPrompt },
                         { role: "user", content: userText }
                     ],
-                    stream: false // 使用相容性最廣的非流式傳輸
+                    stream: false 
                 })
             });
 
-            // 關閉計時器
             clearInterval(思考計時器);
 
             if (!response.ok) throw new Error(`HTTP 錯誤: ${response.status}`);
 
             const data = await response.json();
-            loadingDiv.remove(); // 移除思考提示
+            loadingDiv.remove(); 
             
             if (data.message && data.message.content) {
                 appendMessage(data.message.content, 'bot');
@@ -106,7 +104,7 @@
             console.error(error);
             clearInterval(思考計時器);
             loadingDiv.remove();
-            appendMessage("❌ 無法連線至本地 AI 伺服器。\n\n💡 請確認：\n1. 您的電腦 CMD 視窗中，『ollama serve』正在運作中。\n2. 您的 ngrok 視窗沒有被關閉。\n3. 請確認已開啟新分頁進入 https://portly-lemon-probe.ngrok-free.dev 點選過藍色 Visit Site 按鈕。", 'bot');
+            appendMessage("❌ 無法連線至本地 AI 伺服器。\n\n💡 請確認：\n1. 您的電腦 GIN 後端與 ngrok 視窗沒有被關閉。\n2. 請確認已開啟新分頁進入 https://portly-lemon-probe.ngrok-free.dev 點選過藍色 Visit Site 按鈕。", 'bot');
         } finally {
             inputEl.disabled = false;
             sendBtn.disabled = false;
