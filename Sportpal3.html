@@ -3,117 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SportPal AI 智慧助教 (本地展示端)</title>
+    <title>SportPal AI 智慧助教 (穩定版)</title>
     <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background-color: #f5f7f8; 
-            margin: 0; 
-            padding: 20px; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
-            box-sizing: border-box;
-        }
-        .chat-container { 
-            width: 100%; 
-            max-width: 650px; 
-            background: white; 
-            border-radius: 16px; 
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15); 
-            display: flex; 
-            flex-direction: column; 
-            height: 650px; 
-        }
-        .chat-header { 
-            background: #2b7a78; 
-            color: white; 
-            padding: 18px; 
-            border-radius: 16px 16px 0 0; 
-            font-weight: bold; 
-            text-align: center; 
-            font-size: 18px; 
-            letter-spacing: 1px;
-        }
-        .chat-box { 
-            flex: 1; 
-            padding: 20px; 
-            overflow-y: auto; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 12px; 
-            background: #fafafa; 
-        }
-        .message { 
-            max-width: 85%; 
-            padding: 12px 16px; 
-            border-radius: 12px; 
-            font-size: 15px; 
-            line-height: 1.5; 
-            white-space: pre-wrap; 
-        }
-        .user { 
-            background: #def2f1; 
-            align-self: flex-end; 
-            color: #17252a; 
-            border-bottom-right-radius: 2px; 
-        }
-        .bot { 
-            background: white; 
-            align-self: flex-start; 
-            color: #17252a; 
-            border-bottom-left-radius: 2px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
-        }
-        .input-area { 
-            display: flex; 
-            padding: 15px; 
-            border-top: 1px solid #eee; 
-            background: white; 
-            border-radius: 0 0 16px 16px; 
-            align-items: center; /* 讓按鈕與輸入框置中對齊 */
-        }
-        .input-area textarea { 
-            flex: 1; 
-            height: 65px; 
-            padding: 12px; 
-            border: 1px solid #ddd; 
-            border-radius: 12px; 
-            outline: none; 
-            padding-left: 15px; 
-            resize: none; 
-            font-family: inherit; 
-            font-size: 14px; 
-            box-sizing: border-box; 
-        }
-        .input-area button { 
-            background: #2b7a78; 
-            color: white; 
-            border: none; 
-            padding: 0 22px; 
-            margin-left: 10px; 
-            border-radius: 12px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            height: 65px; /* 讓按鈕高度與 textarea 一致 */
-            font-size: 15px; 
-            transition: background 0.2s; 
-        }
-        .input-area button:hover { 
-            background: #1a5251; 
-        }
-        .input-area button:disabled { 
-            background: #cccccc; 
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f7f8; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; box-sizing: border-box; }
+        .chat-container { width: 100%; max-width: 600px; background: white; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; height: 600px; }
+        .chat-header { background: #2b7a78; color: white; padding: 18px; border-radius: 16px 16px 0 0; font-weight: bold; text-align: center; font-size: 18px; letter-spacing: 1px; }
+        .chat-box { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #fafafa; }
+        .message { max-width: 85%; padding: 12px 16px; border-radius: 12px; font-size: 15px; line-height: 1.5; white-space: pre-wrap; }
+        .user { background: #def2f1; align-self: flex-end; color: #17252a; border-bottom-right-radius: 2px; }
+        .bot { background: white; align-self: flex-start; color: #17252a; border-bottom-left-radius: 2px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .input-area { display: flex; padding: 15px; border-top: 1px solid #eee; background: white; border-radius: 0 0 16px 16px; align-items: center; }
+        .input-area textarea { flex: 1; height: 65px; padding: 12px; border: 1px solid #ddd; border-radius: 12px; outline: none; padding-left: 15px; resize: none; font-family: inherit; font-size: 14px; box-sizing: border-box; }
+        .input-area button { background: #2b7a78; color: white; border: none; padding: 0 22px; margin-left: 10px; border-radius: 12px; cursor: pointer; font-weight: bold; height: 65px; font-size: 15px; transition: background 0.2s; }
+        .input-area button:hover { background: #1a5251; }
+        .input-area button:disabled { background: #cccccc; }
     </style>
 </head>
 <body>
 
 <div class="chat-container">
-    <div class="chat-header">🏥 SportPal AI 建議</div>
+    <div class="chat-header">🏥 SportPal AI 建議 (展示專用端)</div>
     <div class="chat-box" id="chatBox">
-        <div class="message bot">您好！我是您的 AI 動伴，請複製以下指令，填入你的資料，我將為你提供專業建議: &#10;&#10;『上個月運動__公里; 運動__大卡路里; 運動項目主要是跑步/登山/健走/自行車/游泳/室內運動/__; 運動__天; 跨__個縣市運動，運動的目的減重/樂趣/舒壓/__, 請給予運動建議』!</div>
+        <div class="message bot">您好！我是您的 AI 動伴，請複製以下指令，填入你的資料，我將為你提供專業建議: &#10;&#10;『上個月運動__公里; 運動__大卡路里; 運動項目主要是跑步/登山/健走/自行車/游泳/室內運動/__; 運動__天; 跨__個縣市運動，運動的目的是減重/樂趣/舒壓/__, 請給予運動建議』!</div>
     </div>
     <div class="input-area">
         <textarea id="userInput" placeholder="請將整段運動數據指令貼在這裡..."></textarea>
@@ -122,10 +33,10 @@
 </div>
 
 <script>
-    // ⚠️ 這是您目前開啟中的 ngrok 對外通道網址
+    // ⚠️ 請確保這是您運作中的 ngrok 對外網址
     const API_URL = "https://portly-lemon-probe.ngrok-free.dev/api/chat"; 
 
-    // 支援 Enter 直接送出，Shift+Enter 換行
+    // 支援 Enter 送出，Shift+Enter 換行
     document.getElementById("userInput").addEventListener("keydown", function(e) {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
@@ -141,19 +52,27 @@
         
         if (!userText) return;
 
-        // 1. 顯示使用者訊息
+        // 顯示使用者訊息
         appendMessage(userText, 'user');
         inputEl.value = "";
         inputEl.disabled = true;
         sendBtn.disabled = true;
 
-        // 2. 建立 AI 的對話框（先放打字動畫或提示）
-        const botMessageDiv = appendMessage("⚡ SportPal 正在連線本地 Gemma 模型，請稍候...", 'bot');
+        // 顯示機器人思考中
+        const loadingDiv = appendMessage("⚡ SportPal 正在連線筆電 AI 運算中", 'bot');
+        
+        // 💡 啟動前端動態計時器，動態更新「...」讓瀏覽器知道連線還活著
+        let dotCount = 0;
+        const思考計時器 = setInterval(() => {
+            dotCount = (dotCount + 1) % 4;
+            const dots = ".".repeat(dotCount);
+            loadingDiv.textContent = `⚡ SportPal 正在連線筆電 AI 運算中${dots} (本地 Gemma 模型正在全力計算處方，請稍候約 5-15 秒)`;
+        }, 500);
 
         const systemPrompt = "你現在是一位專業、溫柔的健康管理顧問。請針對使用者的症狀與運動數據提供溫和的衛教建議與日常改善方向。請在回答的最後，務必換行並加上這句免責聲明：『⚠️ 免責聲明：以上內容僅供健康衛教參考，無法取代醫師面對面的診斷，若有身體不適請立即就醫。』";
 
         try {
-            // 3. 發起 Fetch 請求，注意這裡改成了支援序列流式讀取
+            // 發起乾淨、相容性最高的 POST 請求
             const response = await fetch(API_URL, {
                 method: "POST",
                 headers: { 
@@ -166,50 +85,28 @@
                         { role: "system", content: systemPrompt },
                         { role: "user", content: userText }
                     ],
-                    stream: true // 💡 開啟打字機模式！不再讓瀏覽器乾等
+                    stream: false // 使用相容性最廣的非流式傳輸
                 })
             });
 
+            // 關閉計時器
+            clearInterval(思考計時器);
+
             if (!response.ok) throw new Error(`HTTP 錯誤: ${response.status}`);
 
-            // 4. 清空緩衝提示，準備像打字機一樣填入文字
-            botMessageDiv.textContent = ""; 
+            const data = await response.json();
+            loadingDiv.remove(); // 移除思考提示
             
-            // 5. 讀取背後源源不絕傳過來的文字流 (ReadableStream)
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder("utf-8");
-            let buffer = "";
-
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-
-                // 解碼目前收到的文字碎片
-                buffer += decoder.decode(value, { stream: true });
-                
-                // Ollama 傳過來的格式是每行一個獨立的 JSON 物件，我們要切開處理
-                const lines = buffer.split("\n");
-                // 留最後一個可能還沒傳完的碎片在緩衝區中
-                buffer = lines.pop(); 
-
-                for (const line of lines) {
-                    if (line.trim() === "") continue;
-                    try {
-                        const parsed = JSON.parse(line);
-                        if (parsed.message && parsed.message.content) {
-                            // 💡 即時追加字元到網頁對話框上！
-                            botMessageDiv.textContent += parsed.message.content;
-                            chatBox.scrollTop = chatBox.scrollHeight; // 自動捲動
-                        }
-                    } catch (err) {
-                        console.error("解析文字流碎片失敗", err);
-                    }
-                }
+            if (data.message && data.message.content) {
+                appendMessage(data.message.content, 'bot');
+            } else {
+                appendMessage("🤖 收到回應，但格式解析不正確。", 'bot');
             }
-
         } catch (error) {
             console.error(error);
-            botMessageDiv.textContent = "❌ 連線超時或被防火牆中斷。請確認：\n1. 筆電 CMD 的 'ollama serve' 仍在運行\n2. ngrok 視窗沒有關閉\n3. 您的網路環境沒有斷線。";
+            clearInterval(思考計時器);
+            loadingDiv.remove();
+            appendMessage("❌ 無法連線至本地 AI 伺服器。\n\n💡 請確認：\n1. 您的電腦 CMD 視窗中，『ollama serve』正在運作中。\n2. 您的 ngrok 視窗沒有被關閉。\n3. 請確認已開啟新分頁進入 https://portly-lemon-probe.ngrok-free.dev 點選過藍色 Visit Site 按鈕。", 'bot');
         } finally {
             inputEl.disabled = false;
             sendBtn.disabled = false;
