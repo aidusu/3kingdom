@@ -125,10 +125,10 @@
     // ⚠️ 這是您目前開啟中的 ngrok 對外通道網址
     const API_URL = "https://portly-lemon-probe.ngrok-free.dev/api/chat"; 
 
-    // 💡 優化鍵盤監聽事件：支援 Enter 送出，Shift+Enter 換行
+    // 支援 Enter 直接送出，Shift+Enter 換行
     document.getElementById("userInput").addEventListener("keydown", function(e) {
         if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault(); // 阻止預設的換行行為
+            e.preventDefault();
             sendMessage();
         }
     });
@@ -141,19 +141,19 @@
         
         if (!userText) return;
 
-        // 顯示使用者對話
+        // 1. 顯示使用者訊息
         appendMessage(userText, 'user');
         inputEl.value = "";
         inputEl.disabled = true;
         sendBtn.disabled = true;
 
-        // 顯示機器人正在思考
-        const loadingDiv = appendMessage("⚡ SportPal 正在呼叫本地 Gemma 2B 模型規劃處方中...", 'bot');
+        // 2. 建立 AI 的對話框（先放打字動畫或提示）
+        const botMessageDiv = appendMessage("⚡ SportPal 正在連線本地 Gemma 模型，請稍候...", 'bot');
 
-        // 提示詞工程 (Prompt Engineering)
-        const systemPrompt = `你現在是一位專業、溫柔的健康管理顧問。請針對使用者的症狀與運動數據提供溫和的衛教建議與日常改善方向。請在回答的最後，務必換行並加上這句免責聲明：『⚠️ 免責聲明：以上內容僅供健康衛教參考，無法取代醫師面對面的診斷，若有身體不適請立即就醫。』`;
+        const systemPrompt = "你現在是一位專業、溫柔的健康管理顧問。請針對使用者的症狀與運動數據提供溫和的衛教建議與日常改善方向。請在回答的最後，務必換行並加上這句免責聲明：『⚠️ 免責聲明：以上內容僅供健康衛教參考，無法取代醫師面對面的診斷，若有身體不適請立即就醫。』";
 
         try {
+            // 3. 發起 Fetch 請求，注意這裡改成了支援序列流式讀取
             const response = await fetch(API_URL, {
                 method: "POST",
                 headers: { 
@@ -166,28 +166,50 @@
                         { role: "system", content: systemPrompt },
                         { role: "user", content: userText }
                     ],
-                    stream: false
+                    stream: true // 💡 開啟打字機模式！不再讓瀏覽器乾等
                 })
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP 錯誤！狀態碼: ${response.status}`);
+            if (!response.ok) throw new Error(`HTTP 錯誤: ${response.status}`);
+
+            // 4. 清空緩衝提示，準備像打字機一樣填入文字
+            botMessageDiv.textContent = ""; 
+            
+            // 5. 讀取背後源源不絕傳過來的文字流 (ReadableStream)
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            let buffer = "";
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                // 解碼目前收到的文字碎片
+                buffer += decoder.decode(value, { stream: true });
+                
+                // Ollama 傳過來的格式是每行一個獨立的 JSON 物件，我們要切開處理
+                const lines = buffer.split("\n");
+                // 留最後一個可能還沒傳完的碎片在緩衝區中
+                buffer = lines.pop(); 
+
+                for (const line of lines) {
+                    if (line.trim() === "") continue;
+                    try {
+                        const parsed = JSON.parse(line);
+                        if (parsed.message && parsed.message.content) {
+                            // 💡 即時追加字元到網頁對話框上！
+                            botMessageDiv.textContent += parsed.message.content;
+                            chatBox.scrollTop = chatBox.scrollHeight; // 自動捲動
+                        }
+                    } catch (err) {
+                        console.error("解析文字流碎片失敗", err);
+                    }
+                }
             }
 
-            const data = await response.json();
-            loadingDiv.remove(); // 移除思考中
-            
-            if (data.message && data.message.content) {
-                appendMessage(data.message.content, 'bot');
-            } else {
-                appendMessage("🤖 收到回應，但格式解析不正確。", 'bot');
-            }
         } catch (error) {
-            console.error("詳細錯誤訊息:", error);
-            loadingDiv.remove();
-            
-            // 精準本地調試提示
-            appendMessage(`❌ 連線失敗。請確認以下運行狀態：\n\n1. 您的 CMD 視窗中是否有輸入環境變數並正在執行 『ollama serve』？\n2. 您的 ngrok 視窗是否維持開啟並正常連線中？\n3. 如果這是您今天第一次啟動連線，請先在瀏覽器開新分頁單獨打開：https://portly-lemon-probe.ngrok-free.dev 點擊藍色的「Visit Site」按鈕解鎖。`, 'bot');
+            console.error(error);
+            botMessageDiv.textContent = "❌ 連線超時或被防火牆中斷。請確認：\n1. 筆電 CMD 的 'ollama serve' 仍在運行\n2. ngrok 視窗沒有關閉\n3. 您的網路環境沒有斷線。";
         } finally {
             inputEl.disabled = false;
             sendBtn.disabled = false;
