@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>團隊資料查詢系統</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .search-box {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 25px;
+            gap: 10px;
+        }
+        input[type="text"] {
+            width: 60%;
+            padding: 10px 15px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            outline: none;
+        }
+        input[type="text"]:focus {
+            border-color: #3498db;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .loading {
+            text-align: center;
+            font-size: 18px;
+            color: #7f8c8d;
+            display: none;
+        }
+        .error-msg {
+            color: #e74c3c;
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            display: none;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            color: #2c3e50;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        .no-data {
+            text-align: center;
+            color: #7f8c8d;
+            margin-top: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>團隊最新位置記錄查詢</h2>
+    
+    <div class="search-box">
+        <input type="text" id="teamInput" placeholder="請輸入團隊編號 (例如: NTU)">
+        <button onclick="searchTeam()">查詢</button>
+    </div>
+
+    <div id="errorMsg" class="error-msg"></div>
+    <div id="loading" class="loading">資料載入中，請稍候...</div>
+    <div id="noData" class="no-data">找不到符合該團隊編號的資料。</div>
+
+    <table id="resultTable">
+        <thead id="tableHead">
+            </thead>
+        <tbody id="tableBody">
+            </tbody>
+    </table>
+</div>
+
+<script>
+    const apiUrl = 'https://opensheet.elk.sh/18Ol8kRgvdd6Do91s17CT-w32ds2n3zdN7cf6bDn9a38/位置記錄';
+
+    async function searchTeam() {
+        const teamInput = document.getElementById('teamInput').value.trim();
+        const loadingDiv = document.getElementById('loading');
+        const errorMsg = document.getElementById('errorMsg');
+        const resultTable = document.getElementById('resultTable');
+        const noData = document.getElementById('noData');
+        const tableHead = document.getElementById('tableHead');
+        const tableBody = document.getElementById('tableBody');
+
+        // 初始化狀態
+        errorMsg.textContent = '';
+        noData.style.display = 'none';
+        resultTable.style.display = 'none';
+        tableHead.innerHTML = '';
+        tableBody.innerHTML = '';
+
+        if (!teamInput) {
+            errorMsg.textContent = '請輸入團隊編號！';
+            return;
+        }
+
+        loadingDiv.style.display = 'block';
+
+        try {
+            const response = await fetch(apiUrl);
+            if (!response.ok) {
+                throw new Error('無法取得 Google Sheet 資料，請確認 API 是否正常。');
+            }
+            
+            const data = await response.json();
+            loadingDiv.style.display = 'none';
+
+            if (!data || data.length === 0) {
+                noData.style.display = 'block';
+                return;
+            }
+
+            // 1. 取得所有欄位的名稱 (Keys)
+            const allKeys = Object.keys(data[0]);
+            const teamKey = allKeys[0];  // 第一欄通常是團隊編號
+            const nameKey = allKeys[1];  // 第二欄通常是姓名 (若是其他欄位，程式會動態對應，但主要以第二欄作為去重依據)
+
+            // 2. 篩選與去重邏輯
+            // 我們從後往前（從最新到最舊）尋找
+            const seenNames = new Set();
+            const filteredData = [];
+
+            for (let i = data.length - 1; i >= 0; i--) {
+                const row = data[i];
+                
+                // 比對第一欄 (團隊編號)，忽略大小寫與前後空格
+                if (row[teamKey] && row[teamKey].toString().trim().toLowerCase() === teamInput.toLowerCase()) {
+                    const name = row[nameKey] ? row[nameKey].toString().trim() : '未知姓名';
+                    
+                    // 如果這個姓名沒出現過，代表這是最新的一筆，保留它
+                    if (!seenNames.has(name)) {
+                        seenNames.add(name);
+                        filteredData.push(row); // 放入結果陣列
+                    }
+                }
+            }
+
+            // 如果找不到符合的資料
+            if (filteredData.length === 0) {
+                noData.style.display = 'block';
+                return;
+            }
+
+            // 3. 渲染表格標頭
+            let headHtml = '<tr>';
+            allKeys.forEach(key => {
+                headHtml += `<th>${key}</th>`;
+            });
+            headHtml += '</tr>';
+            tableHead.innerHTML = headHtml;
+
+            // 4. 渲染表格內容 (因為剛才是從後往前抓，這裡將它倒序回來，讓畫面由舊到新，或直接顯示皆可)
+            // 這裡直接顯示最新抓到的資料
+            let bodyHtml = '';
+            filteredData.forEach(row => {
+                bodyHtml += '<tr>';
+                allKeys.forEach(key => {
+                    bodyHtml += `<td>${row[key] || ''}</td>`;
+                });
+                bodyHtml += '</tr>';
+            });
+            tableBody.innerHTML = bodyHtml;
+            
+            // 顯示表格
+            resultTable.style.display = 'table';
+
+        } catch (error) {
+            loadingDiv.style.display = 'none';
+            errorMsg.textContent = '發生錯誤: ' + error.message;
+            console.error(error);
+        }
+    }
+
+    // 支援按下 Enter 鍵直接查詢
+    document.getElementById('teamInput').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            searchTeam();
+        }
+    });
+</script>
+
+</body>
+</html>
