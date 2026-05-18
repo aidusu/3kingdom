@@ -81,7 +81,16 @@
         letter-spacing: 1px;
         margin: 8px 0 28px;
     }
-
+        
+    .page-title {
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 1.5rem;
+        letter-spacing: 3px;
+        color: var(--muted);
+        text-align: center;
+        text-transform: uppercase;
+        margin-bottom: 2rem;
+    }
     .input-row {
         display: flex;
         justify-content: center;
@@ -197,13 +206,13 @@
 
 <div id="homePage" class="card active">
     <div class="search-box">
-        <div class="brand">Sport<span>Pal</span></div>
-        <p>請輸入您的姓名以查看個人運動表現</p>
+        <div class="brand">Sport<span>Pal</span>
+        <p>請輸入您的姓名以查看個人運動表現</p></div>
+        </div>
          <div class="page-title">趨勢與分布</div>
         <div class="input-row">
             <input type="text" id="nameInput" placeholder="請輸入姓名 (例如: Hermann)">
             <button onclick="searchUser()">查詢</button>
-        </div>
     </div>
 </div>
 
