@@ -20,12 +20,12 @@
 <body>
 
 <div class="chat-container">
-    <div class="chat-header">🏥 AI 健康諮詢小助手 (Gemma 2B)</div>
+    <div class="chat-header">🏥 SportPal AI 建議</div>
     <div class="chat-box" id="chatBox">
-        <div class="message bot">您好！我是您的 AI 健康管理顧問。請輸入您想諮詢的健康問題或症狀。（例如：感冒喉嚨痛該注意什麼？）</div>
+        <div class="message bot">您好！我是您的 AI 動伴，請輸入您的運動數據，運動類型，或運動目標，讓我與你為伴，運動得更健康!</div>
     </div>
     <div class="input-area">
-        <input type="text" id="userInput" placeholder="請輸入您的問題..." onkeypress="if(event.keyCode==13) sendMessage()">
+        <input type="text" id="userInput" placeholder="請輸入您的資訊與問題..." onkeypress="if(event.keyCode==13) sendMessage()">
         <button id="sendBtn" onclick="sendMessage()">送出</button>
     </div>
 </div>
