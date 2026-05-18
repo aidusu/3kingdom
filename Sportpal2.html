@@ -69,12 +69,12 @@
         sendBtn.disabled = true;
         modelSelect.disabled = true; // 發送時鎖定選單
 
-        const loadingDiv = appendMessage("⚡ SportPal 正在連線筆電 AI 運算中", 'bot');
+        const loadingDiv = appendMessage("⚡ SportPal 正在連線 AI 運算中", 'bot');
         
         let dotCount = 0;
         const timer = setInterval(() => {
             dotCount = (dotCount + 1) % 4;
-            loadingDiv.textContent = `⚡ SportPal 正在連線筆電 AI 運算中${".".repeat(dotCount)} (請稍候約 5-15 秒)`;
+            loadingDiv.textContent = `⚡ SportPal 正在連線 AI 運算中${".".repeat(dotCount)} (請稍候約 5-15 秒)`;
         }, 500);
 
         // 強調繁體中文與台灣用語
