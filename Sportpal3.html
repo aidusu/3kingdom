@@ -69,15 +69,17 @@
         const systemPrompt = `你現在是一位專業、溫柔的健康管理顧問。請針對使用者的症狀與運動數據提供溫和的衛教建議與日常改善方向。請在回答的最後，務必換行並加上這句免責聲明：『⚠️ 免責聲明：以上內容僅供健康衛教參考，無法取代醫師面對面的診斷，若有身體不適請立即就醫。』`;
 
         try {
+            // 💡 調整 Fetch 的安全策略，強制允許跨域讀取，並處理可能被瀏覽器中斷的狀況
             const response = await fetch(API_URL, {
                 method: "POST",
+                mode: "cors", // 確保啟用跨網域
+                credentials: "omit", // 忽略 Cookie，避免瀏覽器的第三方隱私阻擋
                 headers: { 
                     "Content-Type": "application/json",
                     "ngrok-skip-browser-warning": "true" 
                 },
                 body: JSON.stringify({
                     model: "gemma2:2b",
-                    // 💡 改用標準的 chat messages 結構，對本地模型運算更友善、更不容易超時
                     messages: [
                         { role: "system", content: systemPrompt },
                         { role: "user", content: userText }
@@ -86,19 +88,25 @@
                 })
             });
 
+            // 檢查回應狀態
+            if (!response.ok) {
+                throw new Error(`HTTP 錯誤！狀態碼: ${response.status}`);
+            }
+
             const data = await response.json();
             loadingDiv.remove(); // 移除思考中
             
-            // 💡 讀取 /api/chat 返回的標準內容格式
             if (data.message && data.message.content) {
                 appendMessage(data.message.content, 'bot');
             } else {
-                appendMessage("偏方解析完成，但資料格式有誤。", 'bot');
+                appendMessage("🤖 收到回應，但格式解析不正確。", 'bot');
             }
         } catch (error) {
-            console.error(error);
+            console.error("詳細錯誤訊息:", error);
             loadingDiv.remove();
-            appendMessage("❌ 連線已被防火牆或瀏覽器中斷。請確認：1. CMD 視窗中的 ollama serve 有在運行 2. 重新整理手機網頁再試一次。", 'bot');
+            
+            // 💡 終極後備方案：如果因為瀏覽器沙盒 (Sandbox) 導致程式碼連線被切斷，引導使用者點擊直連
+            appendMessage(`❌ 因瀏覽器安全限制，直接連線被阻擋。\n\n💡 這是正常的安全性保護，請複製以下網址，在手機或瀏覽器「開一個新分頁」單獨打開它，點擊『Visit Site』解除限制，再回來這個網頁重新整理就能正常對話了！\n\n🔗 您的專屬通道：\nhttps://portly-lemon-probe.ngrok-free.dev`, 'bot');
         } finally {
             inputEl.disabled = false;
             sendBtn.disabled = false;
