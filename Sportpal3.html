@@ -3,50 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SportPal AI 智慧助教 (本地展示端)</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f7f8; margin: 0; padding: 10px; }
-        .chat-container { max-width: 500px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; flex-direction: column; height: 450px; }
-        .chat-header { background: #2b7a78; color: white; padding: 15px; border-radius: 12px 12px 0 0; font-weight: bold; text-align: center; }
-        .chat-box { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .message { max-width: 80%; padding: 10px 14px; border-radius: 8px; font-size: 14px; line-height: 1.4; white-space: pre-wrap; }
-        .user { background: #def2f1; align-self: flex-end; color: #17252a; }
-        .bot { background: #f1f1f1; align-self: flex-start; color: #17252a; }
-        .input-area { display: flex; padding: 10px; border-top: 1px solid #eee; align-items: flex-end; }
-        
-        /* 💡 這裡修改了輸入框樣式，改為 textarea 並增加高度 */
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background-color: #f5f7f8; 
+            margin: 0; 
+            padding: 20px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            box-sizing: border-box;
+        }
+        .chat-container { 
+            width: 100%; 
+            max-width: 650px; 
+            background: white; 
+            border-radius: 16px; 
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15); 
+            display: flex; 
+            flex-direction: column; 
+            height: 650px; 
+        }
+        .chat-header { 
+            background: #2b7a78; 
+            color: white; 
+            padding: 18px; 
+            border-radius: 16px 16px 0 0; 
+            font-weight: bold; 
+            text-align: center; 
+            font-size: 18px; 
+            letter-spacing: 1px;
+        }
+        .chat-box { 
+            flex: 1; 
+            padding: 20px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; 
+            background: #fafafa; 
+        }
+        .message { 
+            max-width: 85%; 
+            padding: 12px 16px; 
+            border-radius: 12px; 
+            font-size: 15px; 
+            line-height: 1.5; 
+            white-space: pre-wrap; 
+        }
+        .user { 
+            background: #def2f1; 
+            align-self: flex-end; 
+            color: #17252a; 
+            border-bottom-right-radius: 2px; 
+        }
+        .bot { 
+            background: white; 
+            align-self: flex-start; 
+            color: #17252a; 
+            border-bottom-left-radius: 2px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+        }
+        .input-area { 
+            display: flex; 
+            padding: 15px; 
+            border-top: 1px solid #eee; 
+            background: white; 
+            border-radius: 0 0 16px 16px; 
+            align-items: center; /* 讓按鈕與輸入框置中對齊 */
+        }
         .input-area textarea { 
             flex: 1; 
-            height: 60px; /* 調整這個數值可以改變預設輸入框高度 */
-            padding: 10px; 
+            height: 65px; 
+            padding: 12px; 
             border: 1px solid #ddd; 
             border-radius: 12px; 
             outline: none; 
             padding-left: 15px; 
-            resize: none; /* 限制使用者手動拉扯大小，保持畫面整潔 */
-            font-family: inherit;
-            font-size: 14px;
+            resize: none; 
+            font-family: inherit; 
+            font-size: 14px; 
+            box-sizing: border-box; 
         }
-        
-        .input-area button { background: #2b7a78; color: white; border: none; padding: 10px 15px; margin-left: 8px; border-radius: 20px; cursor: pointer; font-weight: bold; height: 38px; }
-        .input-area button:disabled { background: #cccccc; }
+        .input-area button { 
+            background: #2b7a78; 
+            color: white; 
+            border: none; 
+            padding: 0 22px; 
+            margin-left: 10px; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            height: 65px; /* 讓按鈕高度與 textarea 一致 */
+            font-size: 15px; 
+            transition: background 0.2s; 
+        }
+        .input-area button:hover { 
+            background: #1a5251; 
+        }
+        .input-area button:disabled { 
+            background: #cccccc; 
+        }
     </style>
 </head>
 <body>
 
 <div class="chat-container">
-    <div class="chat-header">🏥 SportPal AI 建議</div>
+    <div class="chat-header">🏥 SportPal AI 建議 (展示專用端)</div>
     <div class="chat-box" id="chatBox">
-        <div class="message bot">您好！我是您的 AI 動伴，請複製以下指令，填入你的資料，我將為你提供專業建議: 『上個月運動__公里; 運動__大卡路里; 運動項目主要是跑步/登山/健走/自行車/游泳/室內運動/__; 運動__天; 跨__個縣市運動，運動的目的是減重/樂趣/舒壓/__, 請給予運動建議』!</div>
+        <div class="message bot">您好！我是您的 AI 動伴，請複製以下指令，填入你的資料，我將為你提供專業建議: &#10;&#10;『上個月運動__公里; 運動__大卡路里; 運動項目主要是跑步/登山/健走/自行車/游泳/室內運動/__; 運動__天; 跨__個縣市運動，運動的目的減重/樂趣/舒壓/__, 請給予運動建議』!</div>
     </div>
     <div class="input-area">
-        <textarea id="userInput" placeholder="請輸入您的資訊與問題..." onkeypress="if(event.keyCode==13 && !event.shiftKey) { event.preventDefault(); sendMessage(); }"></textarea>
+        <textarea id="userInput" placeholder="請將整段運動數據指令貼在這裡..."></textarea>
         <button id="sendBtn" onclick="sendMessage()">送出</button>
     </div>
 </div>
 
 <script>
-    // ⚠️ 確保這裡是你的最新 ngrok 網址，注意尾端改成了 /api/chat
+    // ⚠️ 這是您目前開啟中的 ngrok 對外通道網址
     const API_URL = "https://portly-lemon-probe.ngrok-free.dev/api/chat"; 
+
+    // 💡 優化鍵盤監聽事件：支援 Enter 送出，Shift+Enter 換行
+    document.getElementById("userInput").addEventListener("keydown", function(e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault(); // 阻止預設的換行行為
+            sendMessage();
+        }
+    });
 
     async function sendMessage() {
         const inputEl = document.getElementById("userInput");
@@ -63,17 +148,14 @@
         sendBtn.disabled = true;
 
         // 顯示機器人正在思考
-        const loadingDiv = appendMessage("AI 動伴正在為您規劃運動處方...", 'bot');
+        const loadingDiv = appendMessage("⚡ SportPal 正在呼叫本地 Gemma 2B 模型規劃處方中...", 'bot');
 
         // 提示詞工程 (Prompt Engineering)
         const systemPrompt = `你現在是一位專業、溫柔的健康管理顧問。請針對使用者的症狀與運動數據提供溫和的衛教建議與日常改善方向。請在回答的最後，務必換行並加上這句免責聲明：『⚠️ 免責聲明：以上內容僅供健康衛教參考，無法取代醫師面對面的診斷，若有身體不適請立即就醫。』`;
 
         try {
-            // 💡 調整 Fetch 的安全策略，強制允許跨域讀取，並處理可能被瀏覽器中斷的狀況
             const response = await fetch(API_URL, {
                 method: "POST",
-                mode: "cors", // 確保啟用跨網域
-                credentials: "omit", // 忽略 Cookie，避免瀏覽器的第三方隱私阻擋
                 headers: { 
                     "Content-Type": "application/json",
                     "ngrok-skip-browser-warning": "true" 
@@ -88,7 +170,6 @@
                 })
             });
 
-            // 檢查回應狀態
             if (!response.ok) {
                 throw new Error(`HTTP 錯誤！狀態碼: ${response.status}`);
             }
@@ -105,8 +186,8 @@
             console.error("詳細錯誤訊息:", error);
             loadingDiv.remove();
             
-            // 💡 終極後備方案：如果因為瀏覽器沙盒 (Sandbox) 導致程式碼連線被切斷，引導使用者點擊直連
-            appendMessage(`❌ 因瀏覽器安全限制，直接連線被阻擋。\n\n💡 這是正常的安全性保護，請複製以下網址，在手機或瀏覽器「開一個新分頁」單獨打開它，點擊『Visit Site』解除限制，再回來這個網頁重新整理就能正常對話了！\n\n🔗 您的專屬通道：\nhttps://portly-lemon-probe.ngrok-free.dev`, 'bot');
+            // 精準本地調試提示
+            appendMessage(`❌ 連線失敗。請確認以下運行狀態：\n\n1. 您的 CMD 視窗中是否有輸入環境變數並正在執行 『ollama serve』？\n2. 您的 ngrok 視窗是否維持開啟並正常連線中？\n3. 如果這是您今天第一次啟動連線，請先在瀏覽器開新分頁單獨打開：https://portly-lemon-probe.ngrok-free.dev 點擊藍色的「Visit Site」按鈕解鎖。`, 'bot');
         } finally {
             inputEl.disabled = false;
             sendBtn.disabled = false;
