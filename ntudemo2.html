@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TripPal旅伴</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#0d0f14; --panel:#13161e; --card:#1a1e2a; --border:#252a38; --accent:#4fffb0; --text:#e8eaf0; --muted:#6b7280; }
+*{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+html,body{ font-family:'Noto Sans TC',sans-serif; background:var(--bg); color:var(--text); height:100%; overflow:hidden; }
+ 
+.screen { position:fixed; inset:0; z-index:9999; display:none; align-items:center; justify-content:center;
+  background-color:#0d0f14;
+  background-image:
+    linear-gradient(rgba(79,255,176,0.13) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79,255,176,0.13) 1px, transparent 1px),
+    linear-gradient(rgba(79,255,176,0.28) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79,255,176,0.28) 1px, transparent 1px);
+  background-size: 30px 30px, 30px 30px, 150px 150px, 150px 150px;
+}
+.box { background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:32px 26px; width:88vw; max-width:340px; text-align:center; }
+.box-logo { font-family:'Space Mono',monospace; font-size:24px; font-weight:700; color:var(--accent); margin-bottom:3px; }
+.box-sub { font-size:15px; color:#ffffff; font-weight:500; margin-bottom:22px; }
+ 
+.field { margin-bottom:12px; text-align:left; }
+.field label { display:block; font-size:15px; color:#ffffff; font-family:'Noto Sans TC',sans-serif; font-weight:600; letter-spacing:0.5px; margin-bottom:5px; }
+.field input { width:100%; background:#ffffff; border:1px solid #d1d5db; border-radius:10px; padding:11px 14px; color:#374151; font-family:'Noto Sans TC',sans-serif; font-size:12px; outline:none; transition:border-color 0.2s; }
+.field input::placeholder { color:#9ca3af; font-size:12px; }
+.field input:focus { border-color:var(--accent); }
+ 
+.err { font-size:12px; color:#f87171; min-height:16px; margin-bottom:10px; text-align:left; }
+ 
+.btn-p { width:100%; background:#f97316; color:#ffffff; border:none; border-radius:10px; padding:13px; font-size:15px; font-weight:700; font-family:'Noto Sans TC',sans-serif; cursor:pointer; margin-bottom:10px; transition:opacity 0.2s; }
+.btn-p:active { opacity:.85; }
+.btn-p:disabled { opacity:.5; cursor:not-allowed; }
+ 
+.btn-g { width:100%; background:#4fffb0; color:#0a3d2b; border:none; border-radius:10px; padding:11px; font-size:15px; font-weight:700; font-family:'Noto Sans TC',sans-serif; cursor:pointer; }
+.btn-g:active { opacity:.85; }
+ 
+.divider { margin:14px 0; border:none; border-top:1px solid var(--border); }
+.note { font-size:11px; color:#ffffff; font-style:italic; line-height:1.7; margin-top:12px; }
+.role-badge { display:inline-flex; align-items:center; gap:6px; border-radius:20px; padding:4px 14px; font-size:15px; font-family:'Space Mono',monospace; margin-bottom:18px; font-weight:700; }
+.role-badge.leader { background:#f97316; border:1px solid #ea6c10; color:#ffffff; }
+.role-badge.member { background:#4fffb0; border:1px solid #2de89a; color:#0a3d2b; }
+ 
+/* 地圖裝飾：圓形光暈節點 */
+.screen::before {
+  content:'';
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background-image:
+    radial-gradient(circle 4px at 15% 20%, rgba(79,255,176,0.9) 0%, transparent 100%),
+    radial-gradient(circle 5px at 72% 15%, rgba(249,115,22,0.95) 0%, transparent 100%),
+    radial-gradient(circle 4px at 88% 45%, rgba(79,255,176,0.85) 0%, transparent 100%),
+    radial-gradient(circle 6px at 30% 70%, rgba(249,115,22,0.9) 0%, transparent 100%),
+    radial-gradient(circle 4px at 60% 80%, rgba(79,255,176,0.85) 0%, transparent 100%),
+    radial-gradient(circle 4px at 10% 85%, rgba(79,255,176,0.8) 0%, transparent 100%),
+    radial-gradient(circle 4px at 50% 40%, rgba(249,115,22,0.85) 0%, transparent 100%),
+    radial-gradient(circle 3px at 80% 65%, rgba(79,255,176,0.8) 0%, transparent 100%),
+    radial-gradient(circle 70px at 15% 20%, rgba(79,255,176,0.18) 0%, transparent 100%),
+    radial-gradient(circle 90px at 72% 15%, rgba(249,115,22,0.2) 0%, transparent 100%),
+    radial-gradient(circle 60px at 30% 70%, rgba(249,115,22,0.18) 0%, transparent 100%),
+    radial-gradient(circle 50px at 88% 45%, rgba(79,255,176,0.16) 0%, transparent 100%),
+    radial-gradient(circle 55px at 60% 80%, rgba(79,255,176,0.14) 0%, transparent 100%),
+    radial-gradient(circle 45px at 50% 40%, rgba(249,115,22,0.16) 0%, transparent 100%);
+  z-index:0;
+}
+.box { position:relative; z-index:1; background:rgba(19,22,30,0.92); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid rgba(79,255,176,0.18); box-shadow: 0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(79,255,176,0.06); }
+ 
+.map-pin-deco { position:absolute; font-size:22px; opacity:0.45; animation:floatPin 6s ease-in-out infinite; pointer-events:none; z-index:0; }
+.map-pin-deco:nth-child(1){ top:8%; left:8%;  animation-delay:0s;   font-size:18px; }
+.map-pin-deco:nth-child(2){ top:12%; right:10%; animation-delay:1.5s; font-size:26px; opacity:0.35; }
+.map-pin-deco:nth-child(3){ bottom:18%; left:12%; animation-delay:3s;  font-size:20px; }
+.map-pin-deco:nth-child(4){ bottom:12%; right:8%; animation-delay:4.5s; font-size:16px; opacity:0.4; }
+.map-pin-deco:nth-child(5){ top:45%; left:5%;  animation-delay:2s;   font-size:14px; }
+.map-pin-deco:nth-child(6){ top:35%; right:5%; animation-delay:0.8s; font-size:24px; opacity:0.3; }
+@keyframes floatPin {
+  0%,100% { transform: translateY(0px) rotate(-5deg); }
+  50%      { transform: translateY(-12px) rotate(5deg); }
+}
+ 
+/* ── App 地圖畫面 ── */
+#appScreen { display:none; flex-direction:column; height:100dvh; }
+header { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; background:var(--panel); border-bottom:1px solid var(--border); flex-shrink:0; }
+.logo { font-family:'Space Mono',monospace; font-size:17px; font-weight:700; color:var(--accent); }
+.logo span { color:var(--text); }
+.header-right { display:flex; align-items:center; gap:8px; }
+.group-tag { font-size:11px; font-family:'Space Mono',monospace; background:rgba(79,255,176,0.08); border:1px solid rgba(79,255,176,0.2); border-radius:20px; padding:3px 10px; color:var(--accent); max-width:100px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.status-pill { display:flex; align-items:center; gap:5px; background:rgba(79,255,176,0.06); border:1px solid rgba(79,255,176,0.2); border-radius:20px; padding:4px 10px; font-size:11px; color:var(--accent); font-family:'Space Mono',monospace; }
+#statusDot { width:6px; height:6px; background:var(--accent); border-radius:50%; animation:pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(1.4)} }
+ 
+/* ── 退出群組按鈕（header 右側）── */
+.exit-btn {
+  display:flex; align-items:center; gap:4px;
+  background:rgba(239,68,68,0.12);
+  border:1px solid rgba(239,68,68,0.35);
+  border-radius:20px;
+  padding:4px 10px;
+  font-size:11px;
+  color:#f87171;
+  font-family:'Space Mono',monospace;
+  cursor:pointer;
+  transition:background 0.2s, border-color 0.2s;
+  white-space:nowrap;
+}
+.exit-btn:active { background:rgba(239,68,68,0.28); border-color:#f87171; }
+ 
+.map-wrapper { flex:1; position:relative; min-height:0; }
+#map { width:100%; height:100%; }
+.map-hint { position:absolute; top:10px; left:50%; transform:translateX(-50%); background:rgba(13,15,20,0.82); border:1px solid var(--border); border-radius:20px; padding:5px 14px; font-size:11px; color:var(--muted); backdrop-filter:blur(8px); z-index:500; pointer-events:none; white-space:nowrap; }
+.locate-btn { position:absolute; bottom:14px; right:14px; width:44px; height:44px; border-radius:50%; background:var(--panel); border:1px solid var(--border); color:var(--accent); font-size:20px; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:500; box-shadow:0 4px 16px rgba(0,0,0,.4); }
+.locate-btn:active { transform:scale(0.93); }
+ 
+.bottom-panel { flex-shrink:0; background:var(--panel); border-top:1px solid var(--border); max-height:38vh; overflow-y:auto; }
+.panel-handle { display:flex; align-items:center; justify-content:space-between; padding:10px 16px 6px; position:sticky; top:0; background:var(--panel); z-index:10; border-bottom:1px solid var(--border); }
+.panel-title { font-size:11px; font-family:'Space Mono',monospace; color:var(--muted); text-transform:uppercase; letter-spacing:1.2px; }
+.my-coord { font-family:'Space Mono',monospace; font-size:10px; color:var(--accent); }
+.friends-scroll { display:flex; gap:10px; padding:10px 14px 14px; overflow-x:auto; scrollbar-width:none; }
+.friends-scroll::-webkit-scrollbar { display:none; }
+.friend-card { flex-shrink:0; width:120px; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px 10px; cursor:pointer; position:relative; overflow:hidden; }
+.friend-card::after { content:''; position:absolute; bottom:0; left:0; right:0; height:3px; background:var(--fc,var(--accent)); border-radius:0 0 14px 14px; }
+.friend-card:active { transform:scale(0.96); }
+.friend-card.is-me { border-color:var(--accent); }
+.fc-role { text-align:center; font-size:10px; color:var(--muted); margin-bottom:5px; }
+.fc-avatar { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:17px; margin:0 auto 6px; border:2px solid; }
+.fc-name { text-align:center; font-size:12px; font-weight:700; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.fc-distance { text-align:center; font-family:'Space Mono',monospace; font-size:13px; font-weight:700; color:var(--fc,var(--accent)); }
+.fc-dist-label { text-align:center; font-size:10px; color:var(--muted); margin-top:1px; }
+ 
+.leaflet-container { background:#f0f0f0; }
+.leaflet-tile { filter:grayscale(0.85) brightness(1.05); }
+.leaflet-control-zoom { margin:10px !important; }
+.leaflet-control-zoom a { width:32px !important; height:32px !important; line-height:32px !important; background:var(--panel) !important; color:var(--text) !important; border-color:var(--border) !important; }
+.leaflet-control-attribution { display:none; }
+.leaflet-popup-content-wrapper { background:var(--card); border:1px solid var(--border); border-radius:12px; color:var(--text); font-family:'Noto Sans TC',sans-serif; box-shadow:0 8px 32px rgba(0,0,0,.5); }
+.leaflet-popup-tip { background:var(--card); }
+.leaflet-popup-content { margin:10px 14px; font-size:13px; }
+ 
+/* ── 聊天室 ── */
+.chat-panel { flex-shrink:0; background:var(--panel); border-top:1px solid var(--border); display:flex; flex-direction:column; }
+.chat-handle { display:flex; align-items:center; justify-content:space-between; padding:8px 16px 6px; border-bottom:1px solid var(--border); cursor:pointer; user-select:none; }
+.chat-handle-left { display:flex; align-items:center; gap:8px; }
+.chat-title { font-size:11px; font-family:'Space Mono',monospace; color:var(--muted); text-transform:uppercase; letter-spacing:1.2px; }
+.chat-unread { background:#f97316; color:#fff; font-size:10px; font-weight:700; border-radius:20px; padding:1px 7px; font-family:'Space Mono',monospace; display:none; }
+.chat-toggle { font-size:11px; color:var(--muted); font-family:'Space Mono',monospace; transition:transform 0.2s; }
+.chat-body { overflow:hidden; max-height:0; transition:max-height 0.3s ease; }
+.chat-body.open { max-height:220px; }
+.chat-messages { height:160px; overflow-y:auto; padding:10px 14px 6px; display:flex; flex-direction:column; gap:6px; scrollbar-width:none; }
+.chat-messages::-webkit-scrollbar { display:none; }
+.chat-bubble { max-width:75%; padding:7px 11px; border-radius:14px; font-size:13px; line-height:1.45; word-break:break-word; }
+.chat-bubble.me { align-self:flex-end; background:#4fffb0; color:#0a3d2b; border-bottom-right-radius:4px; }
+.chat-bubble.them { align-self:flex-start; background:var(--card); color:var(--text); border:1px solid var(--border); border-bottom-left-radius:4px; }
+.chat-bubble .bubble-meta { font-size:10px; margin-bottom:3px; font-weight:700; }
+.chat-bubble.me .bubble-meta { color:#0a5c35; }
+.chat-bubble.them .bubble-meta { color:var(--accent); }
+.chat-bubble .bubble-time { font-size:9px; opacity:0.6; margin-top:2px; text-align:right; font-family:'Space Mono',monospace; }
+.chat-input-row { display:flex; align-items:center; gap:8px; padding:8px 12px 10px; border-top:1px solid var(--border); }
+.chat-input { flex:1; background:var(--card); border:1px solid var(--border); border-radius:20px; padding:8px 14px; color:var(--text); font-family:'Noto Sans TC',sans-serif; font-size:13px; outline:none; transition:border-color 0.2s; }
+.chat-input:focus { border-color:var(--accent); }
+.chat-input::placeholder { color:var(--muted); font-size:12px; }
+.chat-send { width:36px; height:36px; border-radius:50%; background:#f97316; border:none; color:#fff; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:opacity 0.2s; }
+.chat-send:active { opacity:0.8; }
+.chat-empty { text-align:center; color:var(--muted); font-size:12px; margin-top:40px; font-style:italic; }
+</style>
+</head>
+<body>
+ 
+<!-- ① 登入（組長）-->
+<div class="screen" id="loginScreen">
+  <div class="map-pin-deco">📍</div>
+  <div class="map-pin-deco">🗺️</div>
+  <div class="map-pin-deco">📍</div>
+  <div class="map-pin-deco">🧭</div>
+  <div class="map-pin-deco">📍</div>
+  <div class="map-pin-deco">🗺️</div>
+  <div class="box">
+    <div class="box-logo">TripPal組長登入</div>
+    <div class="box-sub">組長登入管理頁面</div>
+    <div class="role-badge leader">👑 組長模式</div>
+    <div class="field"><label>組長 Email</label>
+      <input id="inputUser" type="email" placeholder="輸入 Email…" autocapitalize="none"
+        onkeydown="if(event.key==='Enter')gel('inputPass').focus()"></div>
+    <div class="field"><label>組長密碼</label>
+      <input id="inputPass" type="password" placeholder="輸入密碼…"
+        onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="err" id="loginError"></div>
+    <button class="btn-p" id="loginBtn" onclick="doLogin()">確認登入</button>
+    <hr class="divider">
+    <div class="note">若非組長，請點按鈕切換到組員模式</div>
+    <button class="btn-g" onclick="showScreen('memberScreen')">切換到組員模式</button>
+  </div>
+</div>
+ 
+<!-- ② 建立群組 -->
+<div class="screen" id="leaderScreen">
+  <div class="map-pin-deco">👑</div>
+  <div class="map-pin-deco">📍</div>
+  <div class="map-pin-deco">🗺️</div>
+  <div class="map-pin-deco">📍</div>
+  <div class="map-pin-deco">🧭</div>
+  <div class="map-pin-deco">📍</div>
+  <div class="box">
+    <div class="box-logo">TripPal組長建群</div>
+    <div class="box-sub">組長建立新群組頁面</div>
+    <div class="role-badge leader">👑 組長模式</div>
+    <div class="field"><label>組長暱稱</label>
+      <input id="inputLeaderNick" placeholder="輸入組長暱稱…"
+        onkeydown="if(event.key==='Enter')gel('inputGroupName').focus()"></div>
+    <div class="field"><label>群組名稱</label>
+      <input id="inputGroupName" placeholder="輸入群組名稱…"
+        onkeydown="if(event.key==='Enter')doCreateGroup()"></div>
+    <div class="err" id="leaderError"></div>
+    <button class="btn-p" onclick="doCreateGroup()">建立新群組 →</button>
+    <div class="note">請將群組名稱告知組員<br>組員輸入群組名稱即可入群</div>
+    <hr class="divider">
+    <button class="btn-p" onclick="doLogout()">組長登出</button>
+  </div>
+</div>
+ 
+<!-- ③ 加入群組（預設顯示）-->
+<div class="screen" id="memberScreen" style="display:flex">
+  <div class="map-pin-deco">📍</div>
+  <div class="map-pin-deco">🗺️</div>
+  <div class="map-pin-deco">📍</div>
+  <div class="map-pin-deco">🧭</div>
+  <div class="map-pin-deco">📍</div>
+  <div class="map-pin-deco">🗺️</div>
+  <div class="box">
+    <div class="box-logo">TripPal組員入群</div>
+    <div class="box-sub">組員加入群組查看地圖</div>
+    <div class="role-badge member">👤 組員模式</div>
+    <div class="field"><label>組員暱稱</label>
+      <input id="inputNick" placeholder="輸入暱稱…"
+        onkeydown="if(event.key==='Enter')gel('inputJoinGroup').focus()"></div>
+    <div class="field"><label>群組名稱</label>
+      <input id="inputJoinGroup" placeholder="輸入群組名稱…"
+        onkeydown="if(event.key==='Enter')doJoinGroup()"></div>
+    <div class="err" id="memberError"></div>
+    <button class="btn-g" onclick="doJoinGroup()">加入群組查看地圖 →</button>
+    <hr class="divider">
+    <div class="note">組長建立新群組請切換模式</div>
+    <button class="btn-p" onclick="showScreen('loginScreen')">切換到組長模式</button>
+    <hr class="divider">
+    <!-- ✅ 退出說明 note -->
+    <div class="note">
+      💡 退出說明<br>
+      ① 關閉瀏覽器或離開頁面，系統會自動將你從群組移除<br>
+      ② 進入地圖後，點右上角「退出群組」按鈕可主動退出並回到此頁面
+    </div>
+  </div>
+</div>
+ 
+<!-- ④ 地圖主畫面 -->
+<div id="appScreen">
+  <header>
+    <div class="logo">MyTripPal</span></div>
+    <div class="header-right">
+      <div class="group-tag">📍 <span id="groupNameDisplay">—</span></div>
+      <div class="status-pill"><div id="statusDot"></div><span id="statusText">定位中…</span></div>
+      <!-- ✅ 退出群組按鈕 -->
+      <button class="exit-btn" onclick="doExitGroup()">X離開</button>
+    </div>
+  </header>
+  <div class="map-wrapper">
+    <div class="map-hint">同群組 <span id="memberCount">0</span> 位成員在線</div>
+    <div id="map"></div>
+    <button class="locate-btn" onclick="locateMe()">📍</button>
+  </div>
+  <div class="bottom-panel">
+    <div class="panel-handle">
+      <div class="panel-title">群組成員</div>
+      <div class="my-coord" id="coordText">等待定位…</div>
+    </div>
+    <div class="friends-scroll" id="friendsScroll"></div>
+  </div>
+ 
+  <!-- ✅ 群組聊天室 -->
+  <div class="chat-panel">
+    <div class="chat-handle" onclick="toggleChat()">
+      <div class="chat-handle-left">
+        <span class="chat-title">💬 群組聊天</span>
+        <span class="chat-unread" id="chatUnread">0</span>
+      </div>
+      <span class="chat-toggle" id="chatToggleIcon">▲ 展開</span>
+    </div>
+    <div class="chat-body" id="chatBody">
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-empty" id="chatEmpty">尚無訊息，說聲 👋 吧！</div>
+      </div>
+      <div class="chat-input-row">
+        <input class="chat-input" id="chatInput" placeholder="輸入訊息…" maxlength="200"
+          onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="chat-send" onclick="sendChat()">➤</button>
+      </div>
+    </div>
+  </div><!-- end chat-panel -->
+</div><!-- end appScreen -->
+ 
+<!-- Firebase compat SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+ 
+<script>
+const firebaseConfig = {
+  apiKey:            "AIzaSyA7eqBTcaxuPXaPV6wbA-zP5GwN2c2ExfM",
+  authDomain:        "trippal-70d7d.firebaseapp.com",
+  databaseURL:       "https://trippal-70d7d-default-rtdb.asia-southeast1.firebasedatabase.app/",
+  projectId:         "trippal-70d7d",
+  storageBucket:     "trippal-70d7d.firebasestorage.app",
+  messagingSenderId: "444650377829",
+  appId:             "1:444650377829:web:8a84915421cbf1bad5ec8c"
+};
+ 
+firebase.initializeApp(firebaseConfig);
+const db   = firebase.database();
+const auth = firebase.auth();
+ 
+const COLORS = ['#1d4ed8','#e11d48','#16a34a','#d97706','#7c3aed','#0891b2','#be185d','#b45309'];
+ 
+let myId=null, myName=null, myGroup=null, isLeader=false;
+let map=null, markers={}, memberColors={}, colorIdx=0;
+let myLat=null, myLng=null;
+let gpsWatcher=null; // ✅ 記錄 watchPosition ID，退出時可清除
+ 
+const MOVE_THRESHOLD_M = 10;
+let lastUploadedLat=null, lastUploadedLng=null;
+ 
+/* ── 畫面切換 ── */
+function showScreen(id) {
+  ['loginScreen','leaderScreen','memberScreen','appScreen'].forEach(s => {
+    const el = gel(s);
+    el.style.display = 'none';
+  });
+  const target = gel(id);
+  target.style.display = 'flex';
+  if (id === 'appScreen') target.style.flexDirection = 'column';
+}
+ 
+/* ── 登入 ── */
+async function doLogin() {
+  const email = gel('inputUser').value.trim();
+  const pass  = gel('inputPass').value;
+  if (!email || !pass) { setErr('loginError','請輸入 Email 與密碼'); return; }
+  const btn = gel('loginBtn');
+  btn.disabled = true;
+  btn.textContent = '登入中…';
+  setErr('loginError','');
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+  } catch (e) {
+    let msg = '登入失敗，請確認帳號與密碼';
+    if (e.code === 'auth/invalid-email')     msg = 'Email 格式不正確';
+    if (e.code === 'auth/user-not-found')    msg = '找不到此帳號';
+    if (e.code === 'auth/wrong-password')    msg = '密碼錯誤';
+    if (e.code === 'auth/too-many-requests') msg = '嘗試次數過多，請稍後再試';
+    setErr('loginError', msg);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '確認登入';
+  }
+}
+ 
+/* ── 登出 ── */
+async function doLogout() {
+  await auth.signOut();
+  isLeader = false;
+  showScreen('loginScreen');
+}
+ 
+/* ── 監聽登入狀態 ── */
+auth.onAuthStateChanged(user => {
+  if (user) {
+    isLeader = true;
+    myName   = user.email.split('@')[0];
+    showScreen('leaderScreen');
+  }
+});
+ 
+/* ── 建立群組 ── */
+function doCreateGroup() {
+  const nick  = gel('inputLeaderNick').value.trim();
+  const gname = gel('inputGroupName').value.trim();
+  if (!nick)  { setErr('leaderError','請輸入你的暱稱'); return; }
+  if (!gname) { setErr('leaderError','請輸入群組名稱'); return; }
+  db.ref(`groups/${gname}/info`).once('value', snap => {
+    if (snap.exists()) { setErr('leaderError','此群組名稱已存在，請換一個'); return; }
+    db.ref(`groups/${gname}/info`).set({ leader: nick, createdAt: Date.now() });
+    myName  = nick;
+    myGroup = gname;
+    myId    = `leader_${gname}`;
+    gel('groupNameDisplay').textContent = gname;
+    setErr('leaderError','');
+    launchApp();
+  });
+}
+ 
+/* ── 加入群組 ── */
+function doJoinGroup() {
+  const nick  = gel('inputNick').value.trim();
+  const gname = gel('inputJoinGroup').value.trim();
+  if (!nick)  { setErr('memberError','請輸入你的暱稱'); return; }
+  if (!gname) { setErr('memberError','請輸入群組名稱'); return; }
+  db.ref(`groups/${gname}/info`).once('value', snap => {
+    if (!snap.exists()) { setErr('memberError','找不到此群組，請確認名稱'); return; }
+    myName  = nick;
+    myGroup = gname;
+    myId    = `${gname}_${nick}`;
+    gel('groupNameDisplay').textContent = gname;
+    setErr('memberError','');
+    launchApp();
+  });
+}
+ 
+/* ── ✅ 退出群組 ── */
+async function doExitGroup() {
+  if (!confirm('確定要退出群組嗎？')) return;
+ 
+  // 1. 從 Firebase 刪除自己的位置資料
+  if (myId && myGroup) {
+    await db.ref(`groups/${myGroup}/members/${myId}`).remove();
+  }
+ 
+  // 2. 停止 GPS 追蹤
+  if (gpsWatcher !== null) {
+    navigator.geolocation.clearWatch(gpsWatcher);
+    gpsWatcher = null;
+  }
+ 
+  // 3. 停止監聽 Firebase members 和聊天
+  if (myGroup) {
+    db.ref(`groups/${myGroup}/members`).off();
+    stopListenChat();
+  }
+ 
+  // 4. 清除地圖
+  if (map) {
+    map.remove();
+    map = null;
+  }
+ 
+  // 5. 重置狀態
+  markers = {}; memberColors = {}; colorIdx = 0;
+  myId = null; myName = null; myGroup = null;
+  myLat = null; myLng = null;
+  lastUploadedLat = null; lastUploadedLng = null;
+  window._centred = false;
+ 
+  // 重置聊天室 UI
+  chatOpen = false;
+  unreadCount = 0;
+  gel('chatBody').classList.remove('open');
+  gel('chatToggleIcon').textContent = '▲ 展開';
+  gel('chatUnread').style.display = 'none';
+  gel('chatMessages').innerHTML = '<div class="chat-empty" id="chatEmpty">尚無訊息，說聲 👋 吧！</div>';
+  gel('chatInput').value = '';
+ 
+  // 6. 回到組員頁面
+  showScreen('memberScreen');
+}
+ 
+/* ── 啟動地圖 ── */
+function launchApp() {
+  showScreen('appScreen');
+ 
+  map = L.map('map', { zoomControl:true, attributionControl:false }).setView([25.0330,121.5654],14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+ 
+  const myRef = db.ref(`groups/${myGroup}/members/${myId}`);
+  myRef.onDisconnect().remove();
+  window.addEventListener('beforeunload', () => myRef.remove());
+ 
+  if (navigator.geolocation) {
+    // ✅ 儲存 watcher ID 以便退出時清除
+    gpsWatcher = navigator.geolocation.watchPosition(pos => {
+      const newLat = pos.coords.latitude;
+      const newLng = pos.coords.longitude;
+      setStatus(true);
+ 
+      if (!window._centred) {
+        map.setView([newLat, newLng], 16, { animate: true });
+        window._centred = true;
+      }
+ 
+      const moved = (lastUploadedLat === null)
+        ? Infinity
+        : calcDist(lastUploadedLat, lastUploadedLng, newLat, newLng, true);
+ 
+      myLat = newLat;
+      myLng = newLng;
+ 
+      if (moved >= MOVE_THRESHOLD_M) {
+        uploadPos();
+      }
+ 
+    }, err => {
+      console.warn('GPS error:', err.message);
+      setStatus(false);
+    }, {
+      enableHighAccuracy: true,
+      maximumAge: 0,
+      timeout: 15000
+    });
+  }
+ 
+  db.ref(`groups/${myGroup}/members`).on('value', snap => {
+    const data = snap.val() || {};
+    syncMap(data); renderCards(data);
+  });
+ 
+  // ✅ 啟動聊天監聽
+  listenChat();
+}
+ 
+function uploadPos() {
+  if (!myLat) return;
+  db.ref(`groups/${myGroup}/members/${myId}`).set({
+    name: myName, role: isLeader ? 'leader' : 'member',
+    lat: myLat, lng: myLng, updatedAt: Date.now()
+  });
+  lastUploadedLat = myLat;
+  lastUploadedLng = myLng;
+  gel('coordText').textContent = `${myLat.toFixed(4)}, ${myLng.toFixed(4)}`;
+}
+ 
+/* ── 地圖 ── */
+function syncMap(data) {
+  Object.keys(markers).forEach(id => {
+    if (!data[id]) { map.removeLayer(markers[id]); delete markers[id]; delete memberColors[id]; }
+  });
+  Object.entries(data).forEach(([id,u]) => {
+    if (!memberColors[id]) memberColors[id] = COLORS[colorIdx++ % COLORS.length];
+    const c=memberColors[id], isMe=id===myId;
+    if (!markers[id]) {
+      markers[id] = L.marker([u.lat,u.lng],{icon:makeIcon(u,c,isMe)}).addTo(map).bindPopup(makePopup(u,c,isMe));
+    } else {
+      markers[id].setLatLng([u.lat,u.lng]);
+      markers[id].setIcon(makeIcon(u,c,isMe));
+      markers[id].setPopupContent(makePopup(u,c,isMe));
+    }
+  });
+}
+ 
+function makeIcon(u,c,isMe) {
+  const sz=isMe?46:38, em=u.role==='leader'?'👑':'👤';
+  return L.divIcon({
+    className:'',
+    html:`<div style="width:${sz}px;height:${sz}px;background:${c}22;border:${isMe?3:2}px solid ${c};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:${isMe?22:17}px;box-shadow:0 0 0 ${isMe?5:3}px ${c}30,0 3px 10px rgba(0,0,0,.4)">${em}</div><div style="text-align:center;margin-top:2px;font-family:'Noto Sans TC',sans-serif;font-size:11px;font-weight:700;color:${c};text-shadow:0 1px 4px rgba(0,0,0,.9);white-space:nowrap">${u.name}${isMe?' (我)':''}</div>`,
+    iconSize:[sz+10,sz+18], iconAnchor:[(sz+10)/2,sz/2], popupAnchor:[0,-(sz/2+4)]
+  });
+}
+ 
+function makePopup(u,c,isMe) {
+  return `<div style="font-family:'Noto Sans TC',sans-serif;min-width:130px">
+    <div style="font-weight:700;font-size:14px;color:${c};margin-bottom:2px">${u.name}${isMe?' (我)':''}</div>
+    <div style="font-size:11px;color:#9ca3af;margin-bottom:2px">${u.role==='leader'?'👑 組長':'👤 組員'}</div>
+    <div style="font-family:'Space Mono',monospace;font-size:10px;color:#6b7280">${u.lat.toFixed(5)}, ${u.lng.toFixed(5)}</div>
+    <div style="font-size:10px;color:#6b7280;margin-top:2px">更新 ${timeSince(u.updatedAt)}</div>
+  </div>`;
+}
+ 
+/* ── 成員卡片 ── */
+function renderCards(data) {
+  const scroll = gel('friendsScroll');
+  scroll.innerHTML = '';
+  const me = data[myId];
+  gel('memberCount').textContent = Object.keys(data).length;
+  const sorted = Object.entries(data).sort(([,a],[,b])=>(a.role==='leader'?0:1)-(b.role==='leader'?0:1));
+  sorted.forEach(([id,u]) => {
+    const isMe=id===myId, c=memberColors[id]||COLORS[0];
+    const dist=(isMe||!me)?null:calcDist(me.lat,me.lng,u.lat,u.lng);
+    const card=document.createElement('div');
+    card.className='friend-card'+(isMe?' is-me':'');
+    card.style.setProperty('--fc',c);
+    card.innerHTML=`
+      <div class="fc-role">${u.role==='leader'?'👑 組長':'👤 組員'}</div>
+      <div class="fc-avatar" style="background:${c}22;border-color:${c}">${u.role==='leader'?'👑':'👤'}</div>
+      <div class="fc-name">${u.name}${isMe?' (我)':''}</div>
+      ${isMe?`<div class="fc-distance" style="color:var(--muted);font-size:10px">我的位置</div>`
+             :`<div class="fc-distance">${dist}</div><div class="fc-dist-label">距離我</div>`}`;
+    card.onclick=()=>{ map.setView([u.lat,u.lng],16,{animate:true}); markers[id]?.openPopup(); };
+    scroll.appendChild(card);
+  });
+}
+ 
+/* ── 工具 ── */
+function calcDist(a,b,c,d, rawMeters=false) {
+  const R=6371000,dLat=(c-a)*Math.PI/180,dLng=(d-b)*Math.PI/180;
+  const x=Math.sin(dLat/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dLng/2)**2;
+  const dist=R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+  if (rawMeters) return dist;
+  return dist<1000?`${Math.round(dist)} 公尺`:`${(dist/1000).toFixed(1)} 公里`;
+}
+function timeSince(ts) {
+  const s=Math.floor((Date.now()-ts)/1000);
+  if(s<10)return '剛剛'; if(s<60)return `${s}秒前`;
+  if(s<3600)return `${Math.floor(s/60)}分鐘前`; return `${Math.floor(s/3600)}小時前`;
+}
+function setStatus(ok) {
+  gel('statusDot').style.background=ok?'#4fffb0':'#f87171';
+  gel('statusText').textContent=ok?'同步中':'GPS 錯誤';
+}
+function gel(id){ return document.getElementById(id); }
+function setErr(id,msg){ gel(id).textContent=msg; }
+function locateMe(){ if(myLat) map.setView([myLat,myLng],16,{animate:true}); markers[myId]?.openPopup(); }
+ 
+/* ── 聊天室 ── */
+let chatOpen = false;
+let chatListener = null;
+let unreadCount = 0;
+let lastSeenMsgId = null;
+ 
+function toggleChat() {
+  chatOpen = !chatOpen;
+  const body = gel('chatBody');
+  const icon = gel('chatToggleIcon');
+  if (chatOpen) {
+    body.classList.add('open');
+    icon.textContent = '▼ 收起';
+    // 展開時清除未讀
+    unreadCount = 0;
+    const badge = gel('chatUnread');
+    badge.style.display = 'none';
+    badge.textContent = '0';
+    // 捲到最底
+    setTimeout(() => {
+      const msgs = gel('chatMessages');
+      msgs.scrollTop = msgs.scrollHeight;
+    }, 320);
+  } else {
+    body.classList.remove('open');
+    icon.textContent = '▲ 展開';
+  }
+}
+ 
+function sendChat() {
+  const input = gel('chatInput');
+  const text  = input.value.trim();
+  if (!text || !myGroup || !myName) return;
+  input.value = '';
+  db.ref(`groups/${myGroup}/chat`).push({
+    name:      myName,
+    role:      isLeader ? 'leader' : 'member',
+    text:      text,
+    senderId:  myId,
+    timestamp: Date.now()
+  });
+}
+ 
+function listenChat() {
+  if (chatListener) return; // 避免重複監聽
+  const chatRef = db.ref(`groups/${myGroup}/chat`).limitToLast(80);
+  chatListener = chatRef.on('child_added', snap => {
+    const msg = snap.val();
+    const msgKey = snap.key;
+    appendChatBubble(msg, msgKey);
+ 
+    // 如果聊天室是收起狀態 → 累計未讀
+    if (!chatOpen && msg.senderId !== myId) {
+      unreadCount++;
+      const badge = gel('chatUnread');
+      badge.style.display = 'inline';
+      badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+    }
+ 
+    // 如果是展開狀態 → 自動捲到底
+    if (chatOpen) {
+      const msgs = gel('chatMessages');
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+  });
+}
+ 
+function appendChatBubble(msg, key) {
+  const msgs   = gel('chatMessages');
+  const empty  = gel('chatEmpty');
+  if (empty) empty.remove();
+ 
+  const isMe   = msg.senderId === myId;
+  const bubble = document.createElement('div');
+  bubble.className = `chat-bubble ${isMe ? 'me' : 'them'}`;
+  bubble.dataset.key = key;
+ 
+  const roleIcon = msg.role === 'leader' ? '👑' : '👤';
+  const timeStr  = timeSince(msg.timestamp);
+ 
+  bubble.innerHTML = `
+    <div class="bubble-meta">${isMe ? '我' : roleIcon + ' ' + escHtml(msg.name)}</div>
+    <div>${escHtml(msg.text)}</div>
+    <div class="bubble-time">${timeStr}</div>`;
+  msgs.appendChild(bubble);
+}
+ 
+function stopListenChat() {
+  if (chatListener && myGroup) {
+    db.ref(`groups/${myGroup}/chat`).off('child_added', chatListener);
+    chatListener = null;
+  }
+}
+ 
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
