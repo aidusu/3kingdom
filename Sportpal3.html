@@ -56,12 +56,12 @@
         inputEl.disabled = true;
         sendBtn.disabled = true;
 
-        const loadingDiv = appendMessage("⚡ SportPal 正在連線筆電 AI 運算中", 'bot');
+        const loadingDiv = appendMessage("⚡ SportPal 正在連線 AI 運算中", 'bot');
         
         let dotCount = 0;
         const timer = setInterval(() => {
             dotCount = (dotCount + 1) % 4;
-            loadingDiv.textContent = `⚡ SportPal 正在連線筆電 AI 運算中${".".repeat(dotCount)} (請稍候約 5-15 秒)`;
+            loadingDiv.textContent = `⚡ SportPal 正在連線 AI 運算中${".".repeat(dotCount)} (請稍候約 15 秒)`;
         }, 500);
 
         const systemPrompt = "你現在是一位專業的運動教練。請一律使用「繁體中文」回答。請針對使用者的運動數據或問題提供具體的建議與改善說明。每次回答請儘量精簡，控制在100字以內：避免誇大或不適的回答";
