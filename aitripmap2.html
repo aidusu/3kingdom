@@ -31,30 +31,31 @@
     // 1. 初始化地圖
     const map = L.map('map').setView([23.5, 121], 7);
 
-    // 使用台灣內政部國土測繪中心 (NLSC) 通用電子地圖，完全免 API Key 且不跳任何授權提示
+    // 使用無須 API Key 的台灣通用電子地圖
     L.tileLayer('https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{z}/{y}/{x}', {
       maxZoom: 19,
-      attribution: '© <a href="https://maps.nlsc.gov.tw/" target="_blank">國土測繪圖資服務雲</a>'
+      attribution: '© 國土測繪圖資服務雲'
     }).addTo(map);
 
-    // 2. 深色顏色池與姓名分配邏輯
-    const deepColors = [
-      '#8B0000', '#00008B', '#006400', '#4B0082', '#2F4F4F',
-      '#800000', '#191970', '#483D8B', '#2E0854', '#0B3D91'
+    // 2. 顏色池（每 10 個點循環使用一組顏色）
+    const trackColors = [
+      '#E63946', // 紅色 (第 1~10 點)
+      '#2A9D8F', // 藍綠色 (第 11~20 點)
+      '#F4A261', // 暖橙色 (第 21~30 點)
+      '#457B9D', // 沉穩藍 (第 31~40 點)
+      '#6A4C93', // 紫色 (第 41~50 點)
+      '#1D3557', // 深海藍 (第 51~60 點)
+      '#D62828', // 暗紅 (第 61~70 點)
+      '#028090'  // 青藍 (第 71~80 點)
     ];
-    const nameColorMap = {};
-    function getDeepColorForName(name) {
-      if (!nameColorMap[name]) {
-        let hash = 0;
-        for (let i = 0; i < name.length; i++) {
-          hash += name.charCodeAt(i);
-        }
-        nameColorMap[name] = deepColors[hash % deepColors.length];
-      }
-      return nameColorMap[name];
+
+    function getSegmentColor(index) {
+      // index 從 0 開始，Math.floor(index / 10) 代表每 10 個點為一個分組
+      const groupIndex = Math.floor(index / 10);
+      return trackColors[groupIndex % trackColors.length];
     }
 
-    // 3. 圖層與播放狀態管理
+    // 3. 圖層與計時器管理
     let markersLayer = L.layerGroup().addTo(map);
     let playTimer = null;
 
@@ -71,16 +72,16 @@
       }
     }
 
-    // 5. 按照「時間順序」一點一點畫出，並用「細虛線」連接
+    // 5. 按照全隊時間播放、全隊串連、每 10 點換色
     function playTeamTrack(teamCode) {
       if (playTimer) clearInterval(playTimer);
       markersLayer.clearLayers();
 
       // 依團隊編號篩選出有效坐標
       const filtered = allData.filter(row => {
-        return row['團隊編號'] === teamCode &&
-               !isNaN(parseFloat(row['緯度'])) &&
-               !isNaN(parseFloat(row['經度']));
+        const lat = parseFloat(row['緯度']);
+        const lng = parseFloat(row['經度']);
+        return row['團隊編號'] === teamCode && !isNaN(lat) && !isNaN(lng);
       });
 
       if (filtered.length === 0) {
@@ -88,10 +89,10 @@
         return;
       }
 
-      // 依全團「時間」由早到晚排列
-      filtered.sort((a, b) => (a['時間'] > b['時間'] ? 1 : -1));
+      // 全隊資料直接依照「時間」由先到後嚴格排序
+      filtered.sort((a, b) => (String(a['時間']) > String(b['時間']) ? 1 : -1));
 
-      // 縮放到適當視野
+      // 縮放到包含所有點的視野
       const allBounds = filtered.map(r => [parseFloat(r['緯度']), parseFloat(r['經度'])]);
       map.fitBounds(allBounds, { padding: [40, 40], maxZoom: 16 });
 
@@ -99,7 +100,7 @@
       const submitBtn = document.getElementById('submitBtn');
       submitBtn.disabled = true;
 
-      const lastPointByName = {};
+      let lastPoint = null;
       let currentIndex = 0;
 
       playTimer = setInterval(() => {
@@ -116,40 +117,45 @@
         const lat = parseFloat(row['緯度']);
         const lng = parseFloat(row['經度']);
         const currentPt = [lat, lng];
-        const color = getDeepColorForName(name);
+        
+        // 取得當前區間專屬色彩（每 10 個點換一次顏色）
+        const currentColor = getSegmentColor(currentIndex);
 
         statusEl.innerText = `播放中: ${currentIndex + 1} / ${filtered.length} [${row['時間'] || ''}] ${name}`;
 
-        // 核心改動：改為細虛線 (weight: 1.5, dashArray: '4, 4') 連接前後兩點
-        if (lastPointByName[name]) {
-          L.polyline([lastPointByName[name], currentPt], {
-            color: color,
-            weight: 1.5,          // 細線寬度
-            dashArray: '4, 4',    // 虛線樣式：線段 4px、間距 4px
+        // 畫出細虛線：只要有前一點就直接串連起來（不分人）
+        if (lastPoint) {
+          L.polyline([lastPoint, currentPt], {
+            color: currentColor, // 與目前點顏色一致
+            weight: 2,           // 細線
+            dashArray: '6, 6',   // 明顯虛線效果
             opacity: 0.9
           }).addTo(markersLayer);
         }
 
-        // 標記目前時間點
+        // 標記該點
         const marker = L.circleMarker(currentPt, {
           radius: 5,
-          color: color,
-          fillColor: color,
-          fillOpacity: 0.85
+          color: '#ffffff',
+          weight: 1.5,
+          fillColor: currentColor,
+          fillOpacity: 1
         });
         marker.bindPopup(
-          `<b>${name}</b><br>時間: ${row['時間'] || ''}<br>UUID: ${row['UUID'] || ''}`
+          `<b>第 ${currentIndex + 1} 點</b><br>` +
+          `姓名: ${name}<br>` +
+          `時間: ${row['時間'] || ''}<br>` +
+          `UUID: ${row['UUID'] || ''}`
         );
         marker.addTo(markersLayer);
 
-        // 更新此人的上一位置
-        lastPointByName[name] = currentPt;
-
+        // 更新上一個點
+        lastPoint = currentPt;
         currentIndex++;
       }, 300);
     }
 
-    // 6. 表單送出事件
+    // 6. 表單事件
     document.getElementById('filterForm').addEventListener('submit', function(e) {
       e.preventDefault();
       const teamCode = document.getElementById('teamInput').value.trim();
@@ -157,7 +163,7 @@
       playTeamTrack(teamCode);
     });
 
-    // 7. 載入遠端資料
+    // 7. 啟動載入
     loadGPSData();
   </script>
 </body>
