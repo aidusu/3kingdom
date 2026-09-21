@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"><!-- 新增 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GPS + UUID 傳送器</title>
   <style>
     body { 
@@ -32,6 +32,10 @@
       margin-top: 5vw;
       font-size: 1rem;
       word-break: break-all;
+      white-space: pre-wrap; /* 讓 \n 換行效果正常顯示 */
+    }
+    #error {
+      color: #d9534f;
     }
     @media (max-width: 600px) {
       body {
@@ -55,7 +59,7 @@
 
   <div id="output">尚未執行任何動作</div>
   <div id="error"></div>
-  <!-- JS 內容不變 -->
+
   <script>
     // 產生或取得裝置唯一識別 UUID
     let uuid = localStorage.getItem("deviceUUID");
@@ -66,7 +70,6 @@
 
     // 將 Date 物件格式化為台北時區 YYYY/MM/DD HH:MM
     function formatTaipeiTime(date) {
-      // 取得台北時區的年月日時分
       const options = {
         timeZone: 'Asia/Taipei',
         year: 'numeric',
@@ -76,10 +79,7 @@
         minute: '2-digit',
         hour12: false
       };
-      // 例如 "2025/05/09 22:18"
-      // 部分瀏覽器會回傳 "2025/05/09 22:18:00"，我們只取到分鐘
       let str = date.toLocaleString('zh-TW', options);
-      // 只取到分鐘（去掉秒數）
       str = str.replace(/(\d{2}):(\d{2}):\d{2}$/, '$1:$2');
       return str;
     }
@@ -96,11 +96,13 @@
       // 驗證必填欄位
       if (!teamCode) {
         error.textContent = "⚠️ 請輸入團隊編號";
+        output.textContent = "";
         return;
       }
 
       if (!navigator.geolocation) {
         error.textContent = "⚠️ 瀏覽器不支援 GPS 定位";
+        output.textContent = "";
         return;
       }
 
@@ -120,27 +122,39 @@
             timestamp: taipeiTime,
           };
 
-          output.textContent = `📍 裝置 UUID：${uuid}\n團隊編號：${teamCode}\n姓名：${name || "(未填)"}\n緯度：${lat}\n經度：${lon}\n時間：${taipeiTime}\n\n資料已準備送出...`;
+          output.textContent = `📍 裝置 UUID：${uuid}\n團隊編號：${teamCode}\n姓名：${name || "(未填)"}\n緯度：${lat}\n經度：${lon}\n時間：${taipeiTime}\n\n資料傳送中...`;
 
+          // 修改傳送邏輯
           fetch("https://script.google.com/macros/s/AKfycbx4YIRx1aqB8f-3DXQSF3Jk4xrKsL3yO14-2y_MR0uLHfiJOa4PJsMhG-l2l-fb7rI1/exec", {
             method: "POST",
-            mode: "no-cors",
+            // 使用 text/plain 可避免預檢請求 (Preflight CORS)，GAS 仍可透過 e.postData.contents 讀取內容
             headers: {
-              "Content-Type": "application/json"
+              "Content-Type": "text/plain;charset=utf-8"
             },
             body: JSON.stringify(payload)
-          }).then(() => {
-            output.textContent += "\n✅ 資料已送出！";
-          }).catch((err) => {
+          })
+          .then(res => {
+            if (res.ok) {
+              output.textContent += "\n✅ 資料已送出！";
+            } else {
+              output.textContent += "\n✅ 資料已送出（請至 Sheet 確認是否寫入）";
+            }
+          })
+          .catch((err) => {
             error.textContent = "❌ 傳送失敗：" + err;
           });
         },
         (err) => {
           error.textContent = "❌ 定位失敗：" + err.message;
+          output.textContent = "";
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
         }
       );
     }
   </script>
-
 </body>
 </html>
