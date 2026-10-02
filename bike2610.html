@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>台北自行車河濱真實路線播放</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: "Microsoft JhengHei", "Heiti TC", sans-serif;
+            background-color: #f4f4f4;
+        }
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+            text-align: center;
+            width: 320px;
+        }
+        h3 { margin: 0 0 10px 0; color: #2c3e50; }
+        p { font-size: 14px; color: #555; margin-bottom: 15px; font-weight: bold; }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            transition: background 0.3s;
+            width: 100%;
+            display: none; /* 初始隱藏，播放完才顯示讓使用者重播 */
+        }
+        button:hover { background-color: #c0392b; }
+        .bike-icon {
+            font-size: 28px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+            transform: translate(-10px, -15px);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="controls">
+        <h3>🚴‍♂️ 今日河濱騎行回顧</h3>
+        <p id="statusMsg">正在從 GitHub 載入路線資料...</p>
+        <button id="playBtn">↺ 再次回顧</button>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const map = L.map('map').setView([25.035, 121.520], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        const routePoints = [
+            { name: "(1) 大稻埕碼頭", coords: [25.0568, 121.5076] },
+            { name: "(2) 華江雁鴨公園", coords: [25.0381, 121.4963] },
+            { name: "(3) 馬場町", coords: [25.0208, 121.5052] },
+            { name: "(4) 古亭河濱公園", coords: [25.0183, 121.5218] },
+            { name: "(5) 自來水博物館", coords: [25.0135, 121.5292] },
+            { name: "(6) 寶藏岩", coords: [25.0106, 121.5326] },
+            { name: "(7) 景美橋下", coords: [24.9922, 121.5413] },
+            { name: "(8) 恆光橋下", coords: [24.9811, 121.5642] },
+            { name: "(9) 萬壽橋下", coords: [24.9941, 121.5745] },
+            { name: "(10) 台北市動物園", coords: [24.9984, 121.5810] },
+            { name: "(11) 道南橋 (景美溪左岸)", coords: [24.9881, 121.5772] },
+            { name: "(12) 政治大學", coords: [24.9866, 121.5752] }
+        ];
+
+        let markers = [];
+        routePoints.forEach((pt) => {
+            const marker = L.marker(pt.coords).addTo(map);
+            marker.bindPopup(`<b>${pt.name}</b>`);
+            markers.push(marker);
+        });
+
+        const allPOIs = routePoints.map(pt => pt.coords);
+        map.fitBounds(L.polyline(allPOIs).getBounds(), { padding: [30, 30] });
+
+        let trackLatLngs = [];
+        let animatedLine = null;
+        let bikeMarker = null;
+
+        // 設定要讀取的 GPX 檔案名稱 (需與 HTML 放同一個 GitHub 資料夾)
+        const gpxFiles = [
+            "2026-10-02+09_24.gpx",
+            "2026-10-02+14_21.gpx"
+        ];
+
+        async function loadAndPlayGPX() {
+            let allRawPoints = [];
+            const parser = new DOMParser();
+
+            try {
+                // 依序向 GitHub 請求這兩個檔案
+                for (let filename of gpxFiles) {
+                    const response = await fetch(filename);
+                    if (!response.ok) throw new Error(`無法讀取 ${filename}`);
+                    const xmlStr = await response.text();
+                    const xmlDoc = parser.parseFromString(xmlStr, "text/xml");
+                    const trkpts = xmlDoc.getElementsByTagName("trkpt");
+                    
+                    for (let i = 0; i < trkpts.length; i++) {
+                        let lat = parseFloat(trkpts[i].getAttribute("lat"));
+                        let lon = parseFloat(trkpts[i].getAttribute("lon"));
+                        let timeTag = trkpts[i].getElementsByTagName("time")[0];
+                        let timeStr = timeTag ? timeTag.textContent : "";
+                        
+                        if (lat && lon && timeStr) {
+                            allRawPoints.push({ lat: lat, lon: lon, timeStr: timeStr, date: new Date(timeStr) });
+                        }
+                    }
+                }
+
+                // 排序與降採樣 (每分鐘取一點)
+                allRawPoints.sort((a, b) => a.date - b.date);
+                let lastMinute = null;
+                for (let pt of allRawPoints) {
+                    let currentMinute = pt.timeStr.substring(0, 16); 
+                    if (currentMinute !== lastMinute) {
+                        trackLatLngs.push([pt.lat, pt.lon]);
+                        lastMinute = currentMinute;
+                    }
+                }
+
+                if (trackLatLngs.length > 0) {
+                    // 畫出淡淡的背景總路線
+                    const backgroundLine = L.polyline(trackLatLngs, {color: '#999', weight: 4, opacity: 0.4}).addTo(map);
+                    map.fitBounds(backgroundLine.getBounds(), { padding: [20, 20] });
+                    
+                    document.getElementById('statusMsg').innerText = "路線載入完成，開始播放！";
+                    setTimeout(playAnimation, 1000); // 載入完成後等待1秒自動開始
+                } else {
+                    document.getElementById('statusMsg').innerText = "無法解析路線資料。";
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('statusMsg').innerText = "載入失敗，請確認 GPX 檔案是否已放入 3kingdom 資料夾中。";
+            }
+        }
+
+        // 播放動畫函數
+        function playAnimation() {
+            document.getElementById('statusMsg').innerText = "騎乘中...";
+            document.getElementById('playBtn').style.display = 'none';
+
+            if (animatedLine) map.removeLayer(animatedLine);
+            if (bikeMarker) map.removeLayer(bikeMarker);
+            routePoints.forEach(pt => pt.triggered = false);
+            markers.forEach(m => m.closePopup());
+
+            animatedLine = L.polyline([], {color: '#e74c3c', weight: 6, opacity: 0.9}).addTo(map);
+
+            const bikeIcon = L.divIcon({
+                html: '<div>🚴‍♂️</div>',
+                className: 'bike-icon',
+                iconSize: [30, 30]
+            });
+            bikeMarker = L.marker(trackLatLngs[0], {icon: bikeIcon}).addTo(map);
+
+            const totalPoints = trackLatLngs.length;
+            let i = 0;
+
+            function step() {
+                if (i >= totalPoints) {
+                    document.getElementById('statusMsg').innerText = "旅程結束！";
+                    document.getElementById('playBtn').style.display = 'inline-block';
+                    map.fitBounds(animatedLine.getBounds(), { padding: [50, 50] });
+                    return;
+                }
+
+                animatedLine.addLatLng(trackLatLngs[i]);
+                bikeMarker.setLatLng(trackLatLngs[i]);
+                
+                if (i % 3 === 0) {
+                    map.panTo(trackLatLngs[i], { animate: true, duration: 0.2 });
+                }
+
+                for (let p = 0; p < routePoints.length; p++) {
+                    if (!routePoints[p].triggered && map.distance(trackLatLngs[i], routePoints[p].coords) < 600) {
+                        markers[p].openPopup();
+                        routePoints[p].triggered = true;
+                    }
+                }
+
+                i++;
+                setTimeout(step, 80); 
+            }
+            step();
+        }
+
+        // 網頁載入時自動執行
+        window.onload = loadAndPlayGPX;
+        
+        // 綁定再次回顧按鈕
+        document.getElementById('playBtn').addEventListener('click', playAnimation);
+    </script>
+</body>
+</html>
