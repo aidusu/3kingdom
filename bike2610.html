@@ -79,7 +79,7 @@
             { name: "(4) 古亭河濱公園", coords: [25.0183, 121.5218] },
             { name: "(5) 自來水博物館", coords: [25.0135, 121.5292] },
             { name: "(6) 寶藏岩", coords: [25.0106, 121.5326] },
-            { name: "(7) 景美橋下", coords: [24.9922, 121.5413] },
+            { name: "(7) 景美橋下", coords: [24.9877, 121.5397] },
             { name: "(8) 恆光橋下", coords: [24.9811, 121.5642] },
             { name: "(9) 萬壽橋下", coords: [24.9941, 121.5745] },
             { name: "(10) 台北市動物園", coords: [24.9984, 121.5810] },
@@ -169,7 +169,7 @@
             routePoints.forEach(pt => pt.triggered = false);
             markers.forEach(m => m.closePopup());
 
-            animatedLine = L.polyline([], {color: '#1E90FF', weight: 6, opacity: 0.9}).addTo(map);
+            animatedLine = L.polyline([], {color: '#0A192F', weight: 6, opacity: 0.9}).addTo(map);
 
             const bikeIcon = L.divIcon({
                 html: '<div>🚴‍♂️</div>',
