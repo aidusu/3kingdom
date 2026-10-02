@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>台北自行車河濱路線播放</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 引入 Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: "Microsoft JhengHei", "Heiti TC", sans-serif;
+        }
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="controls">
+        <h3>🚴‍♂️ 今日騎行路線回顧</h3>
+        <button id="playBtn">▶ 開始播放路線</button>
+    </div>
+
+    <div id="map"></div>
+
+    <!-- 引入 Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // 初始化地圖，中心點先設定在台北
+        const map = L.map('map').setView([25.035, 121.520], 13);
+
+        // 加入 OpenStreetMap 圖層
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // 路線 12 個景點的座標 (近似值)
+        const routePoints = [
+            { name: "(1) 大稻埕碼頭", coords: [25.0568, 121.5076] },
+            { name: "(2) 華江雁鴨公園", coords: [25.0381, 121.4963] },
+            { name: "(3) 馬場町", coords: [25.0208, 121.5052] },
+            { name: "(4) 古亭河濱公園", coords: [25.0183, 121.5218] },
+            { name: "(5) 自來水博物館", coords: [25.0135, 121.5292] },
+            { name: "(6) 寶藏岩", coords: [25.0106, 121.5326] },
+            { name: "(7) 景美橋下", coords: [24.9922, 121.5413] },
+            { name: "(8) 恆光橋下", coords: [24.9811, 121.5642] },
+            { name: "(9) 萬壽橋下", coords: [24.9941, 121.5745] },
+            { name: "(10) 台北市動物園", coords: [24.9984, 121.5810] },
+            { name: "(11) 道南橋 (景美溪左岸)", coords: [24.9881, 121.5772] },
+            { name: "(12) 政治大學", coords: [24.9866, 121.5752] }
+        ];
+
+        // 調整初始地圖範圍以涵蓋起點
+        map.setView(routePoints[0].coords, 14);
+
+        let currentIndex = 0;
+        let polylines = [];
+        let markers = [];
+        const playBtn = document.getElementById('playBtn');
+
+        // 播放動畫函數
+        function playRoute() {
+            playBtn.disabled = true;
+            playBtn.innerText = "播放中...";
+            
+            // 清除之前的路線與標記
+            polylines.forEach(p => map.removeLayer(p));
+            markers.forEach(m => map.removeLayer(m));
+            polylines = [];
+            markers = [];
+            currentIndex = 0;
+
+            // 每隔 1.5 秒前進一個點
+            const interval = setInterval(() => {
+                if (currentIndex >= routePoints.length) {
+                    clearInterval(interval);
+                    playBtn.disabled = false;
+                    playBtn.innerText = "↺ 重新播放";
+                    
+                    // 播放完畢後將視角拉遠，顯示全貌
+                    const allLatLngs = routePoints.map(pt => pt.coords);
+                    map.fitBounds(L.polyline(allLatLngs).getBounds(), { padding: [50, 50] });
+                    return;
+                }
+
+                const point = routePoints[currentIndex];
+
+                // 加入地點標記
+                const marker = L.marker(point.coords).addTo(map);
+                marker.bindPopup(`<b>${point.name}</b>`).openPopup();
+                markers.push(marker);
+
+                // 畫出兩點之間的連線 (除了起點)
+                if (currentIndex > 0) {
+                    const prevPoint = routePoints[currentIndex - 1];
+                    const polyline = L.polyline([prevPoint.coords, point.coords], {
+                        color: 'blue',
+                        weight: 5,
+                        opacity: 0.7,
+                        dashArray: '10, 10', // 讓線條變成虛線，看起來更有移動感
+                        lineJoin: 'round'
+                    }).addTo(map);
+                    polylines.push(polyline);
+                }
+
+                // 將地圖中心平滑移動到目前節點
+                map.flyTo(point.coords, 14, {
+                    animate: true,
+                    duration: 1
+                });
+
+                currentIndex++;
+            }, 1500); // 1500毫秒 = 1.5秒
+        }
+
+        // 綁定按鈕事件
+        playBtn.addEventListener('click', playRoute);
+    </script>
+</body>
+</html>
