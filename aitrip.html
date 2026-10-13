@@ -1,74 +1,116 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GPS + UUID 傳送器</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AICare GPS 回報器</title>
   <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      padding: 4vw; 
-      margin: 0;
-      background: #f8f8f8;
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      padding: 1.5rem;
+      margin: 0 auto;
+      max-width: 480px;
+      background-color: #f7f9fa;
+      color: #333;
     }
-    label, input, button { 
-      display: block; 
-      margin-top: 4vw; 
-      font-size: 1.1rem; 
+    .card {
+      background: #ffffff;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
-    input { 
-      padding: 1em; 
-      width: 100%; 
-      box-sizing: border-box;
-      max-width: 400px;
+    h2 {
+      margin-top: 0;
+      color: #1a73e8;
+      text-align: center;
     }
-    button { 
-      padding: 1em; 
-      margin-top: 6vw; 
+    label {
+      display: block;
+      margin-top: 1.2rem;
+      font-weight: bold;
+      font-size: 0.95rem;
+    }
+    input {
       width: 100%;
-      font-size: 1.1rem;
-    }
-    #output, #error {
-      margin-top: 5vw;
+      padding: 0.8rem;
+      margin-top: 0.4rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
       font-size: 1rem;
+      box-sizing: border-box;
+    }
+    input:focus {
+      border-color: #1a73e8;
+      outline: none;
+    }
+    button {
+      width: 100%;
+      margin-top: 1.5rem;
+      padding: 0.9rem;
+      background-color: #1a73e8;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    button:disabled {
+      background-color: #9aa0a6;
+      cursor: not-allowed;
+    }
+    button:hover:not(:disabled) {
+      background-color: #1557b0;
+    }
+    #status {
+      margin-top: 1.2rem;
+      padding: 0.8rem;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      white-space: pre-line;
       word-break: break-all;
-      white-space: pre-wrap; /* 讓 \n 換行效果正常顯示 */
+      background: #f1f3f4;
+      display: none;
     }
-    #error {
-      color: #d9534f;
+    .error {
+      background-color: #fce8e6 !important;
+      color: #c5221f;
     }
-    @media (max-width: 600px) {
-      body {
-        padding: 3vw;
-      }
-      label, input, button {
-        font-size: 1rem;
-      }
+    .success {
+      background-color: #e6f4ea !important;
+      color: #137333;
     }
   </style>
 </head>
 <body>
-  <h2>AI Trip 回報位置</h2>
-  <label for="teamCode">團隊編號:</label>
-  <input type="text" id="teamCode" placeholder="例如：TWM" required />
 
-  <label for="name">成員姓名:</label>
-  <input type="text" id="name" placeholder="例如：Hermann" />
+  <div class="card">
+    <h2>📍 AICare 位置回報</h2>
+    
+    <label for="teamCode">團隊編號 <span style="color:red;">*</span></label>
+    <input type="text" id="teamCode" placeholder="例如：C13" required />
 
-  <button onclick="sendGPS()">取得位置並送出</button>
+    <label for="name">姓名 / 暱稱（選填）</label>
+    <input type="text" id="name" placeholder="例如：小華" />
 
-  <div id="output">尚未執行任何動作</div>
-  <div id="error"></div>
+    <button id="sendBtn" onclick="sendGPS()">取得位置並送出</button>
+
+    <div id="status"></div>
+  </div>
 
   <script>
-    // 產生或取得裝置唯一識別 UUID
+    // ⚠️ 請將此處換成您部署的 Google Apps Script Web App 網址
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx4YIRx1aqB8f-3DXQSF3Jk4xrKsL3yO14-2y_MR0uLHfiJOa4PJsMhG-l2l-fb7rI1/exec";
+
+    // 取得或產生裝置唯一 UUID 並保存在 LocalStorage
     let uuid = localStorage.getItem("deviceUUID");
     if (!uuid) {
       uuid = crypto.randomUUID();
       localStorage.setItem("deviceUUID", uuid);
     }
 
-    // 將 Date 物件格式化為台北時區 YYYY/MM/DD HH:MM
+    // 格式化為 Asia/Taipei 台北時間字串
     function formatTaipeiTime(date) {
       const options = {
         timeZone: 'Asia/Taipei',
@@ -80,31 +122,40 @@
         hour12: false
       };
       let str = date.toLocaleString('zh-TW', options);
-      str = str.replace(/(\d{2}):(\d{2}):\d{2}$/, '$1:$2');
-      return str;
+      return str.replace(/(\d{2}):(\d{2}):\d{2}$/, '$1:$2');
+    }
+
+    function showStatus(text, type = "normal") {
+      const status = document.getElementById("status");
+      status.style.display = "block";
+      status.textContent = text;
+      status.className = "";
+      if (type === "error") status.classList.add("error");
+      if (type === "success") status.classList.add("success");
     }
 
     function sendGPS() {
-      const output = document.getElementById("output");
-      const error = document.getElementById("error");
-      const teamCode = document.getElementById("teamCode").value.trim();
-      const name = document.getElementById("name").value.trim();
+      const teamCodeInput = document.getElementById("teamCode");
+      const nameInput = document.getElementById("name");
+      const sendBtn = document.getElementById("sendBtn");
 
-      output.textContent = "正在取得 GPS 位置...";
-      error.textContent = "";
+      const teamCode = teamCodeInput.value.trim();
+      const name = nameInput.value.trim();
 
-      // 驗證必填欄位
       if (!teamCode) {
-        error.textContent = "⚠️ 請輸入團隊編號";
-        output.textContent = "";
+        showStatus("⚠️ 請輸入團隊編號！", "error");
+        teamCodeInput.focus();
         return;
       }
 
       if (!navigator.geolocation) {
-        error.textContent = "⚠️ 瀏覽器不支援 GPS 定位";
-        output.textContent = "";
+        showStatus("⚠️ 您的瀏覽器或設備不支援 GPS 定位功能。", "error");
         return;
       }
+
+      // 鎖定按鈕避免連點
+      sendBtn.disabled = true;
+      showStatus("正在讀取 GPS 座標，請稍候...");
 
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -122,31 +173,44 @@
             timestamp: taipeiTime,
           };
 
-          output.textContent = `📍 裝置 UUID：${uuid}\n團隊編號：${teamCode}\n姓名：${name || "(未填)"}\n緯度：${lat}\n經度：${lon}\n時間：${taipeiTime}\n\n資料傳送中...`;
+          showStatus(`📍 已取得座標！\n緯度：${lat}\n經度：${lon}\n正在送出至雲端...`);
 
-          // 修改傳送邏輯
-          fetch("https://script.google.com/macros/s/AKfycbx4YIRx1aqB8f-3DXQSF3Jk4xrKsL3yO14-2y_MR0uLHfiJOa4PJsMhG-l2l-fb7rI1/exec", {
+          // 送出 POST 請求到 Google Apps Script
+          fetch(GAS_WEB_APP_URL, {
             method: "POST",
-            // 使用 text/plain 可避免預檢請求 (Preflight CORS)，GAS 仍可透過 e.postData.contents 讀取內容
+            mode: "no-cors", // Google Apps Script 跨網域必要設定
             headers: {
-              "Content-Type": "text/plain;charset=utf-8"
+              "Content-Type": "application/json"
             },
             body: JSON.stringify(payload)
           })
-          .then(res => {
-            if (res.ok) {
-              output.textContent += "\n✅ 資料已送出！";
-            } else {
-              output.textContent += "\n✅ 資料已送出（請至 Sheet 確認是否寫入）";
-            }
+          .then(() => {
+            showStatus(`✅ 打卡成功！\n團隊：${teamCode}\n時間：${taipeiTime}`, "success");
           })
           .catch((err) => {
-            error.textContent = "❌ 傳送失敗：" + err;
+            showStatus("❌ 資料傳送失敗：" + err, "error");
+          })
+          .finally(() => {
+            sendBtn.disabled = false;
           });
         },
         (err) => {
-          error.textContent = "❌ 定位失敗：" + err.message;
-          output.textContent = "";
+          sendBtn.disabled = false;
+          let msg = "定位失敗：";
+          switch (err.code) {
+            case err.PERMISSION_DENIED:
+              msg += "使用者拒絕提供位置權限。";
+              break;
+            case err.POSITION_UNAVAILABLE:
+              msg += "無法取得目前位置資訊。";
+              break;
+            case err.TIMEOUT:
+              msg += "定位逾時，請至收訊良好處重試。";
+              break;
+            default:
+              msg += err.message;
+          }
+          showStatus("❌ " + msg, "error");
         },
         {
           enableHighAccuracy: true,
