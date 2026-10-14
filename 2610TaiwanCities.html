@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台灣主要城市座標地圖</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        #header {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #333;
+            pointer-events: none;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .city-popup {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .city-popup strong {
+            font-size: 16px;
+            color: #1a73e8;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="header">台灣主要城市座標點展示</div>
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // 初始化地圖，中心點設在台灣中央附近 (埔里附近經緯度)
+        const map = L.map('map').setView([23.8, 120.95], 8);
+
+        // 使用免費開源的 OpenStreetMap 圖資
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> 貢獻者'
+        }).addTo(map);
+
+        // 8 個城市的座標資料
+        const cities = [
+            { name: "基隆", lat: 25.1276, lng: 121.7392 },
+            { name: "台北", lat: 25.0330, lng: 121.5654 },
+            { name: "宜蘭", lat: 24.7570, lng: 121.7530 },
+            { name: "台中", lat: 24.1632, lng: 120.6403 },
+            { name: "花蓮", lat: 23.9912, lng: 121.6197 },
+            { name: "台南", lat: 22.9997, lng: 120.1856 },
+            { name: "台東", lat: 22.7583, lng: 121.1444 },
+            { name: "高雄", lat: 22.6273, lng: 120.3014 }
+        ];
+
+        // 標記群組，用於自適應縮放視野
+        const markers = [];
+
+        // 逐一新增標記 (Marker) 與點擊彈窗 (Popup)
+        cities.forEach(city => {
+            const popupContent = `
+                <div class="city-popup">
+                    <strong>${city.name}</strong><br>
+                    緯度：${city.lat}<br>
+                    經度：${city.lng}
+                </div>
+            `;
+            const marker = L.marker([city.lat, city.lng])
+                .addTo(map)
+                .bindPopup(popupContent);
+            
+            markers.push(marker);
+        });
+
+        // 自動調整地圖縮放比例以完整容納這 8 個點
+        const group = new L.featureGroup(markers);
+        map.fitBounds(group.getBounds().pad(0.1));
+    </script>
+</body>
+</html>
