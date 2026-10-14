@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>台灣出國目的地造訪人數世界分佈圖</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-light: #eff6ff;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Microsoft JhengHei", sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* 頂部標題列 */
+    header {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .header-title h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    .header-title p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .stats-summary {
+      display: flex;
+      gap: 20px;
+    }
+    .summary-item {
+      text-align: right;
+    }
+    .summary-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+    .summary-val {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    /* 上下分割主版面 */
+    .main-layout {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 60px);
+      overflow: hidden;
+    }
+
+    /* 上半部：地圖 */
+    .map-container {
+      flex: 0 0 54%;
+      position: relative;
+      background: #e2e8f0;
+      border-bottom: 2px solid var(--border);
+    }
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* 地圖圖例面板 */
+    .legend-panel {
+      position: absolute;
+      bottom: 14px;
+      right: 14px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(4px);
+      padding: 8px 14px;
+      border-radius: 8px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+      border: 1px solid var(--border);
+      font-size: 0.76rem;
+      z-index: 999;
+      line-height: 1.5;
+    }
+    .legend-title {
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: #334155;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-color {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    /* 下半部：表格與工具列 */
+    .table-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--card-bg);
+      overflow: hidden;
+    }
+    .table-toolbar {
+      padding: 8px 24px;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .search-input {
+      width: 280px;
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.85rem;
+      outline: none;
+    }
+    .search-input:focus {
+      border-color: var(--primary);
+    }
+    .table-hint {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .table-wrapper {
+      flex: 1;
+      overflow-y: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.88rem;
+    }
+    thead th {
+      position: sticky;
+      top: 0;
+      background: #f1f5f9;
+      color: #475569;
+      font-weight: 600;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      z-index: 2;
+    }
+    tbody td {
+      padding: 9px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #1e293b;
+    }
+    tbody tr {
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    tbody tr:hover {
+      background: var(--primary-light);
+    }
+    tbody tr.active-row {
+      background: #dbeafe !important;
+      font-weight: 600;
+    }
+
+    /* 排名徽章 */
+    .rank-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: #e2e8f0;
+      color: #475569;
+    }
+    .top-1 { background: #fef08a; color: #854d0e; }
+    .top-2 { background: #e2e8f0; color: #1e293b; }
+    .top-3 { background: #fed7aa; color: #9a3412; }
+
+    /* 比例長條圖 */
+    .share-bar-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .share-bar {
+      flex: 1;
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 3px;
+      overflow: hidden;
+      max-width: 140px;
+    }
+    .share-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 3px;
+    }
+
+    /* 彈跳視窗 Popup */
+    .leaflet-popup-content-wrapper {
+      border-radius: 8px;
+      padding: 4px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+    .popup-box {
+      min-width: 170px;
+    }
+    .popup-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #0f172a;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 4px;
+      margin-bottom: 6px;
+    }
+    .popup-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      margin: 3px 0;
+    }
+    .popup-val {
+      font-weight: 700;
+      color: var(--primary);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-title">
+      <h1>台灣出國目的地造訪人數世界分佈圖</h1>
+      <p>涵蓋全球 34 個主要造訪國家與地區（使用標準免費開源底圖，點擊可雙向定位）</p>
+    </div>
+    <div class="stats-summary">
+      <div class="summary-item">
+        <div class="summary-label">涵蓋目的地</div>
+        <div class="summary-val">34 個國家/地區</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">出國總造訪人次</div>
+        <div class="summary-val" id="total-visitors">計算中...</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="main-layout">
+    <!-- 上半部：世界地圖 -->
+    <div class="map-container">
+      <div id="map"></div>
+
+      <!-- 地圖圖例 -->
+      <div class="legend-panel">
+        <div class="legend-title">造訪人數分級</div>
+        <div class="legend-item"><span class="legend-color" style="background:#e11d48;"></span> 100 萬人次以上</div>
+        <div class="legend-item"><span class="legend-color" style="background:#ea580c;"></span> 30 萬 - 100 萬</div>
+        <div class="legend-item"><span class="legend-color" style="background:#d97706;"></span> 5 萬 - 30 萬</div>
+        <div class="legend-item"><span class="legend-color" style="background:#059669;"></span> 1 萬 - 5 萬</div>
+        <div class="legend-item"><span class="legend-color" style="background:#0284c7;"></span> 1 萬以下</div>
+      </div>
+    </div>
+
+    <!-- 下半部：數據表格 -->
+    <section class="table-section">
+      <div class="table-toolbar">
+        <input type="text" id="searchInput" class="search-input" placeholder="搜尋國家或地區名稱..." oninput="handleSearch()"/>
+        <div class="table-hint">提示：點擊任一國家列即可在地圖上自動鎖定並放大</div>
+      </div>
+
+      <div class="table-wrapper">
+        <table id="countryTable">
+          <thead>
+            <tr>
+              <th style="width: 80px; text-align: center;">排名</th>
+              <th style="width: 180px;">目的地國家 / 地區</th>
+              <th style="width: 180px;">造訪人次</th>
+              <th style="width: 240px;">出國佔比</th>
+              <th>地理位置座標</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // 圖片中 34 個國家與人數資料
+    const rawData = [
+      { name: "日本", count: 6730817, lat: 36.2048, lng: 138.2529 },
+      { name: "韓國", count: 1835061, lat: 35.9078, lng: 127.7669 },
+      { name: "香港", count: 1626176, lat: 22.3193, lng: 114.1694 },
+      { name: "中國大陸", count: 3237511, lat: 35.8617, lng: 104.1954 },
+      { name: "澳門", count: 567529, lat: 22.1987, lng: 113.5439 },
+      { name: "越南", count: 1214362, lat: 14.0583, lng: 108.2772 },
+      { name: "泰國", count: 1026976, lat: 15.8700, lng: 100.9925 },
+      { name: "馬來西亞", count: 315455, lat: 4.2105, lng: 101.9758 },
+      { name: "新加坡", count: 395658, lat: 1.3521, lng: 103.8198 },
+      { name: "菲律賓", count: 234043, lat: 12.8797, lng: 121.7740 },
+      { name: "印尼", count: 162169, lat: -0.7893, lng: 113.9213 },
+      { name: "柬埔寨", count: 58909, lat: 12.5657, lng: 104.9910 },
+      { name: "印度", count: 261, lat: 20.5937, lng: 78.9629 },
+      { name: "斯里蘭卡", count: 69, lat: 7.8731, lng: 80.7718 },
+      { name: "尼泊爾", count: 69, lat: 28.3949, lng: 84.1240 },
+      { name: "阿拉伯聯合大公國", count: 182778, lat: 23.4241, lng: 53.8478 },
+      { name: "土耳其", count: 110584, lat: 38.9637, lng: 35.2433 },
+      { name: "埃及", count: 475, lat: 26.8206, lng: 30.8025 },
+      { name: "摩洛哥", count: 30, lat: 31.7917, lng: -7.0926 },
+      { name: "南非", count: 50, lat: -30.5595, lng: 22.9375 },
+      { name: "美國", count: 568258, lat: 37.0902, lng: -95.7129 },
+      { name: "加拿大", count: 86668, lat: 56.1304, lng: -106.3468 },
+      { name: "墨西哥", count: 25, lat: 23.6345, lng: -102.5528 },
+      { name: "澳洲", count: 160328, lat: -25.2744, lng: 133.7751 },
+      { name: "紐西蘭", count: 33358, lat: -40.9006, lng: 174.8860 },
+      { name: "帛琉", count: 14043, lat: 7.5150, lng: 134.5825 },
+      { name: "法國", count: 62846, lat: 46.2276, lng: 2.2137 },
+      { name: "德國", count: 82386, lat: 51.1657, lng: 10.4515 },
+      { name: "義大利", count: 59579, lat: 41.8719, lng: 12.5674 },
+      { name: "英國", count: 32939, lat: 55.3781, lng: -3.4360 },
+      { name: "西班牙", count: 331, lat: 40.4637, lng: -3.7492 },
+      { name: "愛爾蘭", count: 25, lat: 53.1424, lng: -7.6921 },
+      { name: "葡萄牙", count: 101, lat: 39.3999, lng: -8.2245 },
+      { name: "奧地利", count: 60385, lat: 47.5162, lng: 14.5501 }
+    ];
+
+    // 依造訪人數遞減排序
+    rawData.sort((a, b) => b.count - a.count);
+
+    const totalVisitors = rawData.reduce((acc, cur) => acc + cur.count, 0);
+    document.getElementById('total-visitors').innerText = totalVisitors.toLocaleString() + ' 人次';
+
+    function getColor(count) {
+      if (count >= 1000000) return '#e11d48';
+      if (count >= 300000) return '#ea580c';
+      if (count >= 50000) return '#d97706';
+      if (count >= 10000) return '#059669';
+      return '#0284c7';
+    }
+
+    function getRadius(count) {
+      if (count <= 0) return 4;
+      return Math.max(5, Math.min(34, Math.log10(count + 1) * 4.8));
+    }
+
+    // 1. 初始化世界地圖
+    const map = L.map('map', {
+      center: [25.0, 15.0],
+      zoom: 2,
+      minZoom: 2,
+      maxZoom: 18,
+      worldCopyJump: true
+    });
+
+    // 免費且最穩定的 OpenStreetMap 官方開源圖資（無 Token、無網域限制）
+    const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      subdomains: ['a', 'b', 'c'],
+      crossOrigin: true,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> 貢獻者'
+    });
+
+    // 備用免費圖資：CartoDB 簡約版
+    const cartoLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      subdomains: 'abcd',
+      crossOrigin: true,
+      attribution: '&copy; CartoDB & OSM'
+    });
+
+    // 備用免費圖資：Esri 衛星空照圖
+    const esriLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 18,
+      crossOrigin: true,
+      attribution: '&copy; Esri World Imagery'
+    });
+
+    // 預設載入最穩定的 OpenStreetMap
+    osmLayer.addTo(map);
+
+    // 右上角圖層控制面板
+    L.control.layers({
+      "標準開源地圖 (OpenStreetMap)": osmLayer,
+      "簡約淺色世界圖 (CartoDB)": cartoLayer,
+      "高解析衛星空照 (Esri)": esriLayer
+    }, null, { position: 'topright' }).addTo(map);
+
+    const markerMap = new Map();
+
+    // 2. 標記各國氣泡
+    rawData.forEach((item, index) => {
+      const share = ((item.count / totalVisitors) * 100).toFixed(2);
+      const color = getColor(item.count);
+      const radius = getRadius(item.count);
+
+      const marker = L.circleMarker([item.lat, item.lng], {
+        radius: radius,
+        fillColor: color,
+        color: '#ffffff',
+        weight: 1.5,
+        opacity: 0.95,
+        fillOpacity: 0.75
+      }).addTo(map);
+
+      const popupContent = `
+        <div class="popup-box">
+          <div class="popup-title">${item.name}</div>
+          <div class="popup-row"><span>造訪人次：</span><span class="popup-val">${item.count.toLocaleString()} 人</span></div>
+          <div class="popup-row"><span>出國佔比：</span><span class="popup-val">${share}%</span></div>
+          <div class="popup-row"><span>造訪排名：</span><span class="popup-val">第 ${index + 1} 名</span></div>
+        </div>
+      `;
+
+      marker.bindPopup(popupContent);
+      markerMap.set(item.name, marker);
+
+      marker.on('click', () => {
+        highlightTableRow(item.name);
+      });
+    });
+
+    // 3. 渲染下方表格
+    function renderTable(data) {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+
+      data.forEach((item) => {
+        const globalRank = rawData.findIndex(r => r.name === item.name) + 1;
+        const share = ((item.count / totalVisitors) * 100).toFixed(2);
+
+        let rankClass = '';
+        if (globalRank === 1) rankClass = 'top-1';
+        else if (globalRank === 2) rankClass = 'top-2';
+        else if (globalRank === 3) rankClass = 'top-3';
+
+        const tr = document.createElement('tr');
+        tr.id = `row-${item.name}`;
+        tr.innerHTML = `
+          <td style="text-align: center;"><span class="rank-badge ${rankClass}">${globalRank}</span></td>
+          <td style="font-weight: 600;">${item.name}</td>
+          <td style="font-weight: 700; color: #1e293b;">${item.count.toLocaleString()}</td>
+          <td>
+            <div class="share-bar-container">
+              <span style="min-width: 45px;">${share}%</span>
+              <div class="share-bar">
+                <div class="share-fill" style="width: ${Math.min(100, Math.max(2, share * 2))}%;"></div>
+              </div>
+            </div>
+          </td>
+          <td style="color: var(--text-muted); font-size: 0.8rem;">${item.lat > 0 ? '北緯 '+item.lat.toFixed(2) : '南緯 '+Math.abs(item.lat).toFixed(2)}, ${item.lng > 0 ? '東經 '+item.lng.toFixed(2) : '西經 '+Math.abs(item.lng).toFixed(2)}</td>
+        `;
+
+        tr.onclick = () => {
+          focusCountry(item);
+        };
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    // 點選國家飛往該點
+    function focusCountry(item) {
+      highlightTableRow(item.name);
+      const marker = markerMap.get(item.name);
+      if (marker) {
+        map.flyTo([item.lat, item.lng], 5, { duration: 1.2 });
+        setTimeout(() => marker.openPopup(), 600);
+      }
+    }
+
+    function highlightTableRow(name) {
+      document.querySelectorAll('#tableBody tr').forEach(r => r.classList.remove('active-row'));
+      const row = document.getElementById(`row-${name}`);
+      if (row) {
+        row.classList.add('active-row');
+        row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
+    // 搜尋功能
+    function handleSearch() {
+      const q = document.getElementById('searchInput').value.trim();
+      const filtered = rawData.filter(d => d.name.includes(q));
+      renderTable(filtered);
+    }
+
+    // 確保視窗載入或大小改變時地圖完整渲染
+    window.addEventListener('resize', () => {
+      map.invalidateSize();
+    });
+
+    // 初始渲染
+    renderTable(rawData);
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 200);
+  </script>
+</body>
+</html>
