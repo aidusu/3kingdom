@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>南投縣熱門觀光景點人潮分佈地圖</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fff7ed',
+              100: '#ffedd5',
+              500: '#f97316',
+              600: '#ea580c',
+              700: '#c2410c',
+              900: '#7c2d12'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- FontAwesome 圖標 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap');
+    body {
+      font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .leaflet-popup-content-wrapper {
+      border-radius: 12px;
+      padding: 0;
+      overflow: hidden;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25);
+    }
+    .leaflet-popup-content {
+      margin: 0;
+      line-height: 1.4;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: #cbd5e1;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 h-screen flex flex-col overflow-hidden">
+
+  <!-- 頂部資訊列 -->
+  <header class="bg-white border-b border-slate-200 px-4 py-3 sm:px-6 flex flex-wrap items-center justify-between gap-3 z-30 shadow-sm">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-rose-600 flex items-center justify-center text-white shadow-md shadow-rose-500/20">
+        <i class="fa-solid fa-map-location-dot text-lg"></i>
+      </div>
+      <div>
+        <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">南投縣觀光景點人潮分佈地圖</h1>
+        <p class="text-xs text-slate-500">依景點到訪人數呈現氣泡熱度與全縣人潮排行</p>
+      </div>
+    </div>
+
+    <!-- 快速數據統計摘要 -->
+    <div class="flex items-center gap-2 sm:gap-6 text-xs sm:text-sm">
+      <div class="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+        <span class="text-slate-500 font-medium">總造訪人次</span>
+        <span id="stat-total" class="font-bold text-rose-600">0</span>
+      </div>
+      <div class="hidden sm:flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+        <span class="text-slate-500 font-medium">景點平均</span>
+        <span id="stat-avg" class="font-bold text-amber-600">0</span>
+      </div>
+      <div class="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+        <span class="text-slate-500 font-medium">冠軍景點</span>
+        <span id="stat-top" class="font-bold text-slate-900">載入中</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主體容器：側邊欄 + 地圖 -->
+  <div class="flex-1 flex flex-col md:flex-row relative overflow-hidden">
+    
+    <!-- 景點人潮排行榜側邊欄 -->
+    <aside class="w-full md:w-80 lg:w-96 bg-white border-b md:border-b-0 md:border-r border-slate-200 flex flex-col z-20 shadow-sm md:h-full max-h-[35vh] md:max-h-full">
+      <div class="p-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-fire text-rose-500 text-sm"></i>
+          <h2 class="font-bold text-sm text-slate-800">景點人氣排行列表</h2>
+        </div>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-slate-200 text-slate-600 font-semibold" id="spot-count">20 個景點</span>
+      </div>
+
+      <!-- 景點清單列表 -->
+      <div id="spot-list" class="flex-1 overflow-y-auto divide-y divide-slate-100 custom-scrollbar">
+        <!-- 由 JS 動態注入項目 -->
+      </div>
+    </aside>
+
+    <!-- 地圖主區域 -->
+    <main class="flex-1 relative h-full">
+      <div id="map" class="w-full h-full"></div>
+
+      <!-- 地圖圖例說明微章 -->
+      <div class="absolute bottom-5 right-4 z-[1000] bg-white/95 backdrop-blur-sm p-3.5 rounded-xl border border-slate-200/80 shadow-lg text-xs max-w-[210px] pointer-events-none">
+        <div class="font-bold text-slate-800 mb-2 flex items-center gap-1.5">
+          <i class="fa-solid fa-circle-info text-amber-500"></i> 人次圖例指標
+        </div>
+        <div class="space-y-1.5 text-slate-600">
+          <div class="flex items-center gap-2">
+            <span class="w-3.5 h-3.5 rounded-full bg-rose-600 inline-block border border-white shadow"></span>
+            <span>150 萬人以上 (超高人氣)</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-amber-500 inline-block border border-white shadow"></span>
+            <span>50 萬 ~ 150 萬人</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block border border-white shadow"></span>
+            <span>10 萬 ~ 50 萬人</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-cyan-500 inline-block border border-white shadow"></span>
+            <span>10 萬人以下</span>
+          </div>
+        </div>
+        <div class="mt-2.5 pt-2 border-t border-slate-100 text-[11px] text-slate-400">
+          點擊地圖圓圈或列表即可聚焦景點
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // 景點資料庫（完全繁體中文，無任何英文名稱）
+    const attractions = [
+      { name: "九族文化村", visitors: 622910, lat: 23.8698, lng: 120.9497 },
+      { name: "八卦山風景區(南投地區)", visitors: 1637267, lat: 23.9042, lng: 120.6496 },
+      { name: "中臺禪寺", visitors: 385600, lat: 23.9918, lng: 120.9439 },
+      { name: "天空之橋", visitors: 66328, lat: 23.9103, lng: 120.6346 },
+      { name: "日月潭環潭區", visitors: 2592730, lat: 23.8523, lng: 120.9158 },
+      { name: "水里遊客中心", visitors: 30154, lat: 23.8094, lng: 120.8548 },
+      { name: "竹山天梯風景區", visitors: 1038, lat: 23.6543, lng: 120.7188 },
+      { name: "農業部生物多樣性研究所(特有生物研究保育中心)", visitors: 52483, lat: 23.8306, lng: 120.7937 },
+      { name: "杉林溪森林生態渡假園區", visitors: 802841, lat: 23.6302, lng: 120.7932 },
+      { name: "車埕", visitors: 876320, lat: 23.8327, lng: 120.8661 },
+      { name: "東埔溫泉", visitors: 183694, lat: 23.5622, lng: 120.9298 },
+      { name: "桃米地區", visitors: 47967, lat: 23.9422, lng: 120.9287 },
+      { name: "泰雅渡假村", visitors: 30766, lat: 24.0805, lng: 120.9458 },
+      { name: "鳳凰谷鳥園生態園區", visitors: 130817, lat: 23.7278, lng: 120.7892 },
+      { name: "清境高空觀景步道", visitors: 191883, lat: 24.0538, lng: 121.1611 },
+      { name: "清境農場", visitors: 679949, lat: 24.0583, lng: 121.1627 },
+      { name: "惠蓀林場", visitors: 126308, lat: 24.0881, lng: 121.0336 },
+      { name: "塔塔加遊憩區", visitors: 483787, lat: 23.4908, lng: 120.8856 },
+      { name: "奧萬大國家森林遊樂區", visitors: 85021, lat: 23.9515, lng: 121.1804 },
+      { name: "溪頭自然教育園區", visitors: 1570107, lat: 23.6738, lng: 120.7972 }
+    ];
+
+    // 依到訪人數遞減排序
+    attractions.sort((a, b) => b.visitors - a.visitors);
+
+    // 加上排名屬性
+    attractions.forEach((item, index) => {
+      item.rank = index + 1;
+    });
+
+    // 格式化千分位數值
+    function formatNumber(num) {
+      return num.toLocaleString('zh-TW');
+    }
+
+    // 依人次高低設定色彩與半徑
+    function getStyleByVisitors(visitors) {
+      if (visitors >= 1500000) {
+        return { radius: 24, fillColor: "#e11d48", color: "#9f1239", fillOpacity: 0.85, tag: "超高人氣" };
+      } else if (visitors >= 500000) {
+        return { radius: 19, fillColor: "#f97316", color: "#c2410c", fillOpacity: 0.85, tag: "高人氣" };
+      } else if (visitors >= 100000) {
+        return { radius: 14, fillColor: "#10b981", color: "#047857", fillOpacity: 0.85, tag: "熱門" };
+      } else {
+        return { radius: 10, fillColor: "#06b6d4", color: "#0e7490", fillOpacity: 0.85, tag: "一般" };
+      }
+    }
+
+    // 建立地圖實例
+    const map = L.map('map', {
+      center: [23.85, 120.9],
+      zoom: 10,
+      zoomControl: false
+    });
+
+    // 將縮放控制鈕調整至左下角，不遮擋頂部
+    L.control.zoom({ position: 'bottomleft' }).addTo(map);
+
+    // 免費底圖圖資清單
+    const tileNLSC = L.tileLayer('https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{z}/{y}/{x}', {
+      maxZoom: 19,
+      attribution: '&copy; 內政部國土測繪中心 (NLSC)'
+    });
+
+    const tileOSM = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap 貢獻者'
+    });
+
+    const tileEsriSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 18,
+      attribution: '&copy; Esri 衛星影像'
+    });
+
+    // 預設套用清晰的台灣通用電子地圖
+    tileNLSC.addTo(map);
+
+    // 圖層切換控制器
+    const baseLayers = {
+      "台灣電子地圖 (NLSC)": tileNLSC,
+      "標準地圖 (OSM)": tileOSM,
+      "衛星空照圖 (Esri)": tileEsriSat
+    };
+    L.control.layers(baseLayers, null, { position: 'topright' }).addTo(map);
+
+    const markerMap = new Map();
+    const boundsGroup = L.featureGroup();
+
+    attractions.forEach((item) => {
+      const style = getStyleByVisitors(item.visitors);
+
+      const circle = L.circleMarker([item.lat, item.lng], {
+        radius: style.radius,
+        fillColor: style.fillColor,
+        color: '#ffffff',
+        weight: 2.5,
+        opacity: 1,
+        fillOpacity: style.fillOpacity
+      }).addTo(map);
+
+      // 自訂彈窗樣式
+      const popupContent = `
+        <div class="w-64">
+          <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-3.5 flex items-center justify-between">
+            <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-rose-500/90 text-white">第 ${item.rank} 名</span>
+            <span class="text-xs text-slate-300 font-mono">${item.lat.toFixed(4)}, ${item.lng.toFixed(4)}</span>
+          </div>
+          <div class="p-4 bg-white">
+            <h3 class="text-base font-bold text-slate-900 mb-2">${item.name}</h3>
+            <div class="flex items-baseline justify-between pt-1 border-t border-slate-100">
+              <span class="text-xs text-slate-500">到訪人次</span>
+              <span class="text-lg font-extrabold text-rose-600">${formatNumber(item.visitors)} <span class="text-xs font-medium text-slate-400">人</span></span>
+            </div>
+            <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+              <span>熱度評級</span>
+              <span class="font-medium text-slate-700">${style.tag}</span>
+            </div>
+          </div>
+        </div>
+      `;
+
+      circle.bindPopup(popupContent, { maxWidth: 280 });
+
+      // 滑鼠懸浮放大動態回饋
+      circle.on('mouseover', function () {
+        this.setStyle({ weight: 4, fillOpacity: 1 });
+      });
+      circle.on('mouseout', function () {
+        this.setStyle({ weight: 2.5, fillOpacity: style.fillOpacity });
+      });
+
+      markerMap.set(item.name, circle);
+      boundsGroup.addLayer(circle);
+    });
+
+    // 自動調整視野以容納南投縣全景點
+    map.fitBounds(boundsGroup.getBounds().pad(0.1));
+
+    // 渲染頂部摘要統計
+    const totalVisitors = attractions.reduce((acc, curr) => acc + curr.visitors, 0);
+    const avgVisitors = Math.round(totalVisitors / attractions.length);
+    document.getElementById('stat-total').innerText = `${formatNumber(totalVisitors)} 人`;
+    document.getElementById('stat-avg').innerText = `${formatNumber(avgVisitors)} 人`;
+    document.getElementById('stat-top').innerText = attractions[0].name;
+
+    // 渲染側邊欄清單
+    const spotListContainer = document.getElementById('spot-list');
+
+    attractions.forEach((item) => {
+      const style = getStyleByVisitors(item.visitors);
+      const percentage = ((item.visitors / attractions[0].visitors) * 100).toFixed(0);
+
+      const listItem = document.createElement('div');
+      listItem.className = "p-3.5 hover:bg-slate-50 cursor-pointer transition flex items-center justify-between group";
+      listItem.innerHTML = `
+        <div class="flex items-start gap-3 min-w-0 pr-2">
+          <span class="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+            item.rank <= 3 ? 'bg-amber-500 text-white shadow-sm' : 'bg-slate-200 text-slate-700'
+          }">
+            ${item.rank}
+          </span>
+          <div class="min-w-0">
+            <h4 class="font-semibold text-sm text-slate-800 group-hover:text-rose-600 transition truncate">${item.name}</h4>
+            <div class="w-24 bg-slate-100 rounded-full h-1.5 mt-1.5 overflow-hidden">
+              <div class="bg-rose-500 h-full rounded-full" style="width: ${percentage}%"></div>
+            </div>
+          </div>
+        </div>
+        <div class="text-right flex-shrink-0">
+          <div class="font-bold text-sm text-slate-900">${formatNumber(item.visitors)}</div>
+          <div class="text-[11px] text-slate-400">人次</div>
+        </div>
+      `;
+
+      // 點擊側邊項目時飛至景點並開啟彈窗
+      listItem.addEventListener('click', () => {
+        const marker = markerMap.get(item.name);
+        if (marker) {
+          map.flyTo([item.lat, item.lng], 13, { duration: 1.2 });
+          setTimeout(() => {
+            marker.openPopup();
+          }, 1250);
+        }
+      });
+
+      spotListContainer.appendChild(listItem);
+    });
+  </script>
+</body>
+</html>
