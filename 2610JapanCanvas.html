@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>日本 47 都道府縣制霸地圖 - 圓點標記版</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans TC"', 'sans-serif'],
+          },
+          colors: {
+            japanYellow: '#facc15',
+            japanYellowDark: '#eab308',
+            japanGray: '#cbd5e1',
+            japanGrayDark: '#94a3b8',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background-color: #f8fafc;
+      color: #1e293b;
+    }
+    
+    /* Base map vector styling */
+    .pref-base-path {
+      cursor: pointer;
+      fill: #f1f5f9;
+      stroke: #cbd5e1;
+      stroke-width: 1.2;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+      transition: fill 0.2s ease, stroke 0.2s ease;
+      vector-effect: non-scaling-stroke;
+    }
+
+    .pref-base-path:hover {
+      fill: #e2e8f0;
+      stroke: #94a3b8;
+    }
+
+    /* Interactive Dot styling */
+    .pref-dot-group {
+      cursor: pointer;
+      transition: transform 0.2s ease, filter 0.2s ease;
+    }
+
+    .pref-dot-group:hover {
+      filter: drop-shadow(0px 3px 6px rgba(0,0,0,0.3));
+    }
+
+    .pref-dot-group:hover .dot-circle {
+      r: 9;
+    }
+
+    /* Dot Colors */
+    .dot-circle {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      stroke-width: 2;
+    }
+
+    /* Visited State (Yellow) */
+    .pref-dot-group.visited .dot-circle {
+      fill: #facc15;
+      stroke: #d97706;
+    }
+
+    .pref-dot-group.visited .dot-pulse {
+      display: block;
+      animation: dot-glow 2s infinite ease-in-out;
+    }
+
+    /* Unvisited State (Gray) */
+    .pref-dot-group.unvisited .dot-circle {
+      fill: #94a3b8;
+      stroke: #64748b;
+    }
+
+    .pref-dot-group.unvisited .dot-pulse {
+      display: none;
+    }
+
+    .pref-dot-label {
+      pointer-events: none;
+      user-select: none;
+      font-size: 11px;
+      font-weight: 700;
+      fill: #334155;
+      text-shadow: 0px 1px 3px rgba(255,255,255,0.9);
+      transition: fill 0.2s ease;
+    }
+
+    .pref-dot-group.visited .pref-dot-label {
+      fill: #78350f;
+      font-weight: 800;
+    }
+
+    @keyframes dot-glow {
+      0%, 100% { transform: scale(1); opacity: 0.6; }
+      50% { transform: scale(1.6); opacity: 0.1; }
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    #japanSvg {
+      transition: transform 0.15s ease-out;
+    }
+  </style>
+</head>
+<body class="min-h-full flex flex-col bg-slate-50 text-slate-800 antialiased selection:bg-amber-200">
+
+  <!-- Header -->
+  <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-400 text-slate-900 flex items-center justify-center font-black text-xl shadow-md">
+          <i class="fa-solid fa-location-dot"></i>
+        </div>
+        <div>
+          <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white flex items-center gap-2">
+            日本 47 都道府縣制霸圖
+            <span class="text-[10px] sm:text-xs bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full font-extrabold tracking-wide">圓點標記版</span>
+          </h1>
+          <p class="text-xs text-slate-400 hidden sm:block">底圖顯示日本地形輪廓，點擊地圖圓點即可顯示黃色（已去過）或灰色（未去過）</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <button id="btnExport" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-3.5 py-1.5 rounded-lg text-sm transition flex items-center gap-1.5 shadow-sm active:scale-95">
+          <i class="fa-solid fa-download"></i>
+          <span class="hidden sm:inline">匯出分享圖</span>
+        </button>
+        <button id="btnResetConfirm" class="bg-slate-800 hover:bg-rose-950 hover:text-rose-300 text-slate-300 px-3 py-1.5 rounded-lg text-sm transition flex items-center gap-1.5 border border-slate-700 active:scale-95">
+          <i class="fa-solid fa-rotate-left"></i>
+          <span class="hidden sm:inline">重置</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- LEFT COLUMN: Base Map with Dots & Progress Stats (7 cols) -->
+    <section class="lg:col-span-7 flex flex-col space-y-4">
+      
+      <!-- Stats Summary Card -->
+      <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-3">
+          <div>
+            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">制霸進度 Conquest Progress</div>
+            <div class="flex items-baseline space-x-2">
+              <span id="visitedCount" class="text-3xl sm:text-4xl font-black text-slate-900">0</span>
+              <span class="text-slate-400 font-bold text-lg">/ 47</span>
+              <span id="percentText" class="text-amber-500 font-bold text-lg ml-2">(0.0%)</span>
+            </div>
+          </div>
+
+          <!-- Achievement Level Badge -->
+          <div id="achievementBadge" class="bg-slate-100 border border-slate-200 text-slate-600 rounded-xl px-4 py-2 flex items-center gap-3 transition-all duration-300">
+            <i id="badgeIcon" class="fa-solid fa-shoe-prints text-2xl text-slate-400"></i>
+            <div>
+              <div class="text-[10px] text-slate-400 uppercase tracking-wider">成就稱號 Level</div>
+              <div id="badgeTitle" class="font-bold text-sm text-slate-800">日本新手初者</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="w-full bg-slate-100 rounded-full h-3.5 overflow-hidden p-0.5 border border-slate-200">
+          <div id="progressBar" class="bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-400 h-full rounded-full transition-all duration-500 ease-out w-0 shadow-sm"></div>
+        </div>
+      </div>
+
+      <!-- Map Display Container -->
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col items-center justify-center relative overflow-hidden min-h-[520px]">
+        
+        <!-- Legend & Map Zoom Controls -->
+        <div class="w-full flex flex-wrap items-center justify-between gap-2 mb-2 pb-2 border-b border-slate-100 text-xs z-10">
+          <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2">
+              <span class="w-3.5 h-3.5 rounded-full bg-amber-400 border-2 border-amber-600 shadow-sm inline-block"></span>
+              <span class="font-semibold text-slate-800">已去過 (黃色圓點)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3.5 h-3.5 rounded-full bg-slate-400 border-2 border-slate-600 inline-block"></span>
+              <span class="font-semibold text-slate-500">未去過 (灰色圓點)</span>
+            </div>
+          </div>
+
+          <!-- Zoom / Pan controls -->
+          <div class="flex items-center space-x-1.5 bg-slate-100 p-1 rounded-xl">
+            <button id="btnZoomIn" class="w-7 h-7 flex items-center justify-center bg-white hover:bg-slate-200 rounded-lg text-slate-700 font-bold transition shadow-xs" title="放大">
+              <i class="fa-solid fa-plus text-xs"></i>
+            </button>
+            <button id="btnZoomOut" class="w-7 h-7 flex items-center justify-center bg-white hover:bg-slate-200 rounded-lg text-slate-700 font-bold transition shadow-xs" title="縮小">
+              <i class="fa-solid fa-minus text-xs"></i>
+            </button>
+            <button id="btnZoomReset" class="px-2 h-7 flex items-center justify-center bg-white hover:bg-slate-200 rounded-lg text-slate-700 font-semibold text-xs transition shadow-xs" title="重置畫面">
+              原圖
+            </button>
+            <div class="w-px h-4 bg-slate-300 mx-1"></div>
+            <button id="btnSelectAll" class="px-2.5 h-7 text-xs bg-slate-800 hover:bg-slate-900 text-white rounded-lg font-medium transition">全選</button>
+            <button id="btnClearAll" class="px-2.5 h-7 text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-medium transition">全清</button>
+          </div>
+        </div>
+
+        <!-- Dynamic Tooltip -->
+        <div id="mapTooltip" class="absolute pointer-events-none opacity-0 bg-slate-900/95 text-white text-xs py-1.5 px-3 rounded-xl shadow-xl border border-slate-700 transition-opacity duration-150 z-20 flex items-center gap-2 backdrop-blur-sm">
+          <span id="tooltipName" class="font-black text-amber-300">--</span>
+          <span id="tooltipRegion" class="text-slate-400 text-[10px]">--</span>
+          <span id="tooltipStatus" class="bg-amber-400/20 text-amber-300 px-1.5 py-0.5 rounded-md text-[10px] font-bold">未去過</span>
+        </div>
+
+        <!-- Japan Base Map with Overlaid Dots SVG -->
+        <div id="mapViewport" class="w-full max-w-[640px] h-auto flex items-center justify-center p-2 relative overflow-hidden cursor-grab active:cursor-grabbing">
+          <svg id="japanSvg" viewBox="0 0 780 680" class="w-full h-auto drop-shadow-md select-none transform transition-transform duration-200 ease-out">
+            
+            <!-- 1. BASE MAP SHAPES (Gray Outlines) -->
+            <g id="prefectureBaseGroup">
+              <!-- Hokkaido -->
+              <path id="base-pref-1" data-id="1" class="pref-base-path" d="M 540 40 Q 600 30 670 65 Q 730 110 700 155 Q 650 180 580 175 Q 520 170 480 135 C 460 120 480 90 510 80 Z M 480 135 Q 450 150 435 185 C 450 200 485 190 500 165 Z"/>
+              <!-- Tohoku -->
+              <path id="base-pref-2" data-id="2" class="pref-base-path" d="M 525 205 C 555 200 580 215 585 240 C 560 255 520 255 505 240 C 500 220 510 210 525 205 Z"/>
+              <path id="base-pref-3" data-id="3" class="pref-base-path" d="M 545 242 Q 585 245 585 295 C 560 300 545 295 545 242 Z"/>
+              <path id="base-pref-4" data-id="4" class="pref-base-path" d="M 545 295 Q 585 295 580 345 C 555 345 545 330 545 295 Z"/>
+              <path id="base-pref-5" data-id="5" class="pref-base-path" d="M 505 240 C 520 255 545 242 545 295 C 515 295 505 280 505 240 Z"/>
+              <path id="base-pref-6" data-id="6" class="pref-base-path" d="M 505 295 C 530 295 545 310 545 345 C 520 345 500 330 505 295 Z"/>
+              <path id="base-pref-7" data-id="7" class="pref-base-path" d="M 500 345 C 545 345 580 345 575 390 C 535 395 495 385 500 345 Z"/>
+              <!-- Kanto -->
+              <path id="base-pref-8" data-id="8" class="pref-base-path" d="M 535 392 Q 575 390 570 435 C 545 440 535 425 535 392 Z"/>
+              <path id="base-pref-9" data-id="9" class="pref-base-path" d="M 498 388 Q 535 392 535 430 C 508 430 498 415 498 388 Z"/>
+              <path id="base-pref-10" data-id="10" class="pref-base-path" d="M 462 388 Q 498 388 498 430 C 470 430 462 415 462 388 Z"/>
+              <path id="base-pref-11" data-id="11" class="pref-base-path" d="M 470 430 Q 532 430 530 455 C 480 458 470 450 470 430 Z"/>
+              <path id="base-pref-12" data-id="12" class="pref-base-path" d="M 530 440 Q 570 435 565 495 C 538 495 530 470 530 440 Z"/>
+              <path id="base-pref-13" data-id="13" class="pref-base-path" d="M 475 455 Q 530 455 528 475 C 485 475 475 468 475 455 Z"/>
+              <path id="base-pref-14" data-id="14" class="pref-base-path" d="M 475 475 Q 528 475 515 505 C 470 500 475 488 475 475 Z"/>
+              <!-- Chubu -->
+              <path id="base-pref-15" data-id="15" class="pref-base-path" d="M 462 340 C 500 345 500 388 462 388 C 435 380 430 360 462 340 Z"/>
+              <path id="base-pref-16" data-id="16" class="pref-base-path" d="M 405 370 Q 435 370 432 405 C 405 405 405 385 405 370 Z"/>
+              <path id="base-pref-17" data-id="17" class="pref-base-path" d="M 388 335 Q 412 335 405 370 Q 388 405 385 405 C 382 375 388 350 388 335 Z"/>
+              <path id="base-pref-18" data-id="18" class="pref-base-path" d="M 365 405 Q 405 405 398 438 Q 360 435 365 405 Z"/>
+              <path id="base-pref-19" data-id="19" class="pref-base-path" d="M 440 432 Q 470 430 470 462 C 440 462 440 445 440 432 Z"/>
+              <path id="base-pref-20" data-id="20" class="pref-base-path" d="M 425 390 C 462 388 462 432 440 432 C 430 462 410 450 425 390 Z"/>
+              <path id="base-pref-21" data-id="21" class="pref-base-path" d="M 388 405 C 425 405 425 450 385 455 Q 380 430 388 405 Z"/>
+              <path id="base-pref-22" data-id="22" class="pref-base-path" d="M 432 462 C 475 462 475 500 425 500 C 420 480 428 470 432 462 Z"/>
+              <path id="base-pref-23" data-id="23" class="pref-base-path" d="M 388 455 C 425 450 428 495 385 495 Q 380 475 388 455 Z"/>
+              <!-- Kansai -->
+              <path id="base-pref-24" data-id="24" class="pref-base-path" d="M 365 450 C 388 455 385 520 350 520 C 350 485 360 465 365 450 Z"/>
+              <path id="base-pref-25" data-id="25" class="pref-base-path" d="M 355 422 Q 385 422 380 452 C 350 452 350 438 355 422 Z"/>
+              <path id="base-pref-26" data-id="26" class="pref-base-path" d="M 325 408 Q 365 408 355 448 C 325 448 322 425 325 408 Z"/>
+              <path id="base-pref-27" data-id="27" class="pref-base-path" d="M 320 448 Q 350 448 345 480 C 320 480 315 465 320 448 Z"/>
+              <path id="base-pref-28" data-id="28" class="pref-base-path" d="M 282 408 C 325 408 325 452 282 455 C 275 432 278 418 282 408 Z"/>
+              <path id="base-pref-29" data-id="29" class="pref-base-path" d="M 345 452 C 365 452 360 500 338 500 C 338 475 342 462 345 452 Z"/>
+              <path id="base-pref-30" data-id="30" class="pref-base-path" d="M 312 480 C 345 480 350 535 305 530 C 300 505 308 492 312 480 Z"/>
+              <!-- Chugoku -->
+              <path id="base-pref-31" data-id="31" class="pref-base-path" d="M 238 408 Q 282 408 278 430 Q 238 430 238 408 Z"/>
+              <path id="base-pref-32" data-id="32" class="pref-base-path" d="M 185 408 Q 238 408 238 430 C 185 432 180 420 185 408 Z"/>
+              <path id="base-pref-33" data-id="33" class="pref-base-path" d="M 238 430 Q 278 430 272 458 Q 232 458 238 430 Z"/>
+              <path id="base-pref-34" data-id="34" class="pref-base-path" d="M 190 430 Q 238 430 232 458 Q 185 458 190 430 Z"/>
+              <path id="base-pref-35" data-id="35" class="pref-base-path" d="M 140 422 Q 190 422 185 462 Q 135 458 140 422 Z"/>
+              <!-- Shikoku -->
+              <path id="base-pref-36" data-id="36" class="pref-base-path" d="M 245 490 Q 282 490 270 522 Q 240 520 245 490 Z"/>
+              <path id="base-pref-37" data-id="37" class="pref-base-path" d="M 232 472 Q 278 472 272 490 Q 232 490 232 472 Z"/>
+              <path id="base-pref-38" data-id="38" class="pref-base-path" d="M 188 478 Q 232 472 222 518 Q 180 512 188 478 Z"/>
+              <path id="base-pref-39" data-id="39" class="pref-base-path" d="M 198 518 C 265 515 270 550 198 545 C 185 532 190 522 198 518 Z"/>
+              <!-- Kyushu -->
+              <path id="base-pref-40" data-id="40" class="pref-base-path" d="M 100 475 Q 142 475 138 505 Q 98 505 100 475 Z"/>
+              <path id="base-pref-41" data-id="41" class="pref-base-path" d="M 72 485 Q 100 485 98 512 Q 70 512 72 485 Z"/>
+              <path id="base-pref-42" data-id="42" class="pref-base-path" d="M 40 480 Q 72 485 68 532 Q 35 520 40 480 Z"/>
+              <path id="base-pref-43" data-id="43" class="pref-base-path" d="M 78 512 C 122 512 120 560 75 555 C 68 535 72 522 78 512 Z"/>
+              <path id="base-pref-44" data-id="44" class="pref-base-path" d="M 128 505 Q 162 505 158 540 Q 120 540 128 505 Z"/>
+              <path id="base-pref-45" data-id="45" class="pref-base-path" d="M 118 540 Q 155 540 148 590 Q 110 585 118 540 Z"/>
+              <path id="base-pref-46" data-id="46" class="pref-base-path" d="M 68 555 C 118 555 112 615 62 605 C 55 580 60 565 68 555 Z"/>
+              <!-- Okinawa Inset Box Base -->
+              <g id="okinawaBox">
+                <rect x="25" y="25" width="140" height="110" rx="16" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="4,4"/>
+                <text x="38" y="48" font-size="11" font-weight="bold" fill="#64748b">沖繩縣 (Inset)</text>
+                <path id="base-pref-47" data-id="47" class="pref-base-path" d="M 40 60 Q 145 60 145 118 Q 40 118 40 60 Z"/>
+              </g>
+            </g>
+
+            <!-- 2. INTERACTIVE DOT MARKERS GROUP (Rendered via JS for exact coordinates) -->
+            <g id="dotMarkersGroup">
+              <!-- Dynamically populated by JavaScript -->
+            </g>
+
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN: Regional Checklist & Search (5 cols) -->
+    <section class="lg:col-span-5 flex flex-col space-y-4">
+      
+      <!-- Search & Filter Header -->
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-bold text-slate-800 text-base flex items-center gap-2">
+            <i class="fa-solid fa-list-check text-amber-500"></i>
+            都道府縣清單點選
+          </h2>
+          <span id="listSelectedBadge" class="bg-amber-100 text-amber-800 font-bold text-xs px-2.5 py-1 rounded-full">
+            已選 0 / 47
+          </span>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+          <input type="text" id="searchInput" placeholder="搜尋縣市名稱 (例: 東京都, 京都, 沖繩...)" class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amber-400 focus:bg-white transition">
+        </div>
+      </div>
+
+      <!-- Regional Prefectures List -->
+      <div id="regionsContainer" class="flex-1 space-y-3 overflow-y-auto max-h-[600px] pr-1">
+        <!-- JS dynamically populates region accordions here -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal / Share Image Card Generator -->
+  <div id="exportModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 flex flex-col items-center space-y-4">
+      
+      <div class="w-full flex items-center justify-between pb-2 border-b border-slate-100">
+        <h3 class="font-bold text-slate-900 text-base flex items-center gap-2">
+          <i class="fa-solid fa-square-share-nodes text-amber-500"></i>
+          日本制霸地圖 - 分享卡片
+        </h3>
+        <button id="btnCloseModal" class="text-slate-400 hover:text-slate-600 p-1 transition">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Canvas Card Container for Export -->
+      <div id="exportCard" class="w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 text-white rounded-xl p-5 shadow-lg flex flex-col space-y-4 relative overflow-hidden border border-slate-700">
+        <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
+          <div>
+            <h4 class="font-black text-lg text-amber-400 tracking-tight">MY JAPAN MAP</h4>
+            <p class="text-[11px] text-slate-400">日本 47 都道府縣圓點標記紀錄</p>
+          </div>
+          <div class="text-right">
+            <span id="exportDate" class="text-[10px] text-slate-400 block">2026.10.01</span>
+            <span id="exportBadgeTitle" class="text-xs font-bold bg-amber-400 text-slate-950 px-2 py-0.5 rounded">日本達人</span>
+          </div>
+        </div>
+
+        <!-- Preview Stats -->
+        <div class="grid grid-cols-3 gap-2 text-center bg-slate-800/80 rounded-lg p-2.5 border border-slate-700">
+          <div>
+            <span class="text-[10px] text-slate-400 block">已去過縣市</span>
+            <span id="exportVisitedCount" class="text-xl font-black text-amber-400">0</span>
+            <span class="text-[10px] text-slate-400">/ 47</span>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 block">解鎖率</span>
+            <span id="exportPercent" class="text-xl font-black text-amber-400">0%</span>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 block">未去過</span>
+            <span id="exportRemaining" class="text-xl font-black text-slate-300">47</span>
+          </div>
+        </div>
+
+        <!-- Cloned Map Preview Container -->
+        <div id="exportMapContainer" class="bg-slate-950/60 rounded-lg p-2 border border-slate-800 flex items-center justify-center min-h-[220px]">
+          <!-- SVG copy injected here -->
+        </div>
+
+        <div class="flex items-center justify-between text-[10px] text-slate-400 pt-1">
+          <span>#日本旅行 #都道府縣制霸 #JapanTravel</span>
+          <span class="font-mono text-amber-400/80">JapanConquest</span>
+        </div>
+      </div>
+
+      <!-- Download Button -->
+      <div class="w-full flex gap-3 pt-2">
+        <button id="btnDownloadImage" class="flex-1 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-md">
+          <i class="fa-solid fa-circle-down"></i>
+          下載 PNG 圖檔
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Reset Confirmation Modal -->
+  <div id="confirmModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200">
+    <div class="bg-white rounded-2xl max-w-xs w-full p-5 shadow-xl text-center space-y-3">
+      <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto text-xl">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h3 class="font-bold text-slate-800">重置所有標記？</h3>
+      <p class="text-xs text-slate-500">這將會清空目前已標記的所有黃色圓點，此動作無法復原。</p>
+      <div class="flex gap-2 pt-2">
+        <button id="btnCancelReset" class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">取消</button>
+        <button id="btnConfirmReset" class="flex-1 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition">確定清空</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 py-4 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <p>© 2026 日本 47 都道府縣制霸互動圓點圖</p>
+      <p>提示：點擊地圖上的縣市或圓點即可切換「已去過（黃色）」與「未去過（灰色）」</p>
+    </div>
+  </footer>
+
+  <script>
+    // --- 47 PREFECTURES DATA WITH EXACT DOT COORDINATES ---
+    const PREFECTURES_DATA = [
+      { id: 1, name: "北海道", roma: "Hokkaido", region: "hokkaido", regionName: "北海道地區", x: 585, y: 115 },
+      { id: 2, name: "青森縣", roma: "Aomori", region: "tohoku", regionName: "東北地區", x: 545, y: 225 },
+      { id: 3, name: "岩手縣", roma: "Iwate", region: "tohoku", regionName: "東北地區", x: 565, y: 270 },
+      { id: 4, name: "宮城縣", roma: "Miyagi", region: "tohoku", regionName: "東北地區", x: 562, y: 320 },
+      { id: 5, name: "秋田縣", roma: "Akita", region: "tohoku", regionName: "東北地區", x: 525, y: 270 },
+      { id: 6, name: "山形縣", roma: "Yamagata", region: "tohoku", regionName: "東北地區", x: 525, y: 320 },
+      { id: 7, name: "福島縣", roma: "Fukushima", region: "tohoku", regionName: "東北地區", x: 538, y: 368 },
+      { id: 8, name: "茨城縣", roma: "Ibaraki", region: "kanto", regionName: "關東地區", x: 552, y: 412 },
+      { id: 9, name: "栃木縣", roma: "Tochigi", region: "kanto", regionName: "關東地區", x: 516, y: 410 },
+      { id: 10, name: "群馬縣", roma: "Gunma", region: "kanto", regionName: "關東地區", x: 480, y: 410 },
+      { id: 11, name: "埼玉縣", roma: "Saitama", region: "kanto", regionName: "關東地區", x: 500, y: 442 },
+      { id: 12, name: "千葉縣", roma: "Chiba", region: "kanto", regionName: "關東地區", x: 548, y: 468 },
+      { id: 13, name: "東京都", roma: "Tokyo", region: "kanto", regionName: "關東地區", x: 502, y: 465 },
+      { id: 14, name: "神奈川縣", roma: "Kanagawa", region: "kanto", regionName: "關東地區", x: 495, y: 490 },
+      { id: 15, name: "新潟縣", roma: "Niigata", region: "chubu", regionName: "中部地區", x: 465, y: 365 },
+      { id: 16, name: "富山縣", roma: "Toyama", region: "chubu", regionName: "中部地區", x: 418, y: 388 },
+      { id: 17, name: "石川縣", roma: "Ishikawa", region: "chubu", regionName: "中部地區", x: 395, y: 365 },
+      { id: 18, name: "福井縣", roma: "Fukui", region: "chubu", regionName: "中部地區", x: 380, y: 422 },
+      { id: 19, name: "山梨縣", roma: "Yamanashi", region: "chubu", regionName: "中部地區", x: 455, y: 448 },
+      { id: 20, name: "長野縣", roma: "Nagano", region: "chubu", regionName: "中部地區", x: 435, y: 415 },
+      { id: 21, name: "岐阜縣", roma: "Gifu", region: "chubu", regionName: "中部地區", x: 402, y: 430 },
+      { id: 22, name: "靜岡縣", roma: "Shizuoka", region: "chubu", regionName: "中部地區", x: 445, y: 482 },
+      { id: 23, name: "愛知縣", roma: "Aichi", region: "chubu", regionName: "中部地區", x: 405, y: 475 },
+      { id: 24, name: "三重縣", roma: "Mie", region: "kansai", regionName: "近畿/關西地區", x: 368, y: 485 },
+      { id: 25, name: "滋賀縣", roma: "Shiga", region: "kansai", regionName: "近畿/關西地區", x: 365, y: 438 },
+      { id: 26, name: "京都府", roma: "Kyoto", region: "kansai", regionName: "近畿/關西地區", x: 340, y: 428 },
+      { id: 27, name: "大阪府", roma: "Osaka", region: "kansai", regionName: "近畿/關西地區", x: 332, y: 464 },
+      { id: 28, name: "兵庫縣", roma: "Hyogo", region: "kansai", regionName: "近畿/關西地區", x: 298, y: 432 },
+      { id: 29, name: "奈良縣", roma: "Nara", region: "kansai", regionName: "近畿/關西地區", x: 348, y: 476 },
+      { id: 30, name: "和歌山縣", roma: "Wakayama", region: "kansai", regionName: "近畿/關西地區", x: 322, y: 508 },
+      { id: 31, name: "鳥取縣", roma: "Tottori", region: "chugoku", regionName: "中國地區", x: 258, y: 420 },
+      { id: 32, name: "島根縣", roma: "Shimane", region: "chugoku", regionName: "中國地區", x: 210, y: 420 },
+      { id: 33, name: "岡山縣", roma: "Okayama", region: "chugoku", regionName: "中國地區", x: 255, y: 445 },
+      { id: 34, name: "廣島縣", roma: "Hiroshima", region: "chugoku", regionName: "中國地區", x: 210, y: 445 },
+      { id: 35, name: "山口縣", roma: "Yamaguchi", region: "chugoku", regionName: "中國地區", x: 162, y: 442 },
+      { id: 36, name: "德島縣", roma: "Tokushima", region: "shikoku", regionName: "四國地區", x: 258, y: 506 },
+      { id: 37, name: "香川縣", roma: "Kagawa", region: "shikoku", regionName: "四國地區", x: 252, y: 482 },
+      { id: 38, name: "愛媛縣", roma: "Ehime", region: "shikoku", regionName: "四國地區", x: 205, y: 498 },
+      { id: 39, name: "高知縣", roma: "Kochi", region: "shikoku", regionName: "四國地區", x: 220, y: 532 },
+      { id: 40, name: "福岡縣", roma: "Fukuoka", region: "kyushu", regionName: "九州・沖繩地區", x: 120, y: 490 },
+      { id: 41, name: "佐賀縣", roma: "Saga", region: "kyushu", regionName: "九州・沖繩地區", x: 85, y: 498 },
+      { id: 42, name: "長崎縣", roma: "Nagasaki", region: "kyushu", regionName: "九州・沖繩地區", x: 52, y: 506 },
+      { id: 43, name: "熊本縣", roma: "Kumamoto", region: "kyushu", regionName: "九州・沖繩地區", x: 92, y: 534 },
+      { id: 44, name: "大分縣", roma: "Oita", region: "kyushu", regionName: "九州・沖繩地區", x: 142, y: 522 },
+      { id: 45, name: "宮崎縣", roma: "Miyazaki", region: "kyushu", regionName: "九州・沖繩地區", x: 132, y: 565 },
+      { id: 46, name: "鹿兒島縣", roma: "Kagoshima", region: "kyushu", regionName: "九州・沖繩地區", x: 82, y: 582 },
+      { id: 47, name: "沖繩縣", roma: "Okinawa", region: "okinawa", regionName: "九州・沖繩地區", x: 90, y: 88 }
+    ];
+
+    const REGIONS = [
+      { id: "hokkaido", name: "北海道地區" },
+      { id: "tohoku", name: "東北地區" },
+      { id: "kanto", name: "關東地區" },
+      { id: "chubu", name: "中部地區" },
+      { id: "kansai", name: "近畿・關西地區" },
+      { id: "chugoku", name: "中國地區" },
+      { id: "shikoku", name: "四國地區" },
+      { id: "kyushu", name: "九州・沖繩地區" }
+    ];
+
+    // STATE MANAGEMENT
+    let visitedSet = new Set();
+    let currentZoom = 1;
+    const STORAGE_KEY = "japan_conquest_dots_visited_v3";
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadSavedState();
+      renderDotMarkers();
+      renderRegionsList();
+      bindMapAndDotEvents();
+      bindControlEvents();
+      bindZoomEvents();
+      updateUI();
+    });
+
+    function loadSavedState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const arr = JSON.parse(saved);
+          if (Array.isArray(arr)) {
+            visitedSet = new Set(arr.map(Number));
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load state", e);
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(visitedSet)));
+      } catch (e) {
+        console.error("Failed to save state", e);
+      }
+    }
+
+    function renderDotMarkers() {
+      const group = document.getElementById("dotMarkersGroup");
+      group.innerHTML = "";
+
+      PREFECTURES_DATA.forEach(p => {
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.setAttribute("id", `dot-group-${p.id}`);
+        g.setAttribute("data-id", p.id);
+        g.setAttribute("data-name", p.name);
+        g.setAttribute("class", "pref-dot-group unvisited");
+        g.setAttribute("transform", `translate(${p.x}, ${p.y})`);
+
+        // Glowing pulse aura for visited status
+        const pulse = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        pulse.setAttribute("class", "dot-pulse");
+        pulse.setAttribute("cx", "0");
+        pulse.setAttribute("cy", "0");
+        pulse.setAttribute("r", "11");
+        pulse.setAttribute("fill", "#facc15");
+        pulse.setAttribute("opacity", "0.5");
+
+        // Solid Center Circle
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("class", "dot-circle");
+        circle.setAttribute("cx", "0");
+        circle.setAttribute("cy", "0");
+        circle.setAttribute("r", "7.5");
+
+        // Text label
+        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        text.setAttribute("class", "pref-dot-label");
+        text.setAttribute("x", "12");
+        text.setAttribute("y", "4");
+        text.textContent = p.name;
+
+        g.appendChild(pulse);
+        g.appendChild(circle);
+        g.appendChild(text);
+
+        group.appendChild(g);
+      });
+    }
+
+    function renderRegionsList() {
+      const container = document.getElementById("regionsContainer");
+      container.innerHTML = "";
+
+      REGIONS.forEach(reg => {
+        const prefs = PREFECTURES_DATA.filter(p => p.region === reg.id || (reg.id === "kyushu" && p.region === "okinawa"));
+
+        const regionBlock = document.createElement("div");
+        regionBlock.className = "bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs transition hover:border-slate-300";
+
+        const header = document.createElement("div");
+        header.className = "px-4 py-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between cursor-pointer hover:bg-slate-100/80 transition";
+        header.innerHTML = `
+          <div class="flex items-center space-x-2">
+            <span class="font-bold text-slate-800 text-sm">${reg.name}</span>
+            <span id="region-badge-${reg.id}" class="text-[11px] font-semibold bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">0/${prefs.length}</span>
+          </div>
+          <button class="text-xs font-semibold text-amber-600 hover:text-amber-700 hover:underline px-1 py-0.5" onclick="toggleRegionAll('${reg.id}', event)">
+            一鍵全選
+          </button>
+        `;
+
+        const grid = document.createElement("div");
+        grid.className = "p-3 grid grid-cols-2 sm:grid-cols-3 gap-2";
+        grid.id = `grid-region-${reg.id}`;
+
+        prefs.forEach(pref => {
+          const btn = document.createElement("button");
+          btn.id = `btn-pref-${pref.id}`;
+          btn.dataset.id = pref.id;
+          btn.dataset.name = pref.name;
+          btn.className = "pref-list-btn flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium border transition-all duration-150 text-slate-700 border-slate-200 bg-slate-50 hover:border-amber-400";
+          
+          btn.innerHTML = `
+            <span class="truncate">${pref.name}</span>
+            <i class="fa-solid fa-circle-check text-sm text-slate-300 icon-status transition"></i>
+          `;
+
+          btn.addEventListener("click", () => togglePrefecture(pref.id));
+          grid.appendChild(btn);
+        });
+
+        regionBlock.appendChild(header);
+        regionBlock.appendChild(grid);
+        container.appendChild(regionBlock);
+      });
+    }
+
+    function bindMapAndDotEvents() {
+      const tooltip = document.getElementById("mapTooltip");
+      const tooltipName = document.getElementById("tooltipName");
+      const tooltipRegion = document.getElementById("tooltipRegion");
+      const tooltipStatus = document.getElementById("tooltipStatus");
+
+      PREFECTURES_DATA.forEach(p => {
+        const basePath = document.getElementById(`base-pref-${p.id}`);
+        const dotGroup = document.getElementById(`dot-group-${p.id}`);
+
+        const handleHover = (isHovering) => {
+          if (isHovering) {
+            const isVisited = visitedSet.has(p.id);
+            tooltipName.textContent = p.name;
+            tooltipRegion.textContent = p.regionName;
+            tooltipStatus.textContent = isVisited ? "已去過 (黃色)" : "未去過 (灰色)";
+            tooltipStatus.className = isVisited 
+              ? "bg-amber-400 text-slate-950 px-1.5 py-0.5 rounded-md text-[10px] font-bold" 
+              : "bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded-md text-[10px]";
+
+            tooltip.style.opacity = "1";
+          } else {
+            tooltip.style.opacity = "0";
+          }
+        };
+
+        const handleMouseMove = (e) => {
+          const rect = document.getElementById("mapViewport").getBoundingClientRect();
+          const x = e.clientX - rect.left + 15;
+          const y = e.clientY - rect.top - 15;
+          tooltip.style.left = `${x}px`;
+          tooltip.style.top = `${y}px`;
+        };
+
+        // Click Base Path or Dot Marker to toggle state
+        if (basePath) {
+          basePath.addEventListener("click", (e) => {
+            e.stopPropagation();
+            togglePrefecture(p.id);
+          });
+          basePath.addEventListener("mouseenter", () => handleHover(true));
+          basePath.addEventListener("mousemove", handleMouseMove);
+          basePath.addEventListener("mouseleave", () => handleHover(false));
+        }
+
+        if (dotGroup) {
+          dotGroup.addEventListener("click", (e) => {
+            e.stopPropagation();
+            togglePrefecture(p.id);
+          });
+          dotGroup.addEventListener("mouseenter", () => handleHover(true));
+          dotGroup.addEventListener("mousemove", handleMouseMove);
+          dotGroup.addEventListener("mouseleave", () => handleHover(false));
+        }
+      });
+    }
+
+    function bindZoomEvents() {
+      const svg = document.getElementById("japanSvg");
+      const btnIn = document.getElementById("btnZoomIn");
+      const btnOut = document.getElementById("btnZoomOut");
+      const btnReset = document.getElementById("btnZoomReset");
+
+      btnIn.addEventListener("click", () => {
+        if (currentZoom < 2.2) {
+          currentZoom += 0.25;
+          applyZoom();
+        }
+      });
+
+      btnOut.addEventListener("click", () => {
+        if (currentZoom > 0.8) {
+          currentZoom -= 0.25;
+          applyZoom();
+        }
+      });
+
+      btnReset.addEventListener("click", () => {
+        currentZoom = 1;
+        applyZoom();
+      });
+
+      function applyZoom() {
+        svg.style.transform = `scale(${currentZoom})`;
+      }
+    }
+
+    function bindControlEvents() {
+      document.getElementById("btnSelectAll").addEventListener("click", () => {
+        PREFECTURES_DATA.forEach(p => visitedSet.add(p.id));
+        saveState();
+        updateUI();
+      });
+
+      document.getElementById("btnClearAll").addEventListener("click", () => {
+        visitedSet.clear();
+        saveState();
+        updateUI();
+      });
+
+      // Custom Confirmation Modal
+      const confirmModal = document.getElementById("confirmModal");
+      document.getElementById("btnResetConfirm").addEventListener("click", () => {
+        confirmModal.classList.remove("opacity-0", "pointer-events-none");
+      });
+
+      document.getElementById("btnCancelReset").addEventListener("click", () => {
+        confirmModal.classList.add("opacity-0", "pointer-events-none");
+      });
+
+      document.getElementById("btnConfirmReset").addEventListener("click", () => {
+        visitedSet.clear();
+        saveState();
+        updateUI();
+        confirmModal.classList.add("opacity-0", "pointer-events-none");
+      });
+
+      // Search Filter Input
+      const searchInput = document.getElementById("searchInput");
+      searchInput.addEventListener("input", (e) => {
+        const query = e.target.value.trim().toLowerCase();
+        filterListAndMap(query);
+      });
+
+      // Export Modal Events
+      document.getElementById("btnExport").addEventListener("click", openExportModal);
+      document.getElementById("btnCloseModal").addEventListener("click", closeExportModal);
+      document.getElementById("btnDownloadImage").addEventListener("click", downloadExportCard);
+    }
+
+    function togglePrefecture(id) {
+      if (visitedSet.has(id)) {
+        visitedSet.delete(id);
+      } else {
+        visitedSet.add(id);
+      }
+      saveState();
+      updateUI();
+    }
+
+    window.toggleRegionAll = function(regionId, event) {
+      event.stopPropagation();
+      const prefs = PREFECTURES_DATA.filter(p => p.region === regionId || (regionId === "kyushu" && p.region === "okinawa"));
+      const allSelected = prefs.every(p => visitedSet.has(p.id));
+
+      if (allSelected) {
+        prefs.forEach(p => visitedSet.delete(p.id));
+      } else {
+        prefs.forEach(p => visitedSet.add(p.id));
+      }
+      saveState();
+      updateUI();
+    };
+
+    function updateUI() {
+      const total = PREFECTURES_DATA.length;
+      const count = visitedSet.size;
+      const percent = ((count / total) * 100).toFixed(1);
+
+      document.getElementById("visitedCount").textContent = count;
+      document.getElementById("percentText").textContent = `(${percent}%)`;
+      document.getElementById("progressBar").style.width = `${percent}%`;
+      document.getElementById("listSelectedBadge").textContent = `已選 ${count} / ${total}`;
+
+      updateAchievementBadge(count);
+
+      // Update Dot Markers and Base Paths
+      PREFECTURES_DATA.forEach(pref => {
+        const dotGroup = document.getElementById(`dot-group-${pref.id}`);
+        const isVisited = visitedSet.has(pref.id);
+
+        if (dotGroup) {
+          if (isVisited) {
+            dotGroup.setAttribute("class", "pref-dot-group visited");
+          } else {
+            dotGroup.setAttribute("class", "pref-dot-group unvisited");
+          }
+        }
+
+        const btn = document.getElementById(`btn-pref-${pref.id}`);
+        if (btn) {
+          const icon = btn.querySelector(".icon-status");
+          if (isVisited) {
+            btn.className = "pref-list-btn flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold border transition-all duration-150 bg-amber-100 border-amber-400 text-amber-900 shadow-xs";
+            if (icon) {
+              icon.className = "fa-solid fa-circle-check text-sm text-amber-500 icon-status";
+            }
+          } else {
+            btn.className = "pref-list-btn flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium border transition-all duration-150 text-slate-700 border-slate-200 bg-slate-50 hover:border-amber-300";
+            if (icon) {
+              icon.className = "fa-solid fa-circle text-sm text-slate-200 icon-status";
+            }
+          }
+        }
+      });
+
+      REGIONS.forEach(reg => {
+        const prefs = PREFECTURES_DATA.filter(p => p.region === reg.id || (reg.id === "kyushu" && p.region === "okinawa"));
+        const regVisited = prefs.filter(p => visitedSet.has(p.id)).length;
+        const badge = document.getElementById(`region-badge-${reg.id}`);
+        if (badge) {
+          badge.textContent = `${regVisited}/${prefs.length}`;
+          if (regVisited === prefs.length) {
+            badge.className = "text-[11px] font-bold bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full";
+          } else if (regVisited > 0) {
+            badge.className = "text-[11px] font-semibold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full";
+          } else {
+            badge.className = "text-[11px] font-semibold bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full";
+          }
+        }
+      });
+    }
+
+    function updateAchievementBadge(count) {
+      const badgeTitle = document.getElementById("badgeTitle");
+      const badgeIcon = document.getElementById("badgeIcon");
+      const badgeContainer = document.getElementById("achievementBadge");
+
+      let title = "日本新手初者";
+      let icon = "fa-shoe-prints";
+      let bgClass = "bg-slate-100 border-slate-200 text-slate-700";
+
+      if (count === 47) {
+        title = "全日本大滿貫制霸神人!";
+        icon = "fa-crown text-amber-500";
+        bgClass = "bg-amber-100 border-amber-300 text-amber-900";
+      } else if (count >= 35) {
+        title = "日本深度旅遊大師";
+        icon = "fa-plane-departure text-amber-500";
+        bgClass = "bg-amber-50 border-amber-200 text-amber-800";
+      } else if (count >= 20) {
+        title = "日本資深玩家";
+        icon = "fa-map-marked-alt text-amber-500";
+        bgClass = "bg-amber-50 border-amber-200 text-amber-800";
+      } else if (count >= 10) {
+        title = "日本熱情背包客";
+        icon = "fa-compass text-amber-500";
+        bgClass = "bg-slate-100 border-slate-200 text-slate-800";
+      } else if (count >= 1) {
+        title = "日本探索者";
+        icon = "fa-route text-amber-500";
+        bgClass = "bg-slate-100 border-slate-200 text-slate-800";
+      }
+
+      badgeTitle.textContent = title;
+      badgeIcon.className = `fa-solid ${icon} text-2xl`;
+      badgeContainer.className = `border rounded-xl px-4 py-2 flex items-center gap-3 transition-all ${bgClass}`;
+    }
+
+    function filterListAndMap(query) {
+      PREFECTURES_DATA.forEach(p => {
+        const btn = document.getElementById(`btn-pref-${p.id}`);
+        const dotGroup = document.getElementById(`dot-group-${p.id}`);
+        const match = p.name.includes(query) || p.roma.toLowerCase().includes(query) || p.regionName.includes(query);
+
+        if (btn) {
+          btn.style.display = match || query === "" ? "flex" : "none";
+        }
+
+        if (dotGroup) {
+          if (query !== "" && match) {
+            dotGroup.style.transform = `translate(${p.x}px, ${p.y}px) scale(1.4)`;
+          } else {
+            dotGroup.style.transform = `translate(${p.x}px, ${p.y}px) scale(1)`;
+          }
+        }
+      });
+    }
+
+    function openExportModal() {
+      const modal = document.getElementById("exportModal");
+      const count = visitedSet.size;
+      const total = 47;
+      const percent = ((count / total) * 100).toFixed(1);
+
+      document.getElementById("exportVisitedCount").textContent = count;
+      document.getElementById("exportPercent").textContent = `${percent}%`;
+      document.getElementById("exportRemaining").textContent = total - count;
+      document.getElementById("exportBadgeTitle").textContent = document.getElementById("badgeTitle").textContent;
+      
+      const today = new Date();
+      document.getElementById("exportDate").textContent = `${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,'0')}.${String(today.getDate()).padStart(2,'0')}`;
+
+      const mapContainer = document.getElementById("exportMapContainer");
+      mapContainer.innerHTML = "";
+      const originalSvg = document.getElementById("japanSvg");
+      const svgClone = originalSvg.cloneNode(true);
+      
+      svgClone.setAttribute("width", "100%");
+      svgClone.setAttribute("height", "230");
+      svgClone.style.transform = "scale(1)";
+      mapContainer.appendChild(svgClone);
+
+      modal.classList.remove("opacity-0", "pointer-events-none");
+    }
+
+    function closeExportModal() {
+      const modal = document.getElementById("exportModal");
+      modal.classList.add("opacity-0", "pointer-events-none");
+    }
+
+    function downloadExportCard() {
+      const exportCard = document.getElementById("exportCard");
+      const svgElement = exportCard.querySelector("svg");
+      const svgData = new XMLSerializer().serializeToString(svgElement);
+      const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+      const URL = window.URL || window.webkitURL || window;
+      const blobURL = URL.createObjectURL(svgBlob);
+
+      const image = new Image();
+      image.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = 600;
+        canvas.height = 720;
+        const ctx = canvas.getContext("2d");
+
+        ctx.fillStyle = "#0f172a";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "#facc15";
+        ctx.font = "bold 28px 'Noto Sans TC', sans-serif";
+        ctx.fillText("MY JAPAN MAP", 30, 50);
+
+        ctx.fillStyle = "#94a3b8";
+        ctx.font = "14px 'Noto Sans TC', sans-serif";
+        ctx.fillText("日本 47 都道府縣圓點標記紀錄", 30, 75);
+
+        ctx.fillStyle = "#facc15";
+        ctx.fillRect(410, 30, 160, 35);
+        ctx.fillStyle = "#0f172a";
+        ctx.font = "bold 13px 'Noto Sans TC', sans-serif";
+        ctx.fillText(document.getElementById("badgeTitle").textContent, 420, 53);
+
+        ctx.fillStyle = "#1e293b";
+        ctx.fillRect(30, 100, 540, 70);
+
+        ctx.fillStyle = "#facc15";
+        ctx.font = "bold 26px 'Noto Sans TC', sans-serif";
+        ctx.fillText(`${visitedSet.size} / 47`, 60, 145);
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "14px 'Noto Sans TC', sans-serif";
+        ctx.fillText(`解鎖率: ${((visitedSet.size/47)*100).toFixed(1)}%`, 380, 145);
+
+        ctx.drawImage(image, 30, 190, 540, 460);
+
+        ctx.fillStyle = "#64748b";
+        ctx.font = "12px 'Noto Sans TC', sans-serif";
+        ctx.fillText("#日本旅行 #都道府縣制霸 #JapanTravel", 30, 685);
+
+        const a = document.createElement("a");
+        a.download = `Japan_Dot_Map_${new Date().toISOString().slice(0,10)}.png`;
+        a.href = canvas.toDataURL("image/png");
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobURL);
+      };
+
+      image.src = blobURL;
+    }
+  </script>
+</body>
+</html>
