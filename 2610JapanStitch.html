@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+
+<html lang="zh-Hant"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>日本 47 都道府縣制霸圖 - 旅行足跡地圖</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&amp;family=Noto+Sans+TC:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+    body {
+      font-family: 'Noto Sans TC', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Map Region Styles */
+    .pref-node {
+      transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+    .pref-node:hover {
+      filter: brightness(0.92) contrast(1.08);
+      stroke-width: 2.2px !important;
+      stroke: #0f172a !important;
+    }
+    .pref-label {
+      pointer-events: none;
+      transition: all 0.2s ease;
+    }
+
+    /* Pulse animation for current hovered/selected */
+    @keyframes subtlePulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+    }
+    .pulse-select {
+      animation: subtlePulse 1.8s infinite ease-in-out;
+    }
+
+    /* Floating Tooltip */
+    #mapTooltip {
+      pointer-events: none;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen flex flex-col selection:bg-amber-100 selection:text-amber-900">
+<!-- Header -->
+<header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
+<div class="max-w-7xl mx-auto px-4 lg:px-6 h-16 flex items-center justify-between gap-4">
+<!-- Title & Brand -->
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center text-white shadow-md shadow-amber-500/20">
+<span class="text-xl">🗾</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h1 class="text-lg font-black tracking-tight text-slate-900">日本 47 都道府縣制霸圖</h1>
+<span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase bg-red-100 text-red-600 border border-red-200">
+              JAPAN MAP RECORD
+            </span>
+</div>
+<p class="text-xs text-slate-500">點擊地圖即時切換造訪深度，記錄你的東瀛之旅！</p>
+</div>
+</div>
+<!-- Quick Metrics in Header -->
+<div class="flex items-center gap-2 sm:gap-4">
+<!-- Score Card -->
+<div class="hidden sm:flex flex-col items-end px-3 py-1 bg-slate-50 rounded-xl border border-slate-200">
+<span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">制霸總積分</span>
+<span class="text-base font-black text-slate-800 leading-none"><span id="headerTotalScore">0</span> <span class="text-xs text-slate-400 font-medium">pts</span></span>
+</div>
+<!-- Visited Badge -->
+<div class="flex items-center gap-2 px-3 py-1.5 bg-amber-50 border border-amber-200/90 rounded-xl shadow-xs">
+<div class="flex flex-col text-right">
+<span class="text-[10px] text-amber-700 font-bold">解鎖縣市</span>
+<div class="flex items-baseline gap-0.5">
+<span class="text-lg font-black text-amber-600 leading-none" id="headerUnlockedCount">0</span>
+<span class="text-xs font-bold text-slate-400">/ 47</span>
+</div>
+</div>
+<div class="w-9 h-9 rounded-lg bg-amber-500 text-white font-black text-xs flex items-center justify-center shadow-xs">
+<span id="headerPercentage">0%</span>
+</div>
+</div>
+<!-- Action Dropdown / Sharing -->
+<button class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs font-bold transition shadow-sm" onclick="shareAchievement()">
+<span class="material-symbols-outlined text-[16px]">share</span>
+<span class="hidden md:inline">分享制霸</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Level Legend Bar -->
+<section class="bg-white border-b border-slate-200/80 px-4 py-2.5">
+<div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
+<div class="flex items-center gap-1 text-slate-400 font-medium text-[11px] uppercase tracking-wider">
+<span class="material-symbols-outlined text-sm text-slate-400">palette</span>
+<span>造訪等級圖例：</span>
+</div>
+<!-- Legend items clickable to switch painting mode -->
+<div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+<!-- Level 0 -->
+<button class="legend-filter group flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 transition text-[11px] font-semibold text-slate-600" id="legend-btn-0" onclick="setActiveBrush(0)">
+<span class="w-3 h-3 rounded-full border border-slate-300" style="background-color: #e2e8f0;"></span>
+<span>0 未去過</span>
+<span class="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-slate-200 text-slate-700 font-bold" id="badge-count-0">47</span>
+</button>
+<!-- Level 1 -->
+<button class="legend-filter group flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-amber-200/80 bg-amber-50/50 hover:bg-amber-100 transition text-[11px] font-semibold text-amber-900" id="legend-btn-1" onclick="setActiveBrush(1)">
+<span class="w-3 h-3 rounded-full border border-amber-300" style="background-color: #fef08a;"></span>
+<span>1 踩點過境</span>
+<span class="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-amber-200/80 text-amber-800 font-bold" id="badge-count-1">0</span>
+</button>
+<!-- Level 2 -->
+<button class="legend-filter group flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-amber-300/80 bg-amber-50 hover:bg-amber-100 transition text-[11px] font-semibold text-amber-950" id="legend-btn-2" onclick="setActiveBrush(2)">
+<span class="w-3 h-3 rounded-full border border-amber-400" style="background-color: #f59e0b;"></span>
+<span>2-3 短期觀光</span>
+<span class="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-amber-200 text-amber-900 font-bold" id="badge-count-2">0</span>
+</button>
+<!-- Level 3 -->
+<button class="legend-filter group flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-orange-200 bg-orange-50 hover:bg-orange-100 transition text-[11px] font-semibold text-orange-950" id="legend-btn-3" onclick="setActiveBrush(3)">
+<span class="w-3 h-3 rounded-full border border-orange-400" style="background-color: #f97316;"></span>
+<span>4-5 深度旅遊</span>
+<span class="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-orange-200 text-orange-900 font-bold" id="badge-count-3">0</span>
+</button>
+<!-- Level 4 -->
+<button class="legend-filter group flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 transition text-[11px] font-semibold text-red-950" id="legend-btn-4" onclick="setActiveBrush(4)">
+<span class="w-3 h-3 rounded-full border border-red-400" style="background-color: #ef4444;"></span>
+<span>6+ 狂熱常客</span>
+<span class="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-red-200 text-red-900 font-bold" id="badge-count-4">0</span>
+</button>
+<!-- Level 5 -->
+<button class="legend-filter group flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 transition text-[11px] font-semibold text-purple-950" id="legend-btn-5" onclick="setActiveBrush(5)">
+<span class="w-3 h-3 rounded-full border border-purple-400" style="background-color: #8b5cf6;"></span>
+<span>🏠 居住/留學</span>
+<span class="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-purple-200 text-purple-900 font-bold" id="badge-count-5">0</span>
+</button>
+</div>
+<!-- Quick brush mode switch -->
+<div class="flex items-center gap-2">
+<span class="text-[11px] text-slate-400">點擊地圖模式:</span>
+<button class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[11px] flex items-center gap-1" id="toggleClickModeBtn" onclick="toggleClickMode()">
+<span class="material-symbols-outlined text-[13px]">cyclone</span>
+<span id="clickModeText">依序遞增等級 (+1)</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Main Content Layout (Desktop Two-Column) -->
+<main class="max-w-7xl mx-auto px-4 lg:px-6 py-5 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+<!-- Left / Center: Interactive Japan Map Stage (7 cols) -->
+<section class="lg:col-span-7 xl:col-span-8 bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-sm flex flex-col justify-between relative overflow-hidden">
+<!-- Stage Control Bar -->
+<div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100 mb-2">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+<h2 class="text-sm font-bold text-slate-800">全境 47 都道府縣高精度互動地圖</h2>
+<span class="text-xs text-slate-400">（直接點選地圖區塊調整）</span>
+</div>
+<!-- Controls: Classic Preset, Fill All, Reset -->
+<div class="flex items-center gap-1.5 text-xs">
+<button class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition" onclick="fillPresetRoute('classic')" title="東京、大阪、京都、北海道等經典城市">
+            熱門黃金線
+          </button>
+<button class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition" onclick="fillPresetRoute('allVisit')">
+            全境踩點
+          </button>
+<button class="px-2 py-1 rounded-lg hover:bg-rose-50 text-rose-600 font-semibold transition" onclick="resetAll()">
+            全部重設
+          </button>
+</div>
+</div>
+<!-- Map Display Area -->
+<div class="relative w-full rounded-2xl bg-gradient-to-b from-sky-50/70 via-slate-50/40 to-blue-50/40 border border-slate-200/70 p-2 sm:p-4 overflow-hidden flex items-center justify-center min-h-[520px] sm:min-h-[580px]">
+<!-- Ocean decorative markers -->
+<div class="absolute top-6 left-6 text-slate-300 font-black text-xs sm:text-sm tracking-widest pointer-events-none select-none">
+          SEA OF JAPAN<br/><span class="text-[10px] font-medium tracking-normal text-slate-400">日本海</span>
+</div>
+<div class="absolute bottom-10 right-8 text-slate-300 font-black text-xs sm:text-sm tracking-widest pointer-events-none select-none text-right">
+          PACIFIC OCEAN<br/><span class="text-[10px] font-medium tracking-normal text-slate-400">太平洋</span>
+</div>
+<!-- SVG Map of 47 Prefectures of Japan -->
+<svg class="w-full h-auto max-h-[660px] drop-shadow-sm select-none" id="japanMapSvg" viewbox="0 0 780 680" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<filter height="120%" id="softGlow" width="120%" x="-10%" y="-10%">
+<fedropshadow dx="0" dy="2" flood-color="#000" flood-opacity="0.12" stddeviation="2"></fedropshadow>
+</filter>
+</defs>
+<!-- 1. HOKKAIDO (北海道) -->
+<g id="region-svg-hokkaido">
+<path class="pref-node stroke-white stroke-[1.5]" d="M 540,60 L 610,35 L 685,45 L 720,75 L 710,120 L 670,125 L 650,155 L 600,165 L 565,150 L 550,180 L 515,185 L 500,155 L 530,130 L 530,95 Z" data-id="01" data-kana="Hokkaido" data-name="北海道" id="pref-01"></path>
+<text class="pref-label" fill="#1e293b" font-size="14" font-weight="800" text-anchor="middle" x="615" y="98">北海道</text>
+<text class="pref-label" fill="#475569" font-size="10" font-weight="600" text-anchor="middle" x="615" y="116">01 · Hokkaido</text>
+</g>
+<!-- 2. TOHOKU (東北 6 縣) -->
+<g id="region-svg-tohoku">
+<!-- 02 Aomori (青森) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 540,205 L 600,205 L 615,245 L 585,255 L 535,250 L 530,225 Z" data-id="02" data-kana="Aomori" data-name="青森縣" id="pref-02"></path>
+<text class="pref-label" fill="#1e293b" font-size="11" font-weight="700" text-anchor="middle" x="570" y="233">青森</text>
+<!-- 05 Akita (秋田) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 525,255 L 565,255 L 565,305 L 525,305 Z" data-id="05" data-kana="Akita" data-name="秋田縣" id="pref-05"></path>
+<text class="pref-label" fill="#1e293b" font-size="11" font-weight="700" text-anchor="middle" x="545" y="284">秋田</text>
+<!-- 03 Iwate (岩手) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 567,255 L 618,252 L 624,305 L 567,305 Z" data-id="03" data-kana="Iwate" data-name="岩手縣" id="pref-03"></path>
+<text class="pref-label" fill="#1e293b" font-size="11" font-weight="700" text-anchor="middle" x="595" y="284">岩手</text>
+<!-- 06 Yamagata (山形) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 522,308 L 562,308 L 560,352 L 520,350 Z" data-id="06" data-kana="Yamagata" data-name="山形縣" id="pref-06"></path>
+<text class="pref-label" fill="#1e293b" font-size="11" font-weight="700" text-anchor="middle" x="542" y="333">山形</text>
+<!-- 04 Miyagi (宮城) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 565,308 L 620,308 L 610,352 L 563,352 Z" data-id="04" data-kana="Miyagi" data-name="宮城縣" id="pref-04"></path>
+<text class="pref-label" fill="#1e293b" font-size="11" font-weight="700" text-anchor="middle" x="589" y="333">宮城</text>
+<!-- 07 Fukushima (福島) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 518,355 L 616,355 L 610,395 L 520,395 Z" data-id="07" data-kana="Fukushima" data-name="福島縣" id="pref-07"></path>
+<text class="pref-label" fill="#1e293b" font-size="12" font-weight="700" text-anchor="middle" x="568" y="380">福島</text>
+</g>
+<!-- 3. KANTO (關東 7 都縣) -->
+<g id="region-svg-kanto">
+<!-- 08 Ibaraki (茨城) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 578,398 L 624,402 L 618,452 L 576,450 Z" data-id="08" data-kana="Ibaraki" data-name="茨城縣" id="pref-08"></path>
+<text class="pref-label" fill="#1e293b" font-size="11" font-weight="700" text-anchor="middle" x="600" y="430">茨城</text>
+<!-- 09 Tochigi (栃木) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 536,398 L 575,398 L 573,444 L 536,442 Z" data-id="09" data-kana="Tochigi" data-name="栃木縣" id="pref-09"></path>
+<text class="pref-label" fill="#1e293b" font-size="11" font-weight="700" text-anchor="middle" x="555" y="424">栃木</text>
+<!-- 10 Gunma (群馬) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 495,398 L 533,398 L 533,444 L 493,442 Z" data-id="10" data-kana="Gunma" data-name="群馬縣" id="pref-10"></path>
+<text class="pref-label" fill="#1e293b" font-size="11" font-weight="700" text-anchor="middle" x="514" y="424">群馬</text>
+<!-- 11 Saitama (埼玉) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 502,446 L 572,446 L 568,476 L 504,476 Z" data-id="11" data-kana="Saitama" data-name="埼玉縣" id="pref-11"></path>
+<text class="pref-label" fill="#1e293b" font-size="11" font-weight="700" text-anchor="middle" x="537" y="465">埼玉</text>
+<!-- 12 Chiba (千葉) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 572,454 L 620,454 L 610,518 L 572,512 Z" data-id="12" data-kana="Chiba" data-name="千葉縣" id="pref-12"></path>
+<text class="pref-label" fill="#1e293b" font-size="11" font-weight="700" text-anchor="middle" x="594" y="486">千葉</text>
+<!-- 13 Tokyo (東京都) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 505,479 L 566,479 L 566,508 L 505,508 Z" data-id="13" data-kana="Tokyo" data-name="東京都" id="pref-13"></path>
+<text class="pref-label" fill="#1e293b" font-size="11" font-weight="800" text-anchor="middle" x="536" y="497">東京</text>
+<!-- 14 Kanagawa (神奈川) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 502,511 L 562,511 L 558,542 L 506,540 Z" data-id="14" data-kana="Kanagawa" data-name="神奈川縣" id="pref-14"></path>
+<text class="pref-label" fill="#1e293b" font-size="10" font-weight="700" text-anchor="middle" x="534" y="530">神奈川</text>
+</g>
+<!-- 4. CHUBU (中部 9 縣) -->
+<g id="region-svg-chubu">
+<!-- 15 Niigata (新潟) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 466,325 L 518,348 L 515,395 L 476,395 L 466,365 Z" data-id="15" data-kana="Niigata" data-name="新潟縣" id="pref-15"></path>
+<text class="pref-label" fill="#1e293b" font-size="11" font-weight="700" text-anchor="middle" x="494" y="370">新潟</text>
+<!-- 16 Toyama (富山) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 420,366 L 462,366 L 460,402 L 420,402 Z" data-id="16" data-kana="Toyama" data-name="富山縣" id="pref-16"></path>
+<text class="pref-label" fill="#1e293b" font-size="10" font-weight="700" text-anchor="middle" x="441" y="388">富山</text>
+<!-- 17 Ishikawa (石川) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 412,320 L 436,328 L 418,402 L 398,388 Z" data-id="17" data-kana="Ishikawa" data-name="石川縣" id="pref-17"></path>
+<text class="pref-label" fill="#1e293b" font-size="10" font-weight="700" text-anchor="middle" x="414" y="360">石川</text>
+<!-- 18 Fukui (福井) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 370,392 L 415,398 L 406,432 L 362,416 Z" data-id="18" data-kana="Fukui" data-name="福井縣" id="pref-18"></path>
+<text class="pref-label" fill="#1e293b" font-size="10" font-weight="700" text-anchor="middle" x="390" y="416">福井</text>
+<!-- 20 Nagano (長野) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 454,405 L 492,402 L 488,485 L 448,475 Z" data-id="20" data-kana="Nagano" data-name="長野縣" id="pref-20"></path>
+<text class="pref-label" fill="#1e293b" font-size="11" font-weight="700" text-anchor="middle" x="470" y="445">長野</text>
+<!-- 19 Yamanashi (山梨) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 480,482 L 505,482 L 505,524 L 476,522 Z" data-id="19" data-kana="Yamanashi" data-name="山梨縣" id="pref-19"></path>
+<text class="pref-label" fill="#1e293b" font-size="10" font-weight="700" text-anchor="middle" x="492" y="506">山梨</text>
+<!-- 21 Gifu (岐阜) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 412,406 L 452,406 L 446,476 L 406,464 Z" data-id="21" data-kana="Gifu" data-name="岐阜縣" id="pref-21"></path>
+<text class="pref-label" fill="#1e293b" font-size="11" font-weight="700" text-anchor="middle" x="428" y="442">岐阜</text>
+<!-- 22 Shizuoka (靜岡) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 458,512 L 504,525 L 490,560 L 448,540 Z" data-id="22" data-kana="Shizuoka" data-name="靜岡縣" id="pref-22"></path>
+<text class="pref-label" fill="#1e293b" font-size="11" font-weight="700" text-anchor="middle" x="474" y="538">靜岡</text>
+<!-- 23 Aichi (愛知) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 410,470 L 452,480 L 444,534 L 406,515 Z" data-id="23" data-kana="Aichi" data-name="愛知縣" id="pref-23"></path>
+<text class="pref-label" fill="#1e293b" font-size="11" font-weight="700" text-anchor="middle" x="427" y="502">愛知</text>
+</g>
+<!-- 5. KANSAI / KINKI (近畿 7 府縣) -->
+<g id="region-svg-kansai">
+<!-- 25 Shiga (滋賀) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 372,434 L 406,434 L 404,482 L 372,480 Z" data-id="25" data-kana="Shiga" data-name="滋賀縣" id="pref-25"></path>
+<text class="pref-label" fill="#1e293b" font-size="10" font-weight="700" text-anchor="middle" x="389" y="460">滋賀</text>
+<!-- 26 Kyoto (京都府) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 342,410 L 370,422 L 369,480 L 340,468 Z" data-id="26" data-kana="Kyoto" data-name="京都府" id="pref-26"></path>
+<text class="pref-label" fill="#1e293b" font-size="11" font-weight="700" text-anchor="middle" x="355" y="448">京都</text>
+<!-- 28 Hyogo (兵庫) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 298,422 L 340,422 L 338,485 L 296,480 Z" data-id="28" data-kana="Hyogo" data-name="兵庫縣" id="pref-28"></path>
+<text class="pref-label" fill="#1e293b" font-size="11" font-weight="700" text-anchor="middle" x="318" y="456">兵庫</text>
+<!-- 27 Osaka (大阪府) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 340,474 L 368,482 L 366,518 L 338,508 Z" data-id="27" data-kana="Osaka" data-name="大阪府" id="pref-27"></path>
+<text class="pref-label" fill="#1e293b" font-size="11" font-weight="800" text-anchor="middle" x="353" y="498">大阪</text>
+<!-- 29 Nara (奈良) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 370,486 L 398,486 L 396,536 L 368,534 Z" data-id="29" data-kana="Nara" data-name="奈良縣" id="pref-29"></path>
+<text class="pref-label" fill="#1e293b" font-size="10" font-weight="700" text-anchor="middle" x="383" y="512">奈良</text>
+<!-- 24 Mie (三重) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 400,486 L 424,498 L 416,564 L 388,548 L 396,515 Z" data-id="24" data-kana="Mie" data-name="三重縣" id="pref-24"></path>
+<text class="pref-label" fill="#1e293b" font-size="10" font-weight="700" text-anchor="middle" x="408" y="534">三重</text>
+<!-- 30 Wakayama (和歌山) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 340,514 L 388,544 L 378,582 L 332,560 Z" data-id="30" data-kana="Wakayama" data-name="和歌山縣" id="pref-30"></path>
+<text class="pref-label" fill="#1e293b" font-size="10" font-weight="700" text-anchor="middle" x="360" y="552">和歌山</text>
+</g>
+<!-- 6. CHUGOKU (中國 5 縣) -->
+<g id="region-svg-chugoku">
+<!-- 31 Tottori (鳥取) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 240,418 L 295,420 L 294,452 L 244,450 Z" data-id="31" data-kana="Tottori" data-name="鳥取縣" id="pref-31"></path>
+<text class="pref-label" fill="#1e293b" font-size="10" font-weight="700" text-anchor="middle" x="268" y="438">鳥取</text>
+<!-- 32 Shimane (島根) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 178,432 L 238,420 L 240,458 L 186,470 Z" data-id="32" data-kana="Shimane" data-name="島根縣" id="pref-32"></path>
+<text class="pref-label" fill="#1e293b" font-size="10" font-weight="700" text-anchor="middle" x="210" y="448">島根</text>
+<!-- 33 Okayama (岡山) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 246,454 L 294,454 L 290,490 L 244,488 Z" data-id="33" data-kana="Okayama" data-name="岡山縣" id="pref-33"></path>
+<text class="pref-label" fill="#1e293b" font-size="10" font-weight="700" text-anchor="middle" x="268" y="474">岡山</text>
+<!-- 34 Hiroshima (廣島) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 194,468 L 244,456 L 242,498 L 192,504 Z" data-id="34" data-kana="Hiroshima" data-name="廣島縣" id="pref-34"></path>
+<text class="pref-label" fill="#1e293b" font-size="10" font-weight="700" text-anchor="middle" x="218" y="484">廣島</text>
+<!-- 35 Yamaguchi (山口) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 142,464 L 190,470 L 186,515 L 140,505 Z" data-id="35" data-kana="Yamaguchi" data-name="山口縣" id="pref-35"></path>
+<text class="pref-label" fill="#1e293b" font-size="10" font-weight="700" text-anchor="middle" x="164" y="492">山口</text>
+</g>
+<!-- 7. SHIKOKU (四國 4 縣) -->
+<g id="region-svg-shikoku">
+<!-- 37 Kagawa (香川) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 244,514 L 292,514 L 288,540 L 242,536 Z" data-id="37" data-kana="Kagawa" data-name="香川縣" id="pref-37"></path>
+<text class="pref-label" fill="#1e293b" font-size="10" font-weight="700" text-anchor="middle" x="267" y="530">香川</text>
+<!-- 36 Tokushima (德島) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 276,542 L 314,534 L 306,578 L 268,574 Z" data-id="36" data-kana="Tokushima" data-name="德島縣" id="pref-36"></path>
+<text class="pref-label" fill="#1e293b" font-size="10" font-weight="700" text-anchor="middle" x="290" y="560">德島</text>
+<!-- 38 Ehime (愛媛) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 198,524 L 242,520 L 238,574 L 196,564 Z" data-id="38" data-kana="Ehime" data-name="愛媛縣" id="pref-38"></path>
+<text class="pref-label" fill="#1e293b" font-size="10" font-weight="700" text-anchor="middle" x="218" y="548">愛媛</text>
+<!-- 39 Kochi (高知) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 230,564 L 280,560 L 266,602 L 216,596 Z" data-id="39" data-kana="Kochi" data-name="高知縣" id="pref-39"></path>
+<text class="pref-label" fill="#1e293b" font-size="10" font-weight="700" text-anchor="middle" x="250" y="584">高知</text>
+</g>
+<!-- 8. KYUSHU (九州 7 縣) -->
+<g id="region-svg-kyushu">
+<!-- 40 Fukuoka (福岡) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 104,498 L 145,502 L 140,540 L 98,536 Z" data-id="40" data-kana="Fukuoka" data-name="福岡縣" id="pref-40"></path>
+<text class="pref-label" fill="#1e293b" font-size="10" font-weight="800" text-anchor="middle" x="122" y="522">福岡</text>
+<!-- 41 Saga (佐賀) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 68,525 L 102,525 L 98,556 L 66,552 Z" data-id="41" data-kana="Saga" data-name="佐賀縣" id="pref-41"></path>
+<text class="pref-label" fill="#1e293b" font-size="9" font-weight="700" text-anchor="middle" x="84" y="542">佐賀</text>
+<!-- 42 Nagasaki (長崎) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 36,536 L 68,534 L 64,576 L 30,566 Z" data-id="42" data-kana="Nagasaki" data-name="長崎縣" id="pref-42"></path>
+<text class="pref-label" fill="#1e293b" font-size="9" font-weight="700" text-anchor="middle" x="50" y="556">長崎</text>
+<!-- 44 Oita (大分) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 134,534 L 176,540 L 168,582 L 126,572 Z" data-id="44" data-kana="Oita" data-name="大分縣" id="pref-44"></path>
+<text class="pref-label" fill="#1e293b" font-size="10" font-weight="700" text-anchor="middle" x="150" y="560">大分</text>
+<!-- 43 Kumamoto (熊本) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 82,562 L 128,564 L 122,612 L 76,606 Z" data-id="43" data-kana="Kumamoto" data-name="熊本縣" id="pref-43"></path>
+<text class="pref-label" fill="#1e293b" font-size="10" font-weight="700" text-anchor="middle" x="104" y="588">熊本</text>
+<!-- 45 Miyazaki (宮崎) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 124,592 L 166,586 L 158,646 L 118,638 Z" data-id="45" data-kana="Miyazaki" data-name="宮崎縣" id="pref-45"></path>
+<text class="pref-label" fill="#1e293b" font-size="10" font-weight="700" text-anchor="middle" x="142" y="618">宮崎</text>
+<!-- 46 Kagoshima (鹿兒島) -->
+<path class="pref-node stroke-white stroke-[1.5]" d="M 70,612 L 116,614 L 110,666 L 62,658 Z" data-id="46" data-kana="Kagoshima" data-name="鹿兒島縣" id="pref-46"></path>
+<text class="pref-label" fill="#1e293b" font-size="10" font-weight="700" text-anchor="middle" x="90" y="640">鹿兒島</text>
+</g>
+<!-- 9. OKINAWA INSET (沖繩獨立視窗) -->
+<g id="region-svg-okinawa" transform="translate(18, 595)">
+<rect class="shadow-xs" fill="#ffffff" height="74" rx="10" stroke="#cbd5e1" stroke-dasharray="3 3" width="138" x="0" y="0"></rect>
+<text fill="#64748b" font-size="9" font-weight="800" x="10" y="18">47 沖繩群島 (OKINAWA)</text>
+<path class="pref-node stroke-white stroke-[1.5]" d="M 38,28 L 102,28 L 112,56 L 28,56 Z" data-id="47" data-kana="Okinawa" data-name="沖繩縣" id="pref-47"></path>
+<text class="pref-label" fill="#1e293b" font-size="12" font-weight="800" text-anchor="middle" x="70" y="47">沖繩</text>
+</g>
+</svg>
+<!-- Floating Tooltip Card -->
+<div class="absolute hidden bg-slate-900/95 backdrop-blur-md text-white text-xs px-3.5 py-2.5 rounded-xl shadow-xl border border-slate-700 pointer-events-none z-30" id="mapTooltip">
+<div class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-slate-400" id="tooltipBadge"></span>
+<span class="font-bold text-sm" id="tooltipPrefName">東京</span>
+<span class="text-slate-400 text-[10px]" id="tooltipPrefKana">Tokyo</span>
+</div>
+<div class="mt-1 flex items-center justify-between gap-3 text-[11px] text-slate-300">
+<span>造訪等級：<strong class="text-amber-300" id="tooltipLevelText">2-3次 觀光</strong></span>
+<span class="font-bold text-white bg-slate-800 px-1.5 py-0.5 rounded" id="tooltipPoints">+2 pts</span>
+</div>
+</div>
+</div>
+<!-- Map Footer Info -->
+<div class="mt-3 flex flex-wrap items-center justify-between text-xs text-slate-500 gap-2">
+<div class="flex items-center gap-2">
+<span class="inline-block w-2 h-2 rounded-full bg-amber-400"></span>
+<span>支援點擊切換、支援行動裝置與滾動選取，足跡自動儲存於瀏覽器</span>
+</div>
+<div class="font-medium text-slate-400">
+          合計 47 都道府縣 · 完整日本列島拓撲架構
+        </div>
+</div>
+</section>
+<!-- Right: Stats, Region Panels & Badges (5 cols) -->
+<aside class="lg:col-span-5 xl:col-span-4 space-y-4">
+<!-- Achievement Card -->
+<div class="bg-gradient-to-br from-amber-500 via-orange-500 to-amber-600 rounded-3xl p-5 text-white shadow-lg shadow-orange-500/15 relative overflow-hidden">
+<div class="absolute -right-4 -bottom-4 w-32 h-32 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+<div class="relative z-10">
+<div class="flex items-center justify-between mb-3">
+<span class="px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-sm text-[11px] font-bold tracking-wider uppercase text-amber-100 flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">military_tech</span>
+              目前日本旅遊等級
+            </span>
+<button class="text-xs bg-white text-slate-900 hover:bg-amber-50 px-2.5 py-1 rounded-lg font-bold shadow-xs active:scale-95 transition flex items-center gap-1" onclick="shareAchievement()">
+<span class="material-symbols-outlined text-[14px]">content_copy</span>
+              複製成果
+            </button>
+</div>
+<h3 class="text-xl font-black tracking-tight leading-tight" id="achievementTitle">初心者探險家</h3>
+<p class="text-xs text-amber-100 font-medium mt-1" id="achievementDesc">日本旅程剛起步，還有無數美景等待解鎖！</p>
+<!-- Distribution Mini Progress Bar -->
+<div class="mt-4 pt-3 border-t border-white/20">
+<div class="flex items-center justify-between text-[11px] font-semibold text-amber-100 mb-1.5">
+<span>全境制霸進度</span>
+<span><span id="sideCount">0</span> / 47 縣市 (<span id="sidePercent">0%</span>)</span>
+</div>
+<div class="w-full h-3 bg-black/20 rounded-full overflow-hidden flex p-0.5 border border-white/20">
+<div class="h-full bg-yellow-200 transition-all duration-300" id="bar-lvl-1" style="width: 0%" title="踩點"></div>
+<div class="h-full bg-amber-400 transition-all duration-300" id="bar-lvl-2" style="width: 0%" title="觀光"></div>
+<div class="h-full bg-orange-500 transition-all duration-300" id="bar-lvl-3" style="width: 0%" title="深度"></div>
+<div class="h-full bg-red-500 transition-all duration-300" id="bar-lvl-4" style="width: 0%" title="常客"></div>
+<div class="h-full bg-purple-500 transition-all duration-300" id="bar-lvl-5" style="width: 0%" title="居住"></div>
+</div>
+<div class="flex justify-between items-center text-[10px] text-white/80 mt-1.5 font-medium">
+<span>積分制霸點: <strong class="text-white font-bold" id="sidePoints">0</strong> / 235 pts</span>
+<span>等級: <strong class="text-yellow-200 font-bold" id="rankTier">Rank E</strong></span>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Search & Region Group Accordion -->
+<div class="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-sm flex flex-col">
+<div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-500 text-base">format_list_bulleted</span>
+<h3 class="text-sm font-bold text-slate-800">8 大分區快速調控</h3>
+</div>
+<span class="text-[11px] text-slate-400">點選縣名可即時循環切換</span>
+</div>
+<!-- Search / Filter input -->
+<div class="relative mb-3">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-sm">search</span>
+<input class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 focus:bg-white transition" id="prefSearchInput" oninput="filterPrefectures(this.value)" placeholder="搜尋縣市（例：東京、京都、沖繩）..." type="text"/>
+</div>
+<!-- 8 Regional Accordions Container -->
+<div class="space-y-2.5 max-h-[460px] overflow-y-auto pr-1 custom-scrollbar" id="regionGroupContainer">
+<!-- Populated dynamically via JS -->
+</div>
+</div>
+<!-- Notification Toast -->
+<div class="hidden fixed bottom-6 right-6 z-50 bg-slate-900/95 text-white px-4 py-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-2 text-xs font-semibold animate-bounce" id="copyToast">
+<span class="material-symbols-outlined text-emerald-400 text-lg">check_circle</span>
+<span>已複製成就進度至剪貼簿！可直接分享給好友 🎉</span>
+</div>
+</aside>
+</main>
+<script>
+    // -------------------------------------------------------------
+    // 47 PREFECTURES DATA SCHEME
+    // -------------------------------------------------------------
+    const LEVELS = {
+      0: { name: "未造訪", color: "#e2e8f0", points: 0, label: "0次 未去過", desc: "尚未涉足" },
+      1: { name: "踩點過境", color: "#fef08a", points: 1, label: "1次 踩點", desc: "換車、路過或停留一次" },
+      2: { name: "短期觀光", color: "#f59e0b", points: 2, label: "2-3次 觀光", desc: "走訪知名景點、住宿遊玩" },
+      3: { name: "深度旅遊", color: "#f97316", points: 3, label: "4-5次 深度", desc: "去過多次、熟悉當地風土" },
+      4: { name: "狂熱常客", color: "#ef4444", points: 4, label: "6次以上 常客", desc: "宛如後花園般的愛好者" },
+      5: { name: "居住/留學", color: "#8b5cf6", points: 5, label: "長期居住", desc: "曾在此求學、定居或工作" }
+    };
+
+    const REGIONS_DATABASE = [
+      {
+        id: "hokkaido",
+        name: "北海道地方",
+        en: "Hokkaido",
+        prefs: [
+          { id: "01", name: "北海道", kana: "Hokkaido" }
+        ]
+      },
+      {
+        id: "tohoku",
+        name: "東北地方",
+        en: "Tohoku",
+        prefs: [
+          { id: "02", name: "青森縣", kana: "Aomori" },
+          { id: "03", name: "岩手縣", kana: "Iwate" },
+          { id: "04", name: "宮城縣", kana: "Miyagi" },
+          { id: "05", name: "秋田縣", kana: "Akita" },
+          { id: "06", name: "山形縣", kana: "Yamagata" },
+          { id: "07", name: "福島縣", kana: "Fukushima" }
+        ]
+      },
+      {
+        id: "kanto",
+        name: "關東地方",
+        en: "Kanto",
+        prefs: [
+          { id: "08", name: "茨城縣", kana: "Ibaraki" },
+          { id: "09", name: "栃木縣", kana: "Tochigi" },
+          { id: "10", name: "群馬縣", kana: "Gunma" },
+          { id: "11", name: "埼玉縣", kana: "Saitama" },
+          { id: "12", name: "千葉縣", kana: "Chiba" },
+          { id: "13", name: "東京都", kana: "Tokyo" },
+          { id: "14", name: "神奈川縣", kana: "Kanagawa" }
+        ]
+      },
+      {
+        id: "chubu",
+        name: "中部地方",
+        en: "Chubu",
+        prefs: [
+          { id: "15", name: "新潟縣", kana: "Niigata" },
+          { id: "16", name: "富山縣", kana: "Toyama" },
+          { id: "17", name: "石川縣", kana: "Ishikawa" },
+          { id: "18", name: "福井縣", kana: "Fukui" },
+          { id: "19", name: "山梨縣", kana: "Yamanashi" },
+          { id: "20", name: "長野縣", kana: "Nagano" },
+          { id: "21", name: "岐阜縣", kana: "Gifu" },
+          { id: "22", name: "靜岡縣", kana: "Shizuoka" },
+          { id: "23", name: "愛知縣", kana: "Aichi" }
+        ]
+      },
+      {
+        id: "kansai",
+        name: "近畿地方 (關西)",
+        en: "Kansai",
+        prefs: [
+          { id: "24", name: "三重縣", kana: "Mie" },
+          { id: "25", name: "滋賀縣", kana: "Shiga" },
+          { id: "26", name: "京都府", kana: "Kyoto" },
+          { id: "27", name: "大阪府", kana: "Osaka" },
+          { id: "28", name: "兵庫縣", kana: "Hyogo" },
+          { id: "29", name: "奈良縣", kana: "Nara" },
+          { id: "30", name: "和歌山縣", kana: "Wakayama" }
+        ]
+      },
+      {
+        id: "chugoku",
+        name: "中國地方",
+        en: "Chugoku",
+        prefs: [
+          { id: "31", name: "鳥取縣", kana: "Tottori" },
+          { id: "32", name: "島根縣", kana: "Shimane" },
+          { id: "33", name: "岡山縣", kana: "Okayama" },
+          { id: "34", name: "廣島縣", kana: "Hiroshima" },
+          { id: "35", name: "山口縣", kana: "Yamaguchi" }
+        ]
+      },
+      {
+        id: "shikoku",
+        name: "四國地方",
+        en: "Shikoku",
+        prefs: [
+          { id: "36", name: "德島縣", kana: "Tokushima" },
+          { id: "37", name: "香川縣", kana: "Kagawa" },
+          { id: "38", name: "愛媛縣", kana: "Ehime" },
+          { id: "39", name: "高知縣", kana: "Kochi" }
+        ]
+      },
+      {
+        id: "kyushu",
+        name: "九州・沖繩地方",
+        en: "Kyushu & Okinawa",
+        prefs: [
+          { id: "40", name: "福岡縣", kana: "Fukuoka" },
+          { id: "41", name: "佐賀縣", kana: "Saga" },
+          { id: "42", name: "長崎縣", kana: "Nagasaki" },
+          { id: "43", name: "熊本縣", kana: "Kumamoto" },
+          { id: "44", name: "大分縣", kana: "Oita" },
+          { id: "45", name: "宮崎縣", kana: "Miyazaki" },
+          { id: "46", name: "鹿兒島縣", kana: "Kagoshima" },
+          { id: "47", name: "沖繩縣", kana: "Okinawa" }
+        ]
+      }
+    ];
+
+    // State of user visits: Map of prefId -> level (0 to 5)
+    let userPrefState = {};
+    let clickMode = 'cycle'; // 'cycle' (+1 mod 6) or 'brush'
+    let activeBrushLevel = null;
+
+    // Load saved data
+    function loadSavedState() {
+      try {
+        const data = localStorage.getItem('japan_pref_level_v2');
+        if (data) {
+          userPrefState = JSON.parse(data);
+        }
+      } catch (e) {
+        console.warn("Could not read localStorage", e);
+      }
+
+      // Initialize defaults to 0 if absent
+      REGIONS_DATABASE.forEach(r => {
+        r.prefs.forEach(p => {
+          if (userPrefState[p.id] === undefined) {
+            userPrefState[p.id] = 0;
+          }
+        });
+      });
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem('japan_pref_level_v2', JSON.stringify(userPrefState));
+      } catch (e) {}
+    }
+
+    // Toggle click mode: Cycle (+1) vs Specific Stamp
+    function toggleClickMode() {
+      if (clickMode === 'cycle') {
+        clickMode = 'brush';
+        if (activeBrushLevel === null) activeBrushLevel = 2; // Default to tourist
+        document.getElementById('clickModeText').textContent = `固定蓋印 (${LEVELS[activeBrushLevel].name})`;
+      } else {
+        clickMode = 'cycle';
+        activeBrushLevel = null;
+        document.getElementById('clickModeText').textContent = `依序遞增等級 (+1)`;
+        updateLegendStyles();
+      }
+    }
+
+    function setActiveBrush(lvl) {
+      clickMode = 'brush';
+      activeBrushLevel = lvl;
+      document.getElementById('clickModeText').textContent = `固定蓋印 (${LEVELS[lvl].name})`;
+      updateLegendStyles();
+    }
+
+    function updateLegendStyles() {
+      for (let i = 0; i <= 5; i++) {
+        const btn = document.getElementById(`legend-btn-${i}`);
+        if (btn) {
+          if (activeBrushLevel === i && clickMode === 'brush') {
+            btn.classList.add('ring-2', 'ring-slate-900', 'shadow-xs');
+          } else {
+            btn.classList.remove('ring-2', 'ring-slate-900', 'shadow-xs');
+          }
+        }
+      }
+    }
+
+    // Handle Prefecture Click on SVG or Sidebar
+    function handlePrefClick(prefId) {
+      let currentLvl = userPrefState[prefId] || 0;
+      if (clickMode === 'brush' && activeBrushLevel !== null) {
+        userPrefState[prefId] = activeBrushLevel;
+      } else {
+        userPrefState[prefId] = (currentLvl + 1) % 6;
+      }
+      saveState();
+      renderApp();
+      updateTooltipContent(prefId);
+    }
+
+    // Direct Level setter
+    function setPrefLevel(prefId, level) {
+      userPrefState[prefId] = Math.max(0, Math.min(5, level));
+      saveState();
+      renderApp();
+    }
+
+    // Batch Presets
+    function fillPresetRoute(type) {
+      if (type === 'classic') {
+        // Tokyo, Osaka, Kyoto, Kanagawa, Hokkaido, Fukuoka, Okinawa
+        const classicMap = {
+          "13": 4, // Tokyo (Frequent)
+          "27": 3, // Osaka (Deep)
+          "26": 3, // Kyoto (Deep)
+          "14": 2, // Kanagawa
+          "01": 2, // Hokkaido
+          "40": 2, // Fukuoka
+          "47": 3, // Okinawa
+          "29": 1, // Nara
+          "28": 1  // Hyogo
+        };
+        Object.entries(classicMap).forEach(([id, lvl]) => {
+          userPrefState[id] = lvl;
+        });
+      } else if (type === 'allVisit') {
+        REGIONS_DATABASE.forEach(r => {
+          r.prefs.forEach(p => {
+            if (userPrefState[p.id] === 0) userPrefState[p.id] = 1;
+          });
+        });
+      }
+      saveState();
+      renderApp();
+    }
+
+    function resetAll() {
+      if (confirm("確定要重設所有 47 個縣市的旅遊紀錄嗎？")) {
+        REGIONS_DATABASE.forEach(r => {
+          r.prefs.forEach(p => {
+            userPrefState[p.id] = 0;
+          });
+        });
+        saveState();
+        renderApp();
+      }
+    }
+
+    // Calculate Global Statistics
+    function calculateStats() {
+      let unlocked = 0;
+      let totalPoints = 0;
+      let distribution = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+      Object.entries(userPrefState).forEach(([id, lvl]) => {
+        distribution[lvl] = (distribution[lvl] || 0) + 1;
+        if (lvl > 0) unlocked++;
+        totalPoints += LEVELS[lvl].points;
+      });
+
+      const percentage = Math.round((unlocked / 47) * 100);
+      return { unlocked, totalPoints, percentage, distribution };
+    }
+
+    // Render SVG Map Colors & Badges
+    function renderApp() {
+      const stats = calculateStats();
+
+      // Header UI
+      document.getElementById('headerUnlockedCount').textContent = stats.unlocked;
+      document.getElementById('headerPercentage').textContent = `${stats.percentage}%`;
+      document.getElementById('headerTotalScore').textContent = stats.totalPoints;
+
+      // Aside Cards
+      document.getElementById('sideCount').textContent = stats.unlocked;
+      document.getElementById('sidePercent').textContent = `${stats.percentage}%`;
+      document.getElementById('sidePoints').textContent = stats.totalPoints;
+
+      // Update distribution counts in Legend buttons
+      for (let i = 0; i <= 5; i++) {
+        const badge = document.getElementById(`badge-count-${i}`);
+        if (badge) badge.textContent = stats.distribution[i] || 0;
+      }
+
+      // Update Mini Multi-Color Bar
+      for (let i = 1; i <= 5; i++) {
+        const bar = document.getElementById(`bar-lvl-${i}`);
+        if (bar) {
+          const w = ((stats.distribution[i] || 0) / 47) * 100;
+          bar.style.width = `${w}%`;
+        }
+      }
+
+      // Achievement Title & Tier
+      const rankInfo = getAchievementTier(stats.unlocked, stats.totalPoints);
+      document.getElementById('achievementTitle').textContent = rankInfo.title;
+      document.getElementById('achievementDesc').textContent = rankInfo.desc;
+      document.getElementById('rankTier').textContent = rankInfo.rank;
+
+      // Update All 47 SVG Paths
+      Object.entries(userPrefState).forEach(([prefId, lvl]) => {
+        const pathEl = document.getElementById(`pref-${prefId}`);
+        if (pathEl) {
+          const color = LEVELS[lvl].color;
+          pathEl.setAttribute('fill', color);
+          // Darken border slightly for active areas
+          pathEl.setAttribute('stroke', lvl === 0 ? '#cbd5e1' : '#ffffff');
+        }
+
+        // Update Pill in List
+        const pillTag = document.getElementById(`pref-pill-${prefId}`);
+        if (pillTag) {
+          pillTag.style.backgroundColor = LEVELS[lvl].color;
+          pillTag.textContent = lvl === 0 ? '未去' : `Lv.${lvl}`;
+          if (lvl === 0) {
+            pillTag.className = "text-[10px] font-bold px-1.5 py-0.5 rounded text-slate-500 bg-slate-200";
+          } else if (lvl === 1) {
+            pillTag.className = "text-[10px] font-bold px-1.5 py-0.5 rounded text-amber-900 bg-amber-200";
+          } else if (lvl >= 4) {
+            pillTag.className = "text-[10px] font-bold px-1.5 py-0.5 rounded text-white bg-slate-900";
+          } else {
+            pillTag.className = "text-[10px] font-bold px-1.5 py-0.5 rounded text-slate-900 bg-amber-400";
+          }
+        }
+      });
+    }
+
+    function getAchievementTier(unlocked, points) {
+      if (unlocked === 47 && points >= 180) {
+        return { rank: "Rank EX", title: "👑 傳奇東瀛達人 · 神級大滿貫", desc: "47 都道府縣深度走透透！連日本人都佩服的極致旅神！" };
+      }
+      if (unlocked === 47) {
+        return { rank: "Rank S+", title: "🗾 日本完全制霸！", desc: "走遍日本全境四十七都道府縣！達成偉大成就！" };
+      }
+      if (unlocked >= 36) {
+        return { rank: "Rank S", title: "🌟 骨灰級日本旅人", desc: "已踩點 36 縣市以上，橫跨本州、四國、九州與北國！" };
+      }
+      if (unlocked >= 24) {
+        return { rank: "Rank A", title: "✈️ 資深東瀛探險家", desc: "解鎖半個日本！深諳各大私房秘境與溫泉鐵道。" };
+      }
+      if (unlocked >= 12) {
+        return { rank: "Rank B", title: "🚄 漫遊行者", desc: "雙腳遍佈多個主要地區，日本自由行如魚得水！" };
+      }
+      if (unlocked >= 5) {
+        return { rank: "Rank C", title: "🎒 活力背包客", desc: "已造訪多個核心都會區，旅程正在火熱展開！" };
+      }
+      if (unlocked >= 1) {
+        return { rank: "Rank D", title: "🌱 初心旅途啟程", desc: "踏上日本的土地，展開探索各都道府縣的第一步！" };
+      }
+      return { rank: "Rank E", title: "🗺️ 準備啟程的旅人", desc: "日本地圖整裝待發，準備開始記錄你的專屬足跡！" };
+    }
+
+    // Build the 8-Region Sidebar Accordions
+    function renderSidebarList() {
+      const container = document.getElementById('regionGroupContainer');
+      container.innerHTML = '';
+
+      REGIONS_DATABASE.forEach((region, rIdx) => {
+        const groupEl = document.createElement('div');
+        groupEl.className = "border border-slate-200/90 rounded-2xl overflow-hidden bg-slate-50/70";
+        groupEl.id = `region-card-${region.id}`;
+
+        const countUnlocked = region.prefs.filter(p => (userPrefState[p.id] || 0) > 0).length;
+
+        groupEl.innerHTML = `
+          <div class="flex items-center justify-between px-3.5 py-2.5 bg-slate-100/80 cursor-pointer hover:bg-slate-200/60 transition" onclick="toggleAccordion('region-body-${rIdx}')">
+            <div class="flex items-center gap-2">
+              <span class="w-1.5 h-3.5 bg-amber-500 rounded-full"></span>
+              <span class="font-bold text-xs text-slate-800">${region.name}</span>
+              <span class="text-[10px] text-slate-400 font-medium">${region.en}</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white text-slate-600 border border-slate-200" id="reg-count-${region.id}">
+                ${countUnlocked}/${region.prefs.length}
+              </span>
+              <span class="material-symbols-outlined text-slate-400 text-sm">expand_more</span>
+            </div>
+          </div>
+          <div id="region-body-${rIdx}" class="p-2 grid grid-cols-2 gap-1.5 bg-white">
+            ${region.prefs.map(p => `
+              <div 
+                id="pref-list-item-${p.id}"
+                onclick="handlePrefClick('${p.id}')"
+                class="pref-list-node flex items-center justify-between p-2 rounded-xl border border-slate-100 bg-slate-50/80 hover:bg-amber-50 hover:border-amber-200 transition cursor-pointer select-none">
+                <div>
+                  <div class="font-bold text-xs text-slate-800 leading-tight">${p.name}</div>
+                  <div class="text-[9px] text-slate-400">${p.id} · ${p.kana}</div>
+                </div>
+                <span id="pref-pill-${p.id}" class="text-[10px] font-bold px-1.5 py-0.5 rounded text-slate-500 bg-slate-200">
+                  未去
+                </span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        container.appendChild(groupEl);
+      });
+    }
+
+    function toggleAccordion(id) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.toggle('hidden');
+      }
+    }
+
+    // Filter prefectures in sidebar
+    function filterPrefectures(term) {
+      const q = term.trim().toLowerCase();
+      document.querySelectorAll('.pref-list-node').forEach(node => {
+        const text = node.textContent.toLowerCase();
+        if (!q || text.includes(q)) {
+          node.classList.remove('hidden');
+        } else {
+          node.classList.add('hidden');
+        }
+      });
+    }
+
+    // Floating Tooltip handlers
+    function setupMapInteractions() {
+      const tooltip = document.getElementById('mapTooltip');
+      const svg = document.getElementById('japanMapSvg');
+
+      document.querySelectorAll('.pref-node').forEach(elem => {
+        const prefId = elem.getAttribute('data-id');
+        const prefName = elem.getAttribute('data-name');
+        const prefKana = elem.getAttribute('data-kana');
+
+        elem.addEventListener('click', (e) => {
+          e.stopPropagation();
+          handlePrefClick(prefId);
+        });
+
+        elem.addEventListener('mouseenter', (e) => {
+          showTooltip(prefId, prefName, prefKana, e);
+        });
+
+        elem.addEventListener('mousemove', (e) => {
+          moveTooltip(e);
+        });
+
+        elem.addEventListener('mouseleave', () => {
+          tooltip.classList.add('hidden');
+        });
+      });
+    }
+
+    function showTooltip(id, name, kana, e) {
+      const tooltip = document.getElementById('mapTooltip');
+      const lvl = userPrefState[id] || 0;
+      const lvlObj = LEVELS[lvl];
+
+      document.getElementById('tooltipPrefName').textContent = name;
+      document.getElementById('tooltipPrefKana').textContent = `${id} · ${kana}`;
+      document.getElementById('tooltipLevelText').textContent = lvlObj.label;
+      document.getElementById('tooltipPoints').textContent = `+${lvlObj.points} pts`;
+      document.getElementById('tooltipBadge').style.backgroundColor = lvlObj.color;
+
+      tooltip.classList.remove('hidden');
+      moveTooltip(e);
+    }
+
+    function updateTooltipContent(id) {
+      const lvl = userPrefState[id] || 0;
+      const lvlObj = LEVELS[lvl];
+      document.getElementById('tooltipLevelText').textContent = lvlObj.label;
+      document.getElementById('tooltipPoints').textContent = `+${lvlObj.points} pts`;
+      document.getElementById('tooltipBadge').style.backgroundColor = lvlObj.color;
+    }
+
+    function moveTooltip(e) {
+      const tooltip = document.getElementById('mapTooltip');
+      const containerRect = document.getElementById('japanMapSvg').parentElement.getBoundingClientRect();
+      const x = e.clientX - containerRect.left + 14;
+      const y = e.clientY - containerRect.top - 20;
+      tooltip.style.left = `${Math.min(x, containerRect.width - 180)}px`;
+      tooltip.style.top = `${Math.max(10, y)}px`;
+    }
+
+    // Share achievement text
+    function shareAchievement() {
+      const stats = calculateStats();
+      const rankInfo = getAchievementTier(stats.unlocked, stats.totalPoints);
+
+      const text = `🗾【日本 47 都道府縣制霸圖】我的旅遊足跡報告：\n` +
+        `🏆 獲得稱號：${rankInfo.title} (${rankInfo.rank})\n` +
+        `📍 解鎖進度：${stats.unlocked}/47 都道府縣 (制霸率 ${stats.percentage}%)\n` +
+        `⭐ 總累積積分：${stats.totalPoints}/235 pts\n` +
+        `🏠 居住/留學：${stats.distribution[5]} 處 | 🔴 常客：${stats.distribution[4]} 處 | 🟠 深度：${stats.distribution[3]} 處\n` +
+        `快來點亮你的日本地圖！✨`;
+
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast();
+        }).catch(() => {
+          prompt("請複製下方文字分享：", text);
+        });
+      } else {
+        prompt("請複製下方文字分享：", text);
+      }
+    }
+
+    function showToast() {
+      const toast = document.getElementById('copyToast');
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 3000);
+    }
+
+    // Initialization
+    document.addEventListener('DOMContentLoaded', () => {
+      loadSavedState();
+      renderSidebarList();
+      setupMapInteractions();
+      renderApp();
+    });
+  </script>
+</body></html>
