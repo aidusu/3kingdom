@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+
+<html lang="zh-Hant"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>台灣主要城市探索地圖 — 精確座標導覽</title>
+<!-- Leaflet CSS -->
+<link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet"/>
+<!-- Google Fonts & Phosphor Icons -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Noto+Sans+TC:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Noto Sans TC"', '"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            500: '#10b981',
+                            600: '#059669',
+                            teal: '#0d9488'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            font-family: 'Noto Sans TC', -apple-system, sans-serif;
+            background-color: #0f172a;
+        }
+        #map {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            background: #f1f5f9;
+        }
+        /* Modern 2D Flat Minimalist Marker Styling */
+        .flat-pin-wrapper {
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s ease, filter 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .flat-pin-wrapper:hover {
+            transform: translateY(-4px) scale(1.08);
+            z-index: 9999 !important;
+        }
+        .flat-pin-bubble {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 9px 4px 5px;
+            background: #2563eb;
+            color: #ffffff;
+            border-radius: 9999px;
+            border: 2px solid #ffffff;
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.25);
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .flat-pin-index {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #ffffff;
+            color: #2563eb;
+            font-size: 11px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        .flat-pin-arrow {
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 7px solid #2563eb;
+            margin-top: -1px;
+            filter: drop-shadow(0 2px 2px rgba(15, 23, 42, 0.2));
+        }
+
+        /* 2D Palette Themes */
+        .theme-taipei .flat-pin-bubble {
+            background: #e11d48;
+        }
+        .theme-taipei .flat-pin-index {
+            color: #e11d48;
+        }
+        .theme-taipei .flat-pin-arrow {
+            border-top-color: #e11d48;
+        }
+
+        .theme-kaohsiung .flat-pin-bubble {
+            background: #ea580c;
+        }
+        .theme-kaohsiung .flat-pin-index {
+            color: #ea580c;
+        }
+        .theme-kaohsiung .flat-pin-arrow {
+            border-top-color: #ea580c;
+        }
+
+        .theme-taichung .flat-pin-bubble {
+            background: #059669;
+        }
+        .theme-taichung .flat-pin-index {
+            color: #059669;
+        }
+        .theme-taichung .flat-pin-arrow {
+            border-top-color: #059669;
+        }
+
+        /* Leaflet Popup Reskin */
+        .leaflet-popup-content-wrapper {
+            background: rgba(15, 23, 42, 0.94) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            border-radius: 14px !important;
+            box-shadow: 0 16px 28px -6px rgba(0, 0, 0, 0.45) !important;
+            color: #f8fafc !important;
+            padding: 3px !important;
+        }
+        .leaflet-popup-tip {
+            background: rgba(15, 23, 42, 0.94) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        }
+        .leaflet-popup-content {
+            margin: 10px 14px !important;
+            line-height: 1.4 !important;
+        }
+        .leaflet-container a.leaflet-popup-close-button {
+            top: 10px !important;
+            right: 12px !important;
+            color: #94a3b8 !important;
+            font-size: 18px !important;
+            width: 22px !important;
+            height: 22px !important;
+        }
+        .leaflet-container a.leaflet-popup-close-button:hover {
+            color: #ffffff !important;
+        }
+
+        /* Glassmorphism Panels */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.12), 0 2px 8px -2px rgba(15, 23, 42, 0.06);
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+        body.theme-dark-map .glass-panel {
+            background: rgba(15, 23, 42, 0.88);
+            border-color: rgba(255, 255, 255, 0.14);
+            color: #f8fafc;
+            box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.6);
+        }
+        body.theme-dark-map .panel-title {
+            color: #ffffff !important;
+        }
+        body.theme-dark-map .panel-subtext {
+            color: #94a3b8 !important;
+        }
+        body.theme-dark-map .panel-stat-box {
+            background: rgba(30, 41, 59, 0.75) !important;
+            border-color: rgba(255, 255, 255, 0.08) !important;
+            color: #f1f5f9 !important;
+        }
+        body.theme-dark-map .panel-stat-label {
+            color: #94a3b8 !important;
+        }
+        body.theme-dark-map .panel-layer-container {
+            background: rgba(30, 41, 59, 0.8) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+        body.theme-dark-map .custom-layer-btn:not(.active) {
+            color: #94a3b8 !important;
+        }
+        body.theme-dark-map .custom-layer-btn:not(.active):hover {
+            color: #ffffff !important;
+        }
+        body.theme-dark-map .city-chip-unselected {
+            background: rgba(30, 41, 59, 0.85) !important;
+            color: #cbd5e1 !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+        body.theme-dark-map .coord-box {
+            background: rgba(30, 41, 59, 0.85) !important;
+            color: #f1f5f9 !important;
+        }
+
+        .dark-glass {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.45);
+        }
+        /* Hide scrollbars */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Custom Layer Control styling */
+        .custom-layer-btn.active {
+            background: #2563eb;
+            color: #ffffff;
+            box-shadow: 0 2px 6px -1px rgba(37, 99, 235, 0.4);
+        }
+    </style>
+</head>
+<body class="relative h-screen w-screen overflow-hidden text-slate-800">
+<!-- Top Header & App Bar -->
+<header class="absolute top-4 left-3 right-3 z-[1000] flex flex-col gap-2 pointer-events-none">
+<div class="glass-panel pointer-events-auto rounded-2xl p-3.5 transition-all duration-300">
+<div class="flex items-center justify-between gap-3">
+<div class="flex items-center gap-2.5">
+<div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h1 class="panel-title text-base font-black tracking-tight text-slate-900 leading-none">台灣主要城市探索地圖</h1>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700">精確座標版</span>
+</div>
+<p class="panel-subtext text-xs text-slate-500 font-medium mt-1">8 大都會核心地理座標與特色地標</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<!-- Map Layer Selector Dropdown / Buttons (Carto Light, Carto Dark, Esri) -->
+<div class="panel-layer-container flex items-center bg-slate-100/90 rounded-xl p-1 gap-1 border border-slate-200/80 text-xs">
+<button class="custom-layer-btn active px-2.5 py-1 rounded-lg font-bold text-xs transition-all" data-layer="esri" id="layerBtnEsri" title="Esri 全球標準街道地圖 (推薦穩定，無浮水印)">
+<span>Esri 街道圖 (推薦穩定)</span>
+</button>
+<button class="custom-layer-btn px-2.5 py-1 rounded-lg font-medium text-slate-600 text-xs transition-all hover:text-slate-900" data-layer="cartolight" id="layerBtnCartoLight" title="Carto 淺色街道圖資">
+<span>Carto 淺色</span>
+</button>
+<button class="custom-layer-btn px-2.5 py-1 rounded-lg font-medium text-slate-600 text-xs transition-all hover:text-slate-900" data-layer="cartodark" id="layerBtnCartoDark" title="Carto 深色風格圖資">
+<span>Carto 深色</span>
+</button>
+</div>
+<button class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-900 text-white shadow-sm hover:bg-slate-800 active:scale-95 transition-all" id="resetViewBtn" title="重設地圖視野">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+<span>全覽</span>
+</button>
+</div>
+</div>
+<!-- Stats Bar -->
+<div class="mt-3 pt-2.5 border-t border-slate-200/80 grid grid-cols-3 gap-2 text-center text-xs">
+<div class="panel-stat-box bg-slate-100/70 rounded-lg py-1 px-2 border border-transparent">
+<div class="panel-stat-label text-[10px] text-slate-500 font-medium">涵蓋城市</div>
+<div class="font-bold text-slate-800">8 個都會據點</div>
+</div>
+<div class="panel-stat-box bg-slate-100/70 rounded-lg py-1 px-2 border border-transparent">
+<div class="panel-stat-label text-[10px] text-slate-500 font-medium">座標系統</div>
+<div class="font-bold text-slate-800">WGS84 經緯度</div>
+</div>
+<div class="panel-stat-box bg-slate-100/70 rounded-lg py-1 px-2 border border-transparent">
+<div class="panel-stat-label text-[10px] text-slate-500 font-medium">當前圖資</div>
+<div class="font-bold text-blue-600 truncate" id="currentLayerDisplay">Esri 標準街道圖 (推薦穩定)</div>
+</div>
+</div>
+</div>
+<!-- Quick Horizontal City Pill Chips -->
+<div class="pointer-events-auto flex gap-2 overflow-x-auto no-scrollbar py-1 px-0.5">
+<div class="flex gap-1.5 items-center" id="cityChipsContainer">
+<!-- Dynamically populated -->
+</div>
+</div>
+</header>
+<!-- Map Container -->
+<div id="map"></div>
+<!-- Tile Loading & Connection Status Pill Indicator -->
+<div class="absolute bottom-[170px] left-3 z-[1000] pointer-events-none flex items-center gap-1.5 px-3 py-1.5 rounded-full dark-glass text-white text-[11px] font-medium transition-opacity duration-300 shadow-lg" id="tileStatusIndicator">
+<span class="inline-block w-2 h-2 rounded-full bg-emerald-400" id="tileStatusDot"></span>
+<span id="tileStatusText">Esri 標準街道圖 連線正常</span>
+</div>
+<!-- Floating Interactive Bottom Sheet / Card for active city inspection -->
+<div class="absolute bottom-5 left-3 right-3 z-[1000] pointer-events-none">
+<div class="glass-panel pointer-events-auto rounded-2xl p-4 shadow-xl border border-white/70 transition-all duration-300" id="activeCityCard">
+<div class="flex items-start justify-between gap-3">
+<div class="flex gap-3">
+<div class="h-12 w-12 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-lg shadow-md shrink-0" id="cityBadgeIcon">
+                        台
+                    </div>
+<div>
+<div class="flex items-center gap-2">
+<h2 class="panel-title text-lg font-black text-slate-900 leading-tight" id="cardCityName">台北市</h2>
+<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700" id="cardCityTag">首都政經核心</span>
+</div>
+<p class="panel-subtext text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed" id="cardCityDesc">
+                            台灣的政經文化中心，擁有台北101與故宮博物院等世界級地標，四通八達的捷運網絡串聯各大精華商圈。
+                        </p>
+</div>
+</div>
+</div>
+<!-- Coordinates Badges -->
+<div class="mt-3.5 pt-3 border-t border-slate-200/80 flex items-center justify-between text-xs">
+<div class="flex items-center gap-3">
+<div class="coord-box flex items-center gap-1 font-mono text-slate-700 bg-slate-100/90 px-2.5 py-1 rounded-md">
+<span class="text-slate-400 font-sans font-semibold">緯度 N</span>
+<span class="font-bold text-slate-900" id="cardLat">25.0330°</span>
+</div>
+<div class="coord-box flex items-center gap-1 font-mono text-slate-700 bg-slate-100/90 px-2.5 py-1 rounded-md">
+<span class="text-slate-400 font-sans font-semibold">經度 E</span>
+<span class="font-bold text-slate-900" id="cardLng">121.5654°</span>
+</div>
+</div>
+<button class="flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 active:scale-95 transition-all" id="focusCurrentBtn">
+<span>聚焦特寫</span>
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewbox="0 0 24 24">
+<path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+</svg>
+</button>
+</div>
+</div>
+</div>
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+        // 台灣 8 大城市詳細豐富資料 (座標 + 特色地標與描述)
+        const cities = [
+            { 
+                name: "基隆", 
+                tag: "北海岸港都", 
+                lat: 25.1276, 
+                lng: 121.7392, 
+                desc: "歷史悠久的天然良港，以廟口夜市、和平島地質公園與豐富海洋文化聞名。",
+                landmark: "基隆港 & 廟口",
+                theme: "default"
+            },
+            { 
+                name: "台北", 
+                tag: "首都精華樞紐", 
+                lat: 25.0330, 
+                lng: 121.5654, 
+                desc: "國際大都會與文化重鎮，擁有台北101、信義商圈、陽明山與國家級故宮博物院。",
+                landmark: "台北101摩天樓",
+                theme: "taipei"
+            },
+            { 
+                name: "宜蘭", 
+                tag: "蘭陽平原溫泉鄉", 
+                lat: 24.7570, 
+                lng: 121.7530, 
+                desc: "依山傍海的休閒勝地，特色包含礁溪溫泉、傳統藝術中心與龜山島賞鯨文化。",
+                landmark: "蘭陽博物館 & 礁溪",
+                theme: "default"
+            },
+            { 
+                name: "台中", 
+                tag: "文化中樞綠意之都", 
+                lat: 24.1632, 
+                lng: 120.6403, 
+                desc: "地理適中的宜居都會，匯聚台中國家歌劇院、草悟道綠園道與高美濕地夕陽美景。",
+                landmark: "國家歌劇院 & 草悟道",
+                theme: "taichung"
+            },
+            { 
+                name: "花蓮", 
+                tag: "太平洋壯麗山海", 
+                lat: 23.9912, 
+                lng: 121.6197, 
+                desc: "大自然鬼斧神工的太魯閣峽谷、七星潭月牙灣與清澈海水，是台灣東岸的旅遊瑰寶。",
+                landmark: "太魯閣峽谷 & 七星潭",
+                theme: "default"
+            },
+            { 
+                name: "台南", 
+                tag: "百年古都與美食城", 
+                lat: 22.9997, 
+                lng: 120.1856, 
+                desc: "全台歷史最悠久的城市，赤崁樓、安平古堡與享譽全球的道地傳統街頭小吃代表作。",
+                landmark: "安平古堡 & 赤崁樓",
+                theme: "default"
+            },
+            { 
+                name: "台東", 
+                tag: "南島風情慢活之鄉", 
+                lat: 22.7583, 
+                lng: 121.1444, 
+                desc: "坐擁綿延的花東縱谷與三仙台海岸，每年盛夏舉辦的國際熱氣球嘉年華引人入勝。",
+                landmark: "鹿野高台 & 鐵花村",
+                theme: "default"
+            },
+            { 
+                name: "高雄", 
+                tag: "南台灣海港新都會", 
+                lat: 22.6273, 
+                lng: 120.3014, 
+                desc: "轉型成功的現代港灣城，駁二藝術特區、大港橋與高雄流行音樂中心展現滿滿活力。",
+                landmark: "駁二特區 & 高雄港",
+                theme: "kaohsiung"
+            }
+        ];
+
+        // 依使用者需求配置的三大圖資（預設採用 Esri 街道圖，確保無水印且免 API Key 穩定載入）
+        const tileProviders = {
+            esri: {
+                name: "Esri 標準街道圖 (推薦穩定)",
+                url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+                options: {
+                    maxZoom: 19,
+                    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
+                }
+            },
+            cartolight: {
+                name: "Carto 淺色",
+                url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+                options: {
+                    subdomains: 'abcd',
+                    maxZoom: 20,
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                }
+            },
+            cartodark: {
+                name: "Carto 深色",
+                url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+                options: {
+                    subdomains: 'abcd',
+                    maxZoom: 20,
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                }
+            }
+        };
+
+        // 初始化地圖
+        const map = L.map('map', {
+            center: [23.8, 120.95],
+            zoom: 8,
+            zoomControl: false,
+            preferCanvas: true,
+            minZoom: 5,
+            maxZoom: 20
+        });
+
+        // 右上角 Zoom Controls
+        L.control.zoom({ position: 'topright' }).addTo(map);
+
+        // 圖資狀態指示控制
+        const statusIndicator = document.getElementById('tileStatusIndicator');
+        const statusDot = document.getElementById('tileStatusDot');
+        const statusText = document.getElementById('tileStatusText');
+        const currentLayerDisplay = document.getElementById('currentLayerDisplay');
+
+        function updateTileStatus(state, msg) {
+            if (state === 'loading') {
+                statusDot.className = "inline-block w-2 h-2 rounded-full bg-amber-400 animate-ping";
+                statusText.textContent = msg || "圖磚載入中...";
+                statusIndicator.style.opacity = '1';
+            } else if (state === 'ready') {
+                statusDot.className = "inline-block w-2 h-2 rounded-full bg-emerald-400";
+                statusText.textContent = msg || "Esri 標準街道圖 連線正常";
+                setTimeout(() => {
+                    statusIndicator.style.opacity = '0.85';
+                }, 1500);
+            }
+        }
+
+        let currentTileLayer = null;
+
+        function setTileLayer(providerKey) {
+            const config = tileProviders[providerKey] || tileProviders.esri;
+
+            if (currentTileLayer) {
+                map.removeLayer(currentTileLayer);
+            }
+
+            // 深色主題切換支援
+            if (providerKey === 'cartodark') {
+                document.body.classList.add('theme-dark-map');
+            } else {
+                document.body.classList.remove('theme-dark-map');
+            }
+
+            updateTileStatus('loading', `正在載入 ${config.name}...`);
+            currentLayerDisplay.textContent = config.name;
+
+            currentTileLayer = L.tileLayer(config.url, config.options);
+
+            currentTileLayer.on('loading', () => {
+                updateTileStatus('loading', '圖磚載入中...');
+            });
+
+            currentTileLayer.on('load', () => {
+                updateTileStatus('ready', `${config.name} 連線正常`);
+            });
+
+            currentTileLayer.addTo(map);
+        }
+
+        // 預設載入 Esri 街道圖（百分之百免 Key、穩定無浮水印）
+        setTileLayer('esri');
+
+        // 圖層切換按鈕事件綁定
+        document.querySelectorAll('.custom-layer-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const layer = btn.dataset.layer;
+                document.querySelectorAll('.custom-layer-btn').forEach(b => {
+                    b.classList.remove('active');
+                    b.classList.add('text-slate-600');
+                });
+                btn.classList.add('active');
+                btn.classList.remove('text-slate-600');
+                setTileLayer(layer);
+            });
+        });
+
+        // 現代 2D 扁平風格標記產生器（純淨平面地標針）
+        function create2DFlatPinIcon(city, index) {
+            const themeClass = city.theme !== 'default' ? `theme-${city.theme}` : '';
+            const html = `
+                <div class="flat-pin-wrapper ${themeClass}">
+                    <div class="flat-pin-bubble">
+                        <span class="flat-pin-index">${index + 1}</span>
+                        <span>${city.name}</span>
+                    </div>
+                    <div class="flat-pin-arrow"></div>
+                </div>
+            `;
+            return L.divIcon({
+                className: 'leaflet-flat-marker',
+                html: html,
+                iconSize: [64, 34],
+                iconAnchor: [32, 34],
+                popupAnchor: [0, -32]
+            });
+        }
+
+        const markers = [];
+        const markerMap = {};
+        let currentActiveCity = cities[1]; // 預設台北
+
+        // 更新下方卡片內容
+        function updateActiveCard(city) {
+            currentActiveCity = city;
+            document.getElementById('cardCityName').textContent = city.name;
+            document.getElementById('cardCityTag').textContent = city.tag;
+            document.getElementById('cardCityDesc').textContent = city.desc;
+            document.getElementById('cardLat').textContent = `${city.lat.toFixed(4)}°`;
+            document.getElementById('cardLng').textContent = `${city.lng.toFixed(4)}°`;
+            document.getElementById('cityBadgeIcon').textContent = city.name.substring(0, 1);
+            
+            // 更新 Badge 顏色契合主題
+            const badge = document.getElementById('cityBadgeIcon');
+            if (city.theme === 'taipei') {
+                badge.className = 'h-12 w-12 rounded-xl bg-rose-600 flex items-center justify-center text-white font-black text-lg shadow-md shrink-0';
+            } else if (city.theme === 'kaohsiung') {
+                badge.className = 'h-12 w-12 rounded-xl bg-orange-600 flex items-center justify-center text-white font-black text-lg shadow-md shrink-0';
+            } else if (city.theme === 'taichung') {
+                badge.className = 'h-12 w-12 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-black text-lg shadow-md shrink-0';
+            } else {
+                badge.className = 'h-12 w-12 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-lg shadow-md shrink-0';
+            }
+
+            // 更新 Chip 高亮
+            document.querySelectorAll('.city-chip').forEach(btn => {
+                if (btn.dataset.name === city.name) {
+                    btn.classList.add('bg-blue-600', 'text-white', 'shadow-md', 'scale-105');
+                    btn.classList.remove('city-chip-unselected', 'bg-white/90', 'text-slate-700');
+                } else {
+                    btn.classList.remove('bg-blue-600', 'text-white', 'shadow-md', 'scale-105');
+                    btn.classList.add('city-chip-unselected', 'bg-white/90', 'text-slate-700');
+                }
+            });
+        }
+
+        // 逐一新增標記與互動
+        cities.forEach((city, index) => {
+            const icon = create2DFlatPinIcon(city, index);
+            const popupHtml = `
+                <div class="py-1">
+                    <div class="flex items-center gap-1.5 mb-1.5">
+                        <span class="inline-block w-2 h-2 rounded-full bg-blue-400"></span>
+                        <span class="text-[11px] font-bold tracking-wider text-slate-300 uppercase">${city.tag}</span>
+                    </div>
+                    <div class="text-base font-extrabold text-white flex items-center justify-between">
+                        <span>${city.name}</span>
+                        <span class="text-xs font-mono font-medium text-blue-400">#0${index + 1}</span>
+                    </div>
+                    <div class="text-xs text-slate-300 mt-1 mb-2 font-medium">
+                        ${city.landmark}
+                    </div>
+                    <div class="bg-slate-800/90 rounded-lg p-2 font-mono text-[11px] border border-slate-700/60 flex flex-col gap-0.5 text-slate-300">
+                        <div class="flex justify-between"><span>緯度 Latitude:</span><span class="text-sky-300 font-bold">${city.lat}</span></div>
+                        <div class="flex justify-between"><span>經度 Longitude:</span><span class="text-sky-300 font-bold">${city.lng}</span></div>
+                    </div>
+                </div>
+            `;
+
+            const marker = L.marker([city.lat, city.lng], { icon: icon })
+                .addTo(map)
+                .bindPopup(popupHtml);
+
+            marker.on('click', () => {
+                updateActiveCard(city);
+            });
+
+            markers.push(marker);
+            markerMap[city.name] = marker;
+        });
+
+        // 建立快速切換城市 Chip
+        const chipContainer = document.getElementById('cityChipsContainer');
+        cities.forEach(city => {
+            const chip = document.createElement('button');
+            chip.dataset.name = city.name;
+            chip.className = `city-chip px-3 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm flex items-center gap-1 shrink-0 ${city.name === '台北' ? 'bg-blue-600 text-white shadow-md scale-105' : 'city-chip-unselected bg-white/90 text-slate-700'}`;
+            chip.innerHTML = `<span>${city.name}</span>`;
+            chip.onclick = () => {
+                updateActiveCard(city);
+                map.flyTo([city.lat, city.lng], 12, { duration: 1.2 });
+                markerMap[city.name].openPopup();
+            };
+            chipContainer.appendChild(chip);
+        });
+
+        // 自適應所有城市
+        const group = new L.featureGroup(markers);
+        function fitAllCities() {
+            map.fitBounds(group.getBounds().pad(0.12));
+        }
+
+        // 容器尺寸防護機制：立即、100ms、500ms 重算尺寸
+        map.invalidateSize();
+        fitAllCities();
+
+        setTimeout(() => {
+            map.invalidateSize();
+        }, 100);
+
+        setTimeout(() => {
+            map.invalidateSize();
+        }, 500);
+
+        // 視窗 resize 監聽器
+        window.addEventListener('resize', () => {
+            map.invalidateSize();
+        });
+
+        // 綁定全覽與聚焦按鈕
+        document.getElementById('resetViewBtn').addEventListener('click', () => {
+            fitAllCities();
+        });
+
+        document.getElementById('focusCurrentBtn').addEventListener('click', () => {
+            if (currentActiveCity) {
+                map.flyTo([currentActiveCity.lat, currentActiveCity.lng], 13, { duration: 1 });
+                markerMap[currentActiveCity.name].openPopup();
+            }
+        });
+    </script>
+</body></html>
